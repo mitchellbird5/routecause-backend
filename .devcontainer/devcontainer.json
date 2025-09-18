@@ -1,0 +1,25 @@
+{
+  "name": "Node.js & TypeScript",
+  "dockerComposeFile": ["../docker-compose.dev.yml"],
+  "service": "mytravelapp-dev",
+  "workspaceFolder": "/app",
+  "runServices": ["mytravelapp-dev", "osrm"],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "eamodio.gitlens",
+        "christian-kohler.path-intellisense",
+        "ms-azuretools.vscode-docker",
+        "Orta.vscode-jest"
+      ],
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "editor.formatOnSave": true,
+        "eslint.validate": ["javascript", "typescript"]
+      }
+    }
+  }
+}

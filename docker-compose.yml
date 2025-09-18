@@ -1,0 +1,33 @@
+services:
+  mytravelapp-dev:
+    image: mytravelapp:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # target: debug-runtime # multi-stage builder
+    volumes:
+      # Mount local source for hot reload
+      - .:/app:cached
+      # Keep node_modules inside container
+      - node-modules:/app/node_modules
+      # mount osrm data to container
+      - osrm-data:/data/osrm
+    command: npm run dev
+    depends_on:
+      - osrm
+    environment:
+      OSRM_URL: http://osrm:5000
+    stdin_open: true
+    tty: true
+
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: osrm
+    volumes:
+      - osrm-data:/data/osrm
+    working_dir: /data/osrm
+    command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
+
+volumes:
+  node-modules:
+  osrm-data:
