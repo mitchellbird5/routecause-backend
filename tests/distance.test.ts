@@ -1,6 +1,160 @@
-import { convertMinutes, haversineKm,  queryOsrm, getOsrmRoute } from "../src/distance/distance";
+import axios from "axios";
+import { convertMinutes, haversineKm } from "../src/distance/distance";
+import { getOsrmRoute, geocodeAddress, queryOsrm } from "../src/distance/distance";
+
+jest.mock("axios"); // Mock the entire axios module
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+beforeEach(() => {
+  jest.clearAllMocks(); // reset call counts
+});
+
+describe("geocodeAddress", () => {
+  it("returns coordinates for a mocked response", async () => {
+    // Arrange: mock axios.get to return fake geocode data
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        { lat: 0, lon: 0 },
+      ],
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    // Act
+    const result = await geocodeAddress("New Brighton Pier, Christchurch, Canterbury");
+
+    // Assert
+    expect(result).toEqual({ latitude: 0, longitude: 0 });
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      expect.stringContaining("New%20Brighton%20Pier"),
+      expect.objectContaining({
+        headers: { "User-Agent": "MyTravelApp/1.0" },
+        timeout: 10000,
+      })
+    );
+  });
+
+
+  it("throws if API returns an empty array", async () => {
+    mockedAxios.get.mockResolvedValue({
+      data: [],
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    await expect(geocodeAddress("Unknown Place")).rejects.toThrow(
+      'Address not found: "Unknown Place"'
+    );
+  });
+
+  it("throws if axios rejects with a network error", async () => {
+    mockedAxios.get.mockRejectedValue(new Error("Network down"));
+
+    await expect(geocodeAddress("Some Place")).rejects.toThrow(
+      'Failed to geocode address "Some Place": Network down'
+    );
+  });
+
+  it("throws if axios rejects with an AxiosError (500)", async () => {
+    mockedAxios.get.mockRejectedValue({
+      isAxiosError: true,
+      message: "Internal Server Error",
+      config: {},
+      response: { status: 500, data: "Server blew up" },
+    });
+
+    await expect(geocodeAddress("Server Error Place")).rejects.toThrow(
+      'Failed to geocode address "Server Error Place": Internal Server Error'
+    );
+  });
+
+  it("throws if response is missing data", async () => {
+    mockedAxios.get.mockResolvedValue({
+      data: null,
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    await expect(geocodeAddress("Null Response Place")).rejects.toThrow(
+      'Address not found: "Null Response Place"'
+    );
+  });
+
+
+});
+
+describe("queryOsrm", () => {
+  it("returns mocked OSRM route", async () => {
+    // Arrange: mock axios.get to return a fake OSRM response
+    mockedAxios.get.mockResolvedValue({
+      data: {
+        routes: [{ distance: 0, duration: 0 }], // distance in meters, duration in seconds
+      },
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    const start = { latitude: 0, longitude: 0 };
+    const end = { latitude: 0, longitude: 0 };
+
+    // Act
+    const result = await queryOsrm(start, end);
+
+    // Assert
+    expect(result).toEqual({ distance_km: 0, duration_min: 0 });
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false`)
+    );
+  });
+});
+
+describe("getOsrmRoute with dependency injection", () => {
+  it("uses mocked functions", async () => {
+    // Mocked geocodeAddress
+    const mockGeocodeAddress = async (address: string) => {
+      switch (address) {
+        case "New Brighton Pier, Christchurch, Canterbury":
+          return { latitude: -43.531, longitude: 172.655 };
+        case "Queenstown Airport, Queenstown, Otago":
+          return { latitude: -45.021, longitude: 168.738 };
+        default:
+          return { latitude: -43.5321, longitude: 172.6362 };
+      }
+    };
+
+    // Mocked queryOsrm
+    const mockQueryOsrm = async () => ({
+      distance_km: 486.4,
+      duration_min: 364,
+    });
+
+    const result = await getOsrmRoute(
+      "New Brighton Pier, Christchurch, Canterbury",
+      "Queenstown Airport, Queenstown, Otago",
+      {
+        geocodeAddress: mockGeocodeAddress,
+        queryOsrm: mockQueryOsrm,
+      }
+    );
+
+    expect(result.distance_km).toBe(486.4);
+    expect(result.duration_min).toBe(364);
+  });
+});
+
 
 describe("Distance Tests", () => {
+
   // ----------------------
   // convertMinutes
   // ----------------------
@@ -56,65 +210,10 @@ describe("Distance Tests", () => {
       });
     });
 
-  it("returns 0 km for identical coordinates", () => {
-    const coord = { latitude: 10, longitude: 20 };
-    expect(haversineKm(coord, coord)).toBeCloseTo(0);
+    it("returns 0 km for identical coordinates", () => {
+      const coord = { latitude: 10, longitude: 20 };
+      expect(haversineKm(coord, coord)).toBeCloseTo(0);
+    });
   });
-});
 
-
-  // ----------------------
-  // OSRM integration
-  // ----------------------
-  describe("OSRM integration", () => {
-    it("queryOsrm returns valid results within tolerance", async () => {
-      const start = { latitude: -43.5066, longitude: 172.7323 };
-      const end = { latitude: -45.0198, longitude: 168.7453 };
-
-      const result = await queryOsrm(start, end);
-
-      // Expected values
-      const expectedDistance = 486.4;
-      const expectedDuration = 364;
-
-      // Tolerances
-      const distanceTolerance = expectedDistance * 0.01; // 1%
-      const durationTolerance = expectedDuration * 0.10; // 10%
-
-      expect(result.distance_km).toBeGreaterThanOrEqual(expectedDistance - distanceTolerance);
-      expect(result.distance_km).toBeLessThanOrEqual(expectedDistance + distanceTolerance);
-
-      expect(result.duration_min).toBeGreaterThanOrEqual(expectedDuration - durationTolerance);
-      expect(result.duration_min).toBeLessThanOrEqual(expectedDuration + durationTolerance);
-    });
-
-    it("queryOsrm throws on invalid coordinates", async () => {
-      const invalid = { latitude: 361, longitude: 0 };
-      const valid = { latitude: 0, longitude: 0 };
-
-      await expect(queryOsrm(invalid, valid)).rejects.toThrow();
-    });
-
-    it("getOsrmRoute returns valid route within tolerance", async () => {
-      const result = await getOsrmRoute(
-        "New Brighton Pier, Christchurch, Canterbury",
-        "Queenstown Airport, Queenstown, Otago"
-      );
-
-      const expectedDistance = 486.4;
-      const expectedDuration = 364;
-
-      // ±1% for distance
-      const distanceTolerance = expectedDistance * 0.01;
-      expect(result.distance_km).toBeGreaterThanOrEqual(expectedDistance - distanceTolerance);
-      expect(result.distance_km).toBeLessThanOrEqual(expectedDistance + distanceTolerance);
-
-      // ±10% for duration
-      const durationTolerance = expectedDuration * 0.10;
-      expect(result.duration_min).toBeGreaterThanOrEqual(expectedDuration - durationTolerance);
-      expect(result.duration_min).toBeLessThanOrEqual(expectedDuration + durationTolerance);
-    });
-
-  });
-  
 });

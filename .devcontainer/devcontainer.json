@@ -3,6 +3,7 @@
   "dockerComposeFile": ["../docker-compose.dev.yml"],
   "service": "mytravelapp-dev",
   "workspaceFolder": "/app",
+  "postStartCommand": "git config --global --add safe.directory /app",
   "runServices": ["mytravelapp-dev", "osrm"],
   "customizations": {
     "vscode": {

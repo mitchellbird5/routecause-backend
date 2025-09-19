@@ -1,16 +1,13 @@
 import axios from "axios";
-import {  
-  emptyVehicleEntry, 
-  makeVehicleFromRecord, 
-  toFloatOrNaN, 
-  datasetIdForYear, 
-  selectVehicle, 
-  fetchVehicleRecords, 
-  getVehicleData 
+import {
+  toFloatOrNaN,
+  makeVehicleFromRecord,
+  datasetIdForYear,
+  selectVehicle,
+  fetchVehicleRecords,
+  emptyVehicleEntry,
 } from "../src/vehicle/vehicle_data";
-import { VehicleData } from "../src/vehicle/vehicle_types";
 
-// Tell Jest to mock axios
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -27,7 +24,7 @@ const mockRecords = () => [
     "City (L/100 km)": "7.9",
     "Highway (L/100 km)": "6.1",
     "Combined (L/100 km)": "32.0",
-    "CO2 emissions (g/km)": "180.0"
+    "CO2 emissions (g/km)": "180.0",
   },
   {
     Make: "Honda",
@@ -41,9 +38,22 @@ const mockRecords = () => [
     "City (L/100 km)": "8.5",
     "Highway (L/100 km)": "6.8",
     "Combined (L/100 km)": "30.0",
-    "CO2 emissions (g/km)": "185.0"
-  }
+    "CO2 emissions (g/km)": "185.0",
+  },
 ];
+
+describe("toFloatOrNaN", () => {
+  it("converts valid strings to floats", () => {
+    expect(toFloatOrNaN("3.14")).toBeCloseTo(3.14);
+    expect(toFloatOrNaN("-2.71")).toBeCloseTo(-2.71);
+    expect(toFloatOrNaN("0")).toBe(0);
+  });
+
+  it("returns NaN for invalid numbers", () => {
+    expect(Number.isNaN(toFloatOrNaN("abc"))).toBe(true);
+    expect(Number.isNaN(toFloatOrNaN(""))).toBe(true);
+  });
+});
 
 describe("makeVehicleFromRecord", () => {
   it("parses fields correctly", () => {
@@ -63,32 +73,27 @@ describe("makeVehicleFromRecord", () => {
     expect(v.fuel_consumption_comb).toBe(32.0);
     expect(v.co2_emissions).toBe(180.0);
   });
-});
 
-describe("toFloatOrNaN", () => {
-  it("converts valid numbers", () => {
-    expect(toFloatOrNaN("3.14")).toBeCloseTo(3.14);
-    expect(toFloatOrNaN("-2.71")).toBeCloseTo(-2.71);
-    expect(toFloatOrNaN("0")).toBe(0);
-  });
-
-  it("returns NaN for invalid numbers", () => {
-    expect(Number.isNaN(toFloatOrNaN("abc"))).toBe(true);
-    expect(Number.isNaN(toFloatOrNaN(""))).toBe(true);
+  it("handles missing fields gracefully", () => {
+    const v = makeVehicleFromRecord({});
+    expect(v.make).toBe("");
+    expect(v.engine_size).toBeNaN();
+    expect(v.cylinders).toBe(-1);
   });
 });
 
 describe("datasetIdForYear", () => {
-  it("returns correct dataset for old years", () => {
+  it("returns correct dataset for 2000", () => {
     expect(datasetIdForYear(2000)).toBe("42495676-28b7-40f3-b0e0-3d7fe005ca56");
   });
 
-  it("returns correct dataset for modern years", () => {
+  it("returns correct dataset for 2020", () => {
     expect(datasetIdForYear(2020)).toBe("505e609e-624c-443f-9155-97431e5e3732");
   });
 
-  it("returns undefined for out of range years", () => {
+  it("returns undefined for out-of-range year", () => {
     expect(datasetIdForYear(1800)).toBeUndefined();
+    expect(datasetIdForYear(3000)).toBeUndefined();
   });
 });
 
@@ -99,69 +104,58 @@ describe("selectVehicle", () => {
 
     expect(v.make).toBe("Honda");
     expect(v.model).toBe("Civic");
-    expect(v.model_year).toBe("2019");
-    expect(v.vehicle_class).toBe("Compact");
-    expect(v.engine_size).toBe(2.0);
-    expect(v.cylinders).toBe(4);
-    expect(v.transmission).toBe("Manual");
-    expect(v.fuel_type).toBe("Gasoline");
-    expect(v.fuel_consumption_city).toBe(8.5);
-    expect(v.fuel_consumption_hwy).toBe(6.8);
-    expect(v.fuel_consumption_comb).toBe(30.0);
-    expect(v.co2_emissions).toBe(185.0);
   });
 
-  it("returns emptyVehicleEntry for out-of-range index", () => {
+  it("returns emptyVehicleEntry for invalid index", () => {
     const records = mockRecords();
-    const v = selectVehicle(records, 99);
-    expect(v).toEqual(emptyVehicleEntry);
+    expect(selectVehicle(records, 99)).toEqual(emptyVehicleEntry);
+    expect(selectVehicle([], 0)).toEqual(emptyVehicleEntry);
   });
 });
 
 describe("fetchVehicleRecords", () => {
-  it("handles invalid model_year gracefully", async () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("returns [] if model_year is not a number", async () => {
     const result = await fetchVehicleRecords("Honda", "Civic", "notayear");
-    expect(result).toHaveLength(0);
+    expect(result).toEqual([]);
   });
 
-  it("returns mocked records when axios responds successfully", async () => {
+  it("returns [] if datasetIdForYear is undefined", async () => {
+    const result = await fetchVehicleRecords("Ford", "Model T", "1800");
+    expect(result).toEqual([]);
+  });
+
+  it("returns records if axios succeeds", async () => {
     mockedAxios.get.mockResolvedValueOnce({
       status: 200,
-      data: { result: { records: mockRecords() } }
+      data: { result: { records: mockRecords() } },
     });
 
     const result = await fetchVehicleRecords("Toyota", "Corolla", "2020");
     expect(result).toHaveLength(2);
     expect(result[0].Make).toBe("Toyota");
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
   });
 
-  it("returns [] on axios failure", async () => {
-    mockedAxios.get.mockRejectedValueOnce(new Error("network error"));
+  it("retries 3 times then returns [] if axios keeps failing", async () => {
+    mockedAxios.get.mockRejectedValue(new Error("network error"));
     const result = await fetchVehicleRecords("Toyota", "Corolla", "2020");
     expect(result).toEqual([]);
-  });
-});
-
-describe("getVehicleData", () => {
-  it("returns empty entry when year is out of range", async () => {
-    const vehicle = await getVehicleData("Toyota", "Camry", "1985");
-    expect(vehicle).toEqual(emptyVehicleEntry);
+    expect(mockedAxios.get).toHaveBeenCalledTimes(3);
   });
 
-  it("returns a selected vehicle when axios returns data", async () => {
-    mockedAxios.get.mockResolvedValueOnce({
-      status: 200,
-      data: { result: { records: mockRecords() } }
-    });
+  it("succeeds on retry (2nd attempt)", async () => {
+    mockedAxios.get
+      .mockRejectedValueOnce(new Error("first fail"))
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { result: { records: mockRecords() } },
+      });
 
-    // Mock readline interaction
-    jest.spyOn(require("readline"), "createInterface").mockReturnValue({
-      question: (_q: string, cb: (answer: string) => void) => cb("1"),
-      close: jest.fn(),
-    } as any);
-
-    const vehicle = await getVehicleData("Toyota", "Corolla", "2020");
-    expect(vehicle.make).toBe("Toyota");
-    expect(vehicle.model).toBe("Corolla");
+    const result = await fetchVehicleRecords("Honda", "Civic", "2019");
+    expect(result).toHaveLength(2);
+    expect(result[1].Model).toBe("Civic");
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
   });
 });

@@ -7,7 +7,7 @@
     "strict": true,
     "esModuleInterop": true,
     "sourceMap": true,
-    "types": ["node", "jest"]
+    "types": ["node", "jest", "supertest"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]

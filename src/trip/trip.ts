@@ -1,7 +1,8 @@
-import { queryOsrm, geocodeAddress } from "../distance/distance";
+import { getOsrmRoute, geocodeAddress, queryOsrm } from "../distance/distance";
 import { VehicleData } from "../vehicle/vehicle_types";
 import { TripResult } from "../trip/trip_types";
 import { convertMinutes } from "../distance/distance";
+import { Coordinates, OsrmResult, TimeHM, GeocodeAddressFn, QueryOsrmFn } from "../distance/distance_types";
 
 /**
  * Convert TripResult to JSON (for API responses)
@@ -16,28 +17,40 @@ export function tripResultToJson(trip: TripResult) {
     };
 }
 
+export interface TripDependencies {
+    getOsrmRoute: (
+        startAddress: string,
+        endAddress: string,
+        deps: { geocodeAddress: GeocodeAddressFn; queryOsrm: QueryOsrmFn }
+    ) => Promise<OsrmResult>;
+    convertMinutes: (minutes: number) => TimeHM;
+    geocodeAddress: (address: string) => Promise<Coordinates>;
+    queryOsrm: (start: Coordinates, end: Coordinates) => Promise<OsrmResult>;
+}
+
 /**
  * Calculate trip based on start/end addresses and vehicle data
  */
 export async function calculateTrip(
     start_address: string,
     end_address: string,
-    vehicle_data: VehicleData
+    vehicle_data: VehicleData,
+    deps: TripDependencies
 ): Promise<TripResult> {
+    const { getOsrmRoute, convertMinutes, geocodeAddress, queryOsrm } = deps;
 
-    // 1. Geocode addresses
-    const start = await geocodeAddress(start_address);
-    const end = await geocodeAddress(end_address);
+    const osrm_res = await getOsrmRoute(start_address, end_address, {
+        geocodeAddress,
+        queryOsrm,
+    });
 
-    // 2. Query OSRM
-    const osrm_res = await queryOsrm(start, end);
-
-    // 3. Convert duration to hours/minutes
     const dur = convertMinutes(Math.floor(osrm_res.duration_min));
 
-    // 4. Calculate fuel and emissions
-    const fuel_used = (osrm_res.distance_km / 100.0) * vehicle_data.fuel_consumption_comb;
-    const emissions_used = (osrm_res.distance_km * vehicle_data.co2_emissions) / 1000.0; // kg
+    const fuel_used =
+        (osrm_res.distance_km / 100.0) * vehicle_data.fuel_consumption_comb;
+
+    const emissions_used =
+        (osrm_res.distance_km * vehicle_data.co2_emissions) / 1000.0; // kg
 
     return {
         distance_km: osrm_res.distance_km,
