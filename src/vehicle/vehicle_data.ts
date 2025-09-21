@@ -25,18 +25,18 @@ export function toFloatOrNaN(s: string): number {
 
 export function makeVehicleFromRecord(rec: any): VehicleData {
     return {
-        make: rec.Make ?? "",
-        model: rec.Model ?? "",
-        model_year: rec["Model year"] ?? "",
-        vehicle_class: rec["Vehicle class"] ?? "",
-        engine_size: toFloatOrNaN(rec["Engine size (L)"] ?? ""),
-        cylinders: parseInt(rec.Cylinders) || -1,
-        transmission: rec.Transmission ?? "",
-        fuel_type: rec["Fuel type"] ?? "",
-        fuel_consumption_city: toFloatOrNaN(rec["City (L/100 km)"] ?? ""),
-        fuel_consumption_hwy: toFloatOrNaN(rec["Highway (L/100 km)"] ?? ""),
-        fuel_consumption_comb: toFloatOrNaN(rec["Combined (L/100 km)"] ?? ""),
-        co2_emissions: toFloatOrNaN(rec["CO2 emissions (g/km)"] ?? ""),
+        make: rec['Make'] ?? "",
+        model: rec['Model'] ?? "",
+        model_year: rec['Model year'] ?? "",
+        vehicle_class: rec['Vehicle class'] ?? "",
+        engine_size: toFloatOrNaN(rec['Engine size (L)'] ?? ""),
+        cylinders: parseInt(rec['Cylinders']) || -1,
+        transmission: rec['Transmission'] ?? "",
+        fuel_type: rec['Fuel type'] ?? "",
+        fuel_consumption_city: toFloatOrNaN(rec['City (L/100 km)'] ?? ""),
+        fuel_consumption_hwy: toFloatOrNaN(rec['Highway (L/100 km)'] ?? ""),
+        fuel_consumption_comb: toFloatOrNaN(rec['Combined (L/100 km)'] ?? ""),
+        co2_emissions: toFloatOrNaN(rec['CO2 emissions (g/km)'] ?? ""),
     };
 }
 
@@ -52,45 +52,48 @@ export function datasetIdForYear(year: number): string | undefined {
   Government of Canada.
 */
 export async function fetchVehicleRecords(
-    make: string,
-    model: string,
-    model_year: string
-): Promise<any[]> {
-    const year = parseInt(model_year);
-    if (isNaN(year)) {
-        console.error("Invalid model year:", model_year);
-        return [];
-    }
-
-    const datasetId = datasetIdForYear(year);
-    if (!datasetId) return [];
-
-    const q = `${make} ${model_year} ${model}`;
-    const url = "https://open.canada.ca/data/en/api/3/action/datastore_search";
-
-    for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-            const response = await axios.get(url, {
-                params: { resource_id: datasetId, q },
-                timeout: 5000,
-            });
-            if (response.status === 200 && response.data?.result?.records) {
-                const records = response.data.result.records.map((r: any, i: number) => ({
-                    id: i + 1,
-                    ...r,
-                }));
-                return records;
-            }
-        } catch (err: any) {
-            console.error("Attempt", attempt + 1, "error:", err.message);
-            await new Promise((res) => setTimeout(res, 500 * 2 ** attempt)); // backoff
-        }
-    }
-
+  make: string,
+  model: string,
+  model_year: string
+): Promise<VehicleData[]> {
+  const year = parseInt(model_year);
+  if (isNaN(year)) {
+    console.error("Invalid model year:", model_year);
     return [];
+  }
+
+  const datasetId = datasetIdForYear(year);
+  if (!datasetId) return [];
+
+  const q = `${make} ${model_year} ${model}`;
+  const url = "https://open.canada.ca/data/en/api/3/action/datastore_search";
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await axios.get(url, {
+        params: { resource_id: datasetId, q },
+        timeout: 5000,
+      });
+
+      if (response.status === 200 && response.data?.result?.records) {
+        const records: VehicleData[] = response.data.result.records.map(
+          (r: any, i: number) => {
+            const vehicle = makeVehicleFromRecord(r);
+            return { id: i + 1, ...vehicle };
+          }
+        );
+        return records;
+      }
+    } catch (err: any) {
+      console.error("Attempt", attempt + 1, "error:", err.message);
+      await new Promise((res) => setTimeout(res, 500 * 2 ** attempt)); // backoff
+    }
+  }
+
+  return [];
 }
 
 export function selectVehicle(records: any[], index: number): VehicleData {
     if (!records || index < 0 || index >= records.length) return emptyVehicleEntry;
-    return makeVehicleFromRecord(records[index]);
+    return records[index];
 }

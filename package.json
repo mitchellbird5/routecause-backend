@@ -5,10 +5,13 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/api/server.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/api/server.js",
     "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
     "test:watch": "jest --watch",
-    "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand"
+    "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
+    "lint": "eslint ."
   },
   "dependencies": {
     "axios": "^1.6.0",

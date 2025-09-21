@@ -1,6 +1,6 @@
 import axios from "axios";
-import { convertMinutes, haversineKm } from "../src/distance/distance";
-import { getOsrmRoute, geocodeAddress, queryOsrm } from "../src/distance/distance";
+import { convertMinutes, haversineKm } from "../../src/distance/distance";
+import { getOsrmRoute, geocodeAddress, queryOsrm } from "../../src/distance/distance";
 
 jest.mock("axios"); // Mock the entire axios module
 const mockedAxios = axios as jest.Mocked<typeof axios>;

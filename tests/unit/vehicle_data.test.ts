@@ -6,20 +6,22 @@ import {
   selectVehicle,
   fetchVehicleRecords,
   emptyVehicleEntry,
-} from "../src/vehicle/vehicle_data";
+} from "../../src/vehicle/vehicle_data";
+import { VehicleData } from "../../src/vehicle/vehicle_types";
 
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+// make sure this has same entries as actual API data
 const mockRecords = () => [
   {
-    Make: "Toyota",
-    Model: "Corolla",
+    "Make": "Toyota",
+    "Model": "Corolla",
     "Model year": "2020",
     "Vehicle class": "Compact",
     "Engine size (L)": "1.8",
-    Cylinders: "4",
-    Transmission: "Automatic",
+    "Cylinders": "4",
+    "Transmission": "Automatic",
     "Fuel type": "Gasoline",
     "City (L/100 km)": "7.9",
     "Highway (L/100 km)": "6.1",
@@ -27,13 +29,13 @@ const mockRecords = () => [
     "CO2 emissions (g/km)": "180.0",
   },
   {
-    Make: "Honda",
-    Model: "Civic",
+    "Make": "Honda",
+    "Model": "Civic",
     "Model year": "2019",
     "Vehicle class": "Compact",
     "Engine size (L)": "2.0",
-    Cylinders: "4",
-    Transmission: "Manual",
+    "Cylinders": "4",
+    "Transmission": "Manual",
     "Fuel type": "Gasoline",
     "City (L/100 km)": "8.5",
     "Highway (L/100 km)": "6.8",
@@ -41,6 +43,39 @@ const mockRecords = () => [
     "CO2 emissions (g/km)": "185.0",
   },
 ];
+
+
+const mockVehicleData: VehicleData[] = [
+  {
+    make: "Toyota",
+    model: "Corolla",
+    model_year: "2020",
+    vehicle_class: "Compact",
+    engine_size: 1.8,
+    cylinders: 4,
+    transmission: "Automatic",
+    fuel_type: "Gasoline",
+    fuel_consumption_city: 7.9,
+    fuel_consumption_hwy: 6.1,
+    fuel_consumption_comb: 32.0,
+    co2_emissions: 180.0,
+  },
+  {
+    make: "Honda",
+    model: "Civic",
+    model_year: "2019",
+    vehicle_class: "Compact",
+    engine_size: 2.0,
+    cylinders: 4,
+    transmission: "Manual",
+    fuel_type: "Gasoline",
+    fuel_consumption_city: 8.5,
+    fuel_consumption_hwy: 6.8,
+    fuel_consumption_comb: 30.0,
+    co2_emissions: 185.0,
+  },
+];
+
 
 describe("toFloatOrNaN", () => {
   it("converts valid strings to floats", () => {
@@ -99,16 +134,26 @@ describe("datasetIdForYear", () => {
 
 describe("selectVehicle", () => {
   it("returns correct entry when index is valid", () => {
-    const records = mockRecords();
-    const v = selectVehicle(records, 1);
+    const vehicle_data = mockVehicleData;
+    const v = selectVehicle(vehicle_data, 1);
 
     expect(v.make).toBe("Honda");
     expect(v.model).toBe("Civic");
+    expect(v.model_year).toBe("2019");
+    expect(v.vehicle_class).toBe("Compact");
+    expect(v.engine_size).toBe(2.0);
+    expect(v.cylinders).toBe(4);
+    expect(v.transmission).toBe("Manual");
+    expect(v.fuel_type).toBe("Gasoline");
+    expect(v.fuel_consumption_city).toBe(8.5);
+    expect(v.fuel_consumption_hwy).toBe(6.8);
+    expect(v.fuel_consumption_comb).toBe(30.0);
+    expect(v.co2_emissions).toBe(185.0);
   });
 
   it("returns emptyVehicleEntry for invalid index", () => {
-    const records = mockRecords();
-    expect(selectVehicle(records, 99)).toEqual(emptyVehicleEntry);
+    const vehicle_data = mockVehicleData;
+    expect(selectVehicle(vehicle_data, 99)).toEqual(emptyVehicleEntry);
     expect(selectVehicle([], 0)).toEqual(emptyVehicleEntry);
   });
 });
@@ -129,12 +174,12 @@ describe("fetchVehicleRecords", () => {
   it("returns records if axios succeeds", async () => {
     mockedAxios.get.mockResolvedValueOnce({
       status: 200,
-      data: { result: { records: mockRecords() } },
+      data: { result: { records: mockRecords()} },
     });
 
     const result = await fetchVehicleRecords("Toyota", "Corolla", "2020");
     expect(result).toHaveLength(2);
-    expect(result[0].Make).toBe("Toyota");
+    expect(result[0].make).toBe("Toyota");
     expect(mockedAxios.get).toHaveBeenCalledTimes(1);
   });
 
@@ -155,7 +200,7 @@ describe("fetchVehicleRecords", () => {
 
     const result = await fetchVehicleRecords("Honda", "Civic", "2019");
     expect(result).toHaveLength(2);
-    expect(result[1].Model).toBe("Civic");
+    expect(result[1].model).toBe("Civic");
     expect(mockedAxios.get).toHaveBeenCalledTimes(2);
   });
 });

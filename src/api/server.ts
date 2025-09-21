@@ -4,6 +4,10 @@ import { router as apiRouter } from "./routes";
 
 export const app = express();
 
+// Health check
+app.get("/api/health", (_req, res) => res.send("OK"));
+
+
 // Middleware
 app.use(cors());
 app.use(express.json());

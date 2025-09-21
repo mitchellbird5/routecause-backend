@@ -1,6 +1,5 @@
 name: CI
 
-# Trigger workflow on PRs to main and pushes (optional)
 on:
   pull_request:
     branches:
@@ -20,22 +19,49 @@ jobs:
     steps:
       # 1. Checkout the repository
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. Set up Node.js
       - name: Set up Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 3. Install dependencies
+      # 3. Install dependencies (clean install for CI)
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       # 4. Run lint
       - name: Lint code
         run: npm run lint || echo "No lint script defined"
 
-      # 5. Run tests
-      - name: Run tests
-        run: npm test
+      # 5. Run unit tests
+      - name: Run unit tests
+        run: npm run test:unit || npm test
+
+      # 6. Build the app (if needed for server start)
+      - name: Build app
+        run: npm run build || echo "No build step defined"
+
+      # 7. Start API server in background
+      - name: Start API server
+        run: |
+          nohup npm start > server.log 2>&1 &
+          sleep 5
+
+      # 8. Wait for API to be ready
+      - name: Wait for API
+        run: |
+          for i in {1..20}; do
+            if curl -s http://localhost:3000/api/health; then
+              echo "API is up!"
+              exit 0
+            fi
+            echo "Waiting for API..."
+            sleep 3
+          done
+          echo "API did not start in time" && exit 1
+
+      # 9. Run integration tests
+      - name: Run integration tests
+        run: npm run test:integration

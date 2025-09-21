@@ -1,13 +1,13 @@
 import request from "supertest";
-import { app } from "../src/api/server";
+import { app } from "../../src/api/server";
 
 // ---- Mock dependencies ----
-import * as vehicleData from "../src/vehicle/vehicle_data";
-import * as tripModule from "../src/trip/trip";
+import * as vehicleData from "../../src/vehicle/vehicle_data";
+import * as tripModule from "../../src/trip/trip";
 
 // Replace real implementations with Jest mocks
-jest.mock("../src/vehicle/vehicle_data");
-jest.mock("../src/trip/trip");
+jest.mock("../../src/vehicle/vehicle_data");
+jest.mock("../../src/trip/trip");
 
 const mockVehicle = {
   make: "Toyota",

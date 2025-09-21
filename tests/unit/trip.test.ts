@@ -1,5 +1,5 @@
-import { calculateTrip } from "../src/trip/trip";
-import { VehicleData } from "../src/vehicle/vehicle_types";
+import { calculateTrip } from "../../src/trip/trip";
+import { VehicleData } from "../../src/vehicle/vehicle_types";
 
 describe("calculateTrip", () => {
   it("calculates distance, time, fuel, and emissions correctly with mocked dependencies", async () => {
