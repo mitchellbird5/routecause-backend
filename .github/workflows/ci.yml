@@ -35,7 +35,7 @@ jobs:
           # Ensure local data directories exist
           mkdir -p ./osrm-data ./osm-data
           # Start services in detached mode
-          docker-compose -f docker-compose.dev.yml up -d
+          docker compose -f docker-compose.dev.yml up -d
 
           # Wait for OSRM to be ready
           for i in {1..20}; do
@@ -78,4 +78,4 @@ jobs:
       # 8. Tear down containers
       - name: Tear down Docker Compose
         if: always()
-        run: docker-compose -f dev.yml down -v
+        run: docker compose -f dev.yml down -v
