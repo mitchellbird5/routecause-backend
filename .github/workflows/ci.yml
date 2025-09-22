@@ -21,15 +21,14 @@ jobs:
         image: osrm/osrm-backend:latest
         options: >-
           --mount type=volume,source=osrm-data,target=/data/osrm
-        command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
+          osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
 
       nominatim:
         image: mediagis/nominatim:5.1
         options: >-
           --mount type=volume,source=osm-data,target=/var/lib/postgresql/16/main
-        environment:
-          PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
-          IMPORT: 0
+          -e PBF_PATH=/var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
+          -e IMPORT=0
 
     steps:
       # 1. Checkout the repository
