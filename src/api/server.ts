@@ -15,7 +15,7 @@ app.use("/api", apiRouter);
 if (require.main === module) {
   const PORT = 18080;
 
-  server = app.listen(PORT, () => {
+  server = app.listen(PORT, "127.0.0.1", () => {
     console.log(`Server listening on http://localhost:${PORT}`);
   });
 
