@@ -49,7 +49,6 @@ jobs:
           docker run -d \
             --name osrm \
             --mount type=volume,source=osrm-data,target=/data/osrm \
-            --network github_network \
             osrm/osrm-backend:latest \
             osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
           echo "Waiting for OSRM to be ready..."
@@ -69,7 +68,6 @@ jobs:
             --mount type=volume,source=osm-data,target=/var/lib/postgresql/16/main \
             -e PBF_PATH=/var/lib/postgresql/16/main/new-zealand-latest.osm.pbf \
             -e IMPORT=0 \
-            --network github_network \
             mediagis/nominatim:5.1
           echo "Waiting for Nominatim to be ready..."
           for i in {1..20}; do
