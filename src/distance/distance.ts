@@ -8,13 +8,15 @@ import axios from "axios";
  * openstreetmap.org/copyright
  */
 export async function geocodeAddress(address: string): Promise<Coordinates> {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+  // Use NOMINATIM_URL from environment, default to public API if not set
+  const baseUrl = process.env.NOMINATIM_URL || "https://nominatim.openstreetmap.org";
+  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}`;
 
   let response;
   try {
     response = await axios.get(url, {
       headers: { "User-Agent": "MyTravelApp/1.0" },
-      timeout: 10000, // optional: 10s timeout
+      timeout: 10000, // 10s timeout
     });
     console.log("Geocode response:", response.data);
   } catch (err) {
@@ -48,7 +50,7 @@ export async function queryOsrm(
 ): Promise<OsrmResult> {
   const startStr = `${start.longitude},${start.latitude}`;
   const endStr = `${end.longitude},${end.latitude}`;
-  const url = `http://osrm:5000/route/v1/driving/${startStr};${endStr}?overview=false`;
+  const url = `${process.env.OSRM_URL}/route/v1/driving/${startStr};${endStr}?overview=false`;
 
   const response = await axios.get(url);
 

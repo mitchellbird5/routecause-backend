@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/api/server.ts",
+    "dev": "ts-node-dev --transpile-only --inspect=127.0.0.1:9229 src/api/server.ts",
     "build": "tsc",
     "start": "node dist/api/server.js",
+    "debug": "node --inspect -r ts-node/register src/api/server.ts",
     "test": "jest",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",

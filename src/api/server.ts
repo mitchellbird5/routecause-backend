@@ -3,27 +3,32 @@ import cors from "cors";
 import { router as apiRouter } from "./routes";
 
 export const app = express();
+let server: ReturnType<typeof app.listen>;
 
-// Health check
 app.get("/api/health", (_req, res) => res.send("OK"));
-
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use("/api", apiRouter);
 
-// Routes
-app.use("/api", apiRouter); // all routes prefixed with /api
-
-// Only start server if run directly (not when imported in tests)
 if (require.main === module) {
   const PORT = 18080;
-  app
-    .listen(PORT, () => {
-      console.log(`Server listening on http://localhost:${PORT}`);
-    })
-    .on("error", (err: any) => {
-      console.error(`Failed to start server on port ${PORT}:`, err);
-      process.exit(1);
+
+  server = app.listen(PORT, () => {
+    console.log(`Server listening on http://localhost:${PORT}`);
+  });
+
+  server.on("error", (err: any) => {
+    console.error(`Failed to start server on port ${PORT}:`, err);
+    process.exit(1);
+  });
+
+  // Handle ts-node-dev restart signal
+  process.once("SIGUSR2", () => {
+    console.log("SIGUSR2 received: closing server...");
+    server.close(() => {
+      process.kill(process.pid, "SIGUSR2");
     });
+  });
 }

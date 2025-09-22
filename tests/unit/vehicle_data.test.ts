@@ -5,7 +5,7 @@ import {
   datasetIdForYear,
   selectVehicle,
   fetchVehicleRecords,
-  emptyVehicleEntry,
+  emptyVehicleEntry
 } from "../../src/vehicle/vehicle_data";
 import { VehicleData } from "../../src/vehicle/vehicle_types";
 
@@ -108,13 +108,6 @@ describe("makeVehicleFromRecord", () => {
     expect(v.fuel_consumption_comb).toBe(32.0);
     expect(v.co2_emissions).toBe(180.0);
   });
-
-  it("handles missing fields gracefully", () => {
-    const v = makeVehicleFromRecord({});
-    expect(v.make).toBe("");
-    expect(v.engine_size).toBeNaN();
-    expect(v.cylinders).toBe(-1);
-  });
 });
 
 describe("datasetIdForYear", () => {
@@ -123,7 +116,7 @@ describe("datasetIdForYear", () => {
   });
 
   it("returns correct dataset for 2020", () => {
-    expect(datasetIdForYear(2020)).toBe("505e609e-624c-443f-9155-97431e5e3732");
+    expect(datasetIdForYear(2020)).toBe("e10efaa3-a8cc-4072-845a-13e03d996c30");
   });
 
   it("returns undefined for out-of-range year", () => {
@@ -202,5 +195,42 @@ describe("fetchVehicleRecords", () => {
     expect(result).toHaveLength(2);
     expect(result[1].model).toBe("Civic");
     expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("makeVehicleFromRecord", () => {
+  it("should throw an error if any required field is missing", () => {
+    const incompleteRec = {
+      Make: "Toyota",
+      Model: "Corolla",
+      "Model year": "2020",
+      // missing "Vehicle class" and others
+    };
+
+    expect(() => makeVehicleFromRecord(incompleteRec)).toThrowError(
+      /missing required fields: Vehicle class, Engine size \(L\), Cylinders, Transmission, Fuel type, City \(L\/100 km\), Highway \(L\/100 km\), Combined \(L\/100 km\), CO2 emissions \(g\/km\)/
+    );
+  });
+
+  it("should return a VehicleData object if all fields exist", () => {
+    const completeRec = {
+      "Make": "Toyota",
+      "Model": "Corolla",
+      "Model year": "2020",
+      "Vehicle class": "Compact",
+      "Engine size (L)": "1.8",
+      "Cylinders": "4",
+      "Transmission": "Automatic",
+      "Fuel type": "Gasoline",
+      "City (L/100 km)": "7.9",
+      "Highway (L/100 km)": "6.1",
+      "Combined (L/100 km)": "6.8",
+      "CO2 emissions (g/km)": "155"
+    };
+
+    const vehicle = makeVehicleFromRecord(completeRec);
+    expect(vehicle.make).toBe("Toyota");
+    expect(vehicle.model_year).toBe("2020");
+    expect(vehicle.cylinders).toBe(4);
   });
 });

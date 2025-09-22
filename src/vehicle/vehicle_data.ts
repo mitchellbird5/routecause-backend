@@ -23,7 +23,39 @@ export function toFloatOrNaN(s: string): number {
     return isNaN(v) ? NAN_F : v;
 }
 
-export function makeVehicleFromRecord(rec: any): VehicleData {
+/**
+ * Validates a vehicle record.
+ * Throws an error if any required field is missing.
+ */
+export function validateVehicleRecord(
+  rec: any,
+  requiredFields: Array<string>
+): void {
+  const missingFields = requiredFields.filter(field => !(field in rec));
+
+  if (missingFields.length > 0) {
+    throw new Error(`Vehicle record is missing required fields: ${missingFields.join(", ")}`);
+  }
+}
+
+export function makeVehicleFromRecord(
+  rec: any
+): VehicleData {
+    const requiredFields = [
+      "Make",
+      "Model",
+      "Model year",
+      "Vehicle class",
+      "Engine size (L)",
+      "Cylinders",
+      "Transmission",
+      "Fuel type",
+      "City (L/100 km)",
+      "Highway (L/100 km)",
+      "Combined (L/100 km)",
+      "CO2 emissions (g/km)"
+    ];
+    validateVehicleRecord(rec, requiredFields)
     return {
         make: rec['Make'] ?? "",
         model: rec['Model'] ?? "",
@@ -42,7 +74,7 @@ export function makeVehicleFromRecord(rec: any): VehicleData {
 
 export function datasetIdForYear(year: number): string | undefined {
     if (year >= 1990 && year <= 2014) return "42495676-28b7-40f3-b0e0-3d7fe005ca56";
-    if (year >= 2015 && year <= 2025) return "505e609e-624c-443f-9155-97431e5e3732";
+    if (year >= 2015 && year <= 2025) return "e10efaa3-a8cc-4072-845a-13e03d996c30";
 }
 
 /*

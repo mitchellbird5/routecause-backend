@@ -6,12 +6,12 @@ services:
       - .:/app:cached
       - node-modules:/app/node_modules
       - osrm-data:/data/osrm
-    # ports:
-    #   - "3000:3000"
     depends_on:
       - osrm
+      - nominatim
     environment:
       OSRM_URL: http://osrm:5000
+      NOMINATIM_URL: http://nominatim:8080
       NODE_ENV: development
 
   osrm:
@@ -22,6 +22,18 @@ services:
     working_dir: /data/osrm
     command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
 
+  nominatim:
+    image: mediagis/nominatim:5.1
+    container_name: nominatim
+    volumes:
+      - osm-data:/var/lib/postgresql/16/main
+    environment:
+      PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
+      IMPORT: 0
+
+
 volumes:
   node-modules:
   osrm-data:
+  osm-data:
+    external: true
