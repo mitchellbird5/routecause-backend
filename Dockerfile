@@ -24,8 +24,5 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["entrypoint.sh"]
 
-# Expose port for development
-# EXPOSE 3000
-
 # Default command for dev
 CMD ["npm", "run", "dev"]

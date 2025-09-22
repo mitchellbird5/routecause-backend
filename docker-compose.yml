@@ -1,24 +1,18 @@
 services:
   mytravelapp-dev:
-    image: mytravelapp:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-      # target: debug-runtime # multi-stage builder
+    image: mytravelapp-dev:latest
+    build: .
     volumes:
-      # Mount local source for hot reload
       - .:/app:cached
-      # Keep node_modules inside container
       - node-modules:/app/node_modules
-      # mount osrm data to container
       - osrm-data:/data/osrm
-    command: npm run dev
     depends_on:
       - osrm
+      - nominatim
     environment:
       OSRM_URL: http://osrm:5000
-    stdin_open: true
-    tty: true
+      NOMINATIM_URL: http://nominatim:8080
+      NODE_ENV: production
 
   osrm:
     image: osrm/osrm-backend:latest
@@ -28,6 +22,18 @@ services:
     working_dir: /data/osrm
     command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
 
+  nominatim:
+    image: mediagis/nominatim:5.1
+    container_name: nominatim
+    volumes:
+      - osm-data:/var/lib/postgresql/16/main
+    environment:
+      PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
+      IMPORT: 0
+
+
 volumes:
   node-modules:
   osrm-data:
+  osm-data:
+    external: true

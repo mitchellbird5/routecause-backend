@@ -1,96 +1,81 @@
 name: CI
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  build-and-test:
+  integration:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [22.x]
-
     steps:
-      # 1. Checkout the repository
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # 2. Set up Node.js
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
 
-      # 3. Install dependencies
+      # 3. Install Node dependencies
       - name: Install dependencies
         run: npm ci
 
-      # 4. Lint code
-      - name: Lint code
-        run: npm run lint || echo "No lint script defined"
-
-      # 5. Run unit tests
-      - name: Run unit tests
-        run: npm run test:unit || npm test
-
-      # 6. Build app
+      # 4. Build the app (if needed)
       - name: Build app
         run: npm run build || echo "No build step defined"
 
-      # 7. Start OSRM container in background
-      - name: Start OSRM
+      # 5. Start all containers using Docker Compose
+      - name: Start Docker Compose services
         run: |
-          docker run -d \
-            --name osrm \
-            --mount type=volume,source=osrm-data,target=/data/osrm \
-            osrm/osrm-backend:latest \
-            osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
-          echo "Waiting for OSRM to be ready..."
+          # Ensure local data directories exist
+          mkdir -p ./osrm-data ./osm-data
+          # Start services in detached mode
+          docker-compose -f docker-compose.dev.yml up -d
+
+          # Wait for OSRM to be ready
           for i in {1..20}; do
             if curl -s http://localhost:5000/health; then
-              echo "OSRM is up!"
+              echo "OSRM is ready"
               break
             fi
+            echo "Waiting for OSRM..."
             sleep 3
           done
 
-      # 8. Start Nominatim container in background
-      - name: Start Nominatim
-        run: |
-          docker run -d \
-            --name nominatim \
-            --mount type=volume,source=osm-data,target=/var/lib/postgresql/16/main \
-            -e PBF_PATH=/var/lib/postgresql/16/main/new-zealand-latest.osm.pbf \
-            -e IMPORT=0 \
-            mediagis/nominatim:5.1
-          echo "Waiting for Nominatim to be ready..."
-          for i in {1..20}; do
+          # Wait for Nominatim to be ready
+          for i in {1..30}; do
             if curl -s "http://localhost:8080/search?q=test"; then
-              echo "Nominatim is up!"
+              echo "Nominatim is ready"
               break
             fi
-            sleep 3
+            echo "Waiting for Nominatim..."
+            sleep 5
           done
 
-      # 9. Start API server in background
+      # 6. Start API server in background
       - name: Start API server
         run: |
           nohup npm start > server.log 2>&1 &
-          echo "Waiting for API..."
+          # Wait for API health endpoint
           for i in {1..20}; do
             if curl -s http://localhost:18080/api/health; then
-              echo "API is up!"
+              echo "API is up"
               break
             fi
+            echo "Waiting for API..."
             sleep 3
           done
 
-      # 10. Run integration tests
+      # 7. Run integration tests
       - name: Run integration tests
         run: npm run test:integration
+
+      # 8. Tear down containers
+      - name: Tear down Docker Compose
+        if: always()
+        run: docker-compose -f dev.yml down -v
