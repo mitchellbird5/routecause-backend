@@ -7,7 +7,7 @@ services:
       interval: 5s
       retries: 20
       timeout: 300s
-      start_period: 300s
+      start_period: 60s
 
 
   osrm_ci:
@@ -21,7 +21,7 @@ services:
       interval: 5s
       retries: 20
       timeout: 300s
-      start_period: 300s
+      start_period: 60s
 
       
 
@@ -31,10 +31,8 @@ services:
       dockerfile: Dockerfile
     image: mytravelapp_ci:latest
     depends_on:
-      osrm_ci:
-        condition: service_healthy
-      nominatim_ci:
-        condition: service_healthy
+      - osrm_ci
+      - nominatim_ci
     environment:
       NODE_ENV: test
       OSRM_URL: http://osrm_ci:5000
