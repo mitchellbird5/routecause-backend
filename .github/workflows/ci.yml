@@ -26,30 +26,7 @@ jobs:
         run: npm run build || echo "No build step defined"
 
       - name: Start CI containers
-        run: |
-          docker compose -f docker-compose.ci.yml up -d
-
-          # Wait for OSRM
-          docker compose exec -T osrm_ci sh -c '
-            for i in $(seq 1 20); do
-              if curl -s http://osrm_ci:5000/health; then
-                echo "OSRM ready"; exit 0;
-              fi
-              echo "Waiting for OSRM..."; sleep 3;
-            done
-            exit 1
-          '
-
-          # Wait for Nominatim
-          docker compose exec -T nominatim_ci sh -c '
-            for i in $(seq 1 20); do
-              if curl -s "http://nominatim_ci:8080/search?q=Casino+de+Monte-Carlo"; then
-                echo "Nominatim ready"; exit 0;
-              fi
-              echo "Waiting for Nominatim..."; sleep 5;
-            done
-            exit 1
-          '
+        run: docker compose -f docker-compose.ci.yml up -d --wait
 
       - name: Run integration tests
         run: docker compose exec -T mytravelapp_ci npm run test:integration
