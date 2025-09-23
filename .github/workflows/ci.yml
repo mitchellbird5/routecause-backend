@@ -28,13 +28,21 @@ jobs:
       - name: Start CI containers
         run: docker compose -f docker-compose.ci.yml up -d --wait
 
-      - name: Show OSRM and Nominatim logs
+      - name: List all containers
+        if: always()
+        run: docker ps -a
+
+      - name: Show logs for all containers
         if: always()
         run: |
-          echo "=== OSRM Logs ==="
-          docker compose logs osrm_ci
-          echo "=== Nominatim Logs ==="
-          docker compose logs nominatim_ci
+          for c in $(docker ps -a -q); do
+            echo "=== Logs for container $c ==="
+            docker logs $c
+          done
+
+      - name: Check OSRM test data
+        if: always()
+        run: ls -l ./tests/integration/data
 
       - name: Run integration tests
         run: docker compose exec -T mytravelapp_ci npm run test:integration
