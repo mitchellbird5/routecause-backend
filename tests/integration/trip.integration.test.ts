@@ -10,8 +10,8 @@ describe("Integration: /api/trip", () => {
         make: "Toyota",
         model: "Corolla",
         model_year: "2008",
-        start: "Christchurch",
-        end: "Queenstown"
+        start: "Wellington Railway Station",
+        end: "Te Papa Museum"
       })
       .set("Accept", "application/json");
 
@@ -23,10 +23,10 @@ describe("Integration: /api/trip", () => {
     expect(res.body).toHaveProperty("co2_kg");
 
     // sanity checks
-    expect(res.body.distance_km).toBeCloseTo(481.5043, 1);
-    expect(res.body.hours).toBe(6);
-    expect(res.body.minutes).toBe(23);
-    expect(res.body.fuel_used_l).toBeCloseTo(35.6313182, 1)
-    expect(res.body.co2_kg).toBeCloseTo(81.855731, 1)
+    expect(res.body.distance_km).toBeCloseTo(1.5504, 1);
+    expect(res.body.hours).toBe(0);
+    expect(res.body.minutes).toBe(3);
+    expect(res.body.fuel_used_l).toBeCloseTo(0.1147296, 1)
+    expect(res.body.co2_kg).toBeCloseTo(0.263568, 1)
   });
 });
