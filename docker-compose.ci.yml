@@ -2,13 +2,20 @@ services:
   nominatim_ci:
     image: mitchellbird5/nominatim-test-data:latest
     container_name: nominatim_ci
-    # no ports exposed
 
   osrm_ci:
     image: osrm/osrm-backend:latest
     container_name: osrm_ci
-    command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
-    # no ports exposed
+    volumes:
+      - ./tests/integration/data:/data/osrm
+    command: |
+      sh -c "
+        osrm-extract -p /opt/car.lua /data/osrm/test.osm.pbf &&
+        osrm-partition /data/osrm/test.osrm &&
+        osrm-customize /data/osrm/test.osrm &&
+        osrm-routed --algorithm mld /data/osrm/test.osrm
+      "
+      
 
   mytravelapp_ci:
     build: .
@@ -16,7 +23,6 @@ services:
     volumes:
       - .:/app:cached
       - node-modules:/app/node_modules
-      - osrm-data:/data/osrm
     depends_on:
       - osrm_ci
       - nominatim_ci
@@ -27,4 +33,3 @@ services:
 
 volumes:
   node-modules:
-  osrm-data:
