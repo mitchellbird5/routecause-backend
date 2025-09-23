@@ -30,9 +30,9 @@ jobs:
           docker compose -f docker-compose.ci.yml up -d
 
           # Wait for OSRM
-          docker compose exec -T ci-osrm sh -c '
+          docker compose exec -T osrm_ci sh -c '
             for i in $(seq 1 20); do
-              if curl -s http://ci-osrm:5000/health; then
+              if curl -s http://osrm_ci:5000/health; then
                 echo "OSRM ready"; exit 0;
               fi
               echo "Waiting for OSRM..."; sleep 3;
@@ -41,9 +41,9 @@ jobs:
           '
 
           # Wait for Nominatim
-          docker compose exec -T ci-nominatim sh -c '
+          docker compose exec -T nominatim_ci sh -c '
             for i in $(seq 1 20); do
-              if curl -s "http://ci-nominatim:8080/search?q=Casino+de+Monte-Carlo"; then
+              if curl -s "http://nominatim_ci:8080/search?q=Casino+de+Monte-Carlo"; then
                 echo "Nominatim ready"; exit 0;
               fi
               echo "Waiting for Nominatim..."; sleep 5;
@@ -52,7 +52,7 @@ jobs:
           '
 
       - name: Run integration tests
-        run: docker compose exec -T ci-mytravelapp npm run test:integration
+        run: docker compose exec -T mytravelapp_ci npm run test:integration
 
       - name: Tear down CI containers
         if: always()
