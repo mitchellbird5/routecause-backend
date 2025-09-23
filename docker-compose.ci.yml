@@ -6,7 +6,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- 'http://localhost:8080/search?q=Casino+de+Monte-Carlo' || exit 1"]
       interval: 5s
       retries: 20
-      start_period: 10s
+      timeout: 300s
 
   osrm_ci:
     image: osrm/osrm-backend:latest
@@ -18,7 +18,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
       interval: 5s
       retries: 20
-      start_period: 10s
+      timeout: 300s
       
 
   mytravelapp_ci:
