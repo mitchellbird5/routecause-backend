@@ -18,6 +18,9 @@ RUN npm install
 COPY ./src ./src
 COPY tsconfig.json ./
 
+# Copy tests for CI
+COPY ./tests ./tests
+
 # Copy entrypoint script
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
