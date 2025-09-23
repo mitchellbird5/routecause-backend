@@ -44,8 +44,8 @@ jobs:
         if: always()
         run: ls -l ./tests/integration/data
 
-      - name: Run integration tests
-        run: docker compose exec -T mytravelapp_ci npx jest --config jest.config.js --verbose
+      - name: Run tests
+        run: docker compose exec -T mytravelapp_ci npx jest --verbose
 
       - name: Tear down CI containers
         if: always()

@@ -19,6 +19,7 @@ COPY ./src ./src
 COPY tsconfig.json ./
 
 # Copy tests for CI
+COPY jest.config.js ./
 COPY ./tests ./tests
 
 # Copy entrypoint script
