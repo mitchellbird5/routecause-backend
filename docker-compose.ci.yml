@@ -30,6 +30,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: mytravelapp_ci:latest
+    working_dir: /app
     depends_on:
       - osrm_ci
       - nominatim_ci
