@@ -32,10 +32,8 @@ jobs:
       # 5. Start all containers using Docker Compose
       - name: Start Docker Compose services
         run: |
-          # Ensure local data directories exist
-          mkdir -p ./osrm-data ./osm-data
-          # Start services in detached mode
-          docker compose -f docker-compose.dev.yml up -d
+          # Use dev compose file + CI override to swap in prebuilt Nominatim
+          docker compose -f docker-compose.dev.yml -f docker-compose.ci.yml up -d
 
           # Wait for OSRM to be ready
           for i in {1..20}; do
@@ -48,8 +46,8 @@ jobs:
           done
 
           # Wait for Nominatim to be ready
-          for i in {1..30}; do
-            if curl -s "http://localhost:8080/search?q=test"; then
+          for i in {1..20}; do
+            if curl -s "http://localhost:8080/search?q=Casino+de+Monte-Carlo"; then
               echo "Nominatim is ready"
               break
             fi
@@ -61,7 +59,6 @@ jobs:
       - name: Start API server
         run: |
           nohup npm start > server.log 2>&1 &
-          # Wait for API health endpoint
           for i in {1..20}; do
             if curl -s http://localhost:18080/api/health; then
               echo "API is up"
@@ -77,5 +74,4 @@ jobs:
 
       # 8. Tear down containers
       - name: Tear down Docker Compose
-        if: always()
-        run: docker compose -f docker-compose.dev.yml down -v
+        run: docker compose -f docker-compose.dev.yml -f docker-compose.ci.yml down -v

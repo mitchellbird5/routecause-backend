@@ -1,0 +1,2 @@
+*.pbf filter=lfs diff=lfs merge=lfs -text
+/tests/integration/data filter=lfs diff=lfs merge=lfs -text
