@@ -2,28 +2,33 @@ services:
   nominatim_ci:
     image: mitchellbird5/nominatim-test-data:latest
     container_name: nominatim_ci
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 'http://localhost:8080/search?q=Casino+de+Monte-Carlo' || exit 1"]
+      interval: 5s
+      retries: 20
+      start_period: 10s
 
   osrm_ci:
     image: osrm/osrm-backend:latest
     container_name: osrm_ci
     volumes:
       - ./tests/integration/data:/data/osrm
-    command: sh -c "osrm-routed --algorithm mld /data/osrm/test.osrm"
+    command: osrm-routed --algorithm mld /data/osrm/test.osrm
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 5s
+      retries: 20
+      start_period: 5s
       
 
   mytravelapp_ci:
-    build: .
-    container_name: mytravelapp_ci
-    volumes:
-      - .:/app:cached
-      - node-modules:/app/node_modules
+    image: mytravelapp_ci:latest
     depends_on:
-      - osrm_ci
-      - nominatim_ci
+      osrm_ci:
+        condition: service_healthy
+      nominatim_ci:
+        condition: service_healthy
     environment:
       NODE_ENV: test
       OSRM_URL: http://osrm_ci:5000
       NOMINATIM_URL: http://nominatim_ci:8080
-
-volumes:
-  node-modules:
