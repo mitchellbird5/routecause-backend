@@ -11,67 +11,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # 3. Install Node dependencies
       - name: Install dependencies
         run: npm ci
 
-      # 4. Build the app (if needed)
       - name: Build app
         run: npm run build || echo "No build step defined"
 
-      # 5. Start all containers using Docker Compose
-      - name: Start Docker Compose services
+      - name: Start CI containers
         run: |
-          # Use dev compose file + CI override to swap in prebuilt Nominatim
           docker compose -f docker-compose.dev.yml -f docker-compose.ci.yml up -d
 
-          # Wait for OSRM to be ready
-          for i in {1..20}; do
-            if curl -s http://localhost:5000/health; then
-              echo "OSRM is ready"
-              break
-            fi
-            echo "Waiting for OSRM..."
-            sleep 3
-          done
+          # Wait for OSRM
+          docker compose exec -T ci-osrm sh -c '
+            for i in $(seq 1 20); do
+              if curl -s http://ci-osrm:5000/health; then
+                echo "OSRM ready"; exit 0;
+              fi
+              echo "Waiting for OSRM..."; sleep 3;
+            done
+            exit 1
+          '
 
-          # Wait for Nominatim to be ready
-          for i in {1..20}; do
-            if curl -s "http://localhost:8080/search?q=Casino+de+Monte-Carlo"; then
-              echo "Nominatim is ready"
-              break
-            fi
-            echo "Waiting for Nominatim..."
-            sleep 5
-          done
+          # Wait for Nominatim
+          docker compose exec -T ci-nominatim sh -c '
+            for i in $(seq 1 20); do
+              if curl -s "http://ci-nominatim:8080/search?q=Casino+de+Monte-Carlo"; then
+                echo "Nominatim ready"; exit 0;
+              fi
+              echo "Waiting for Nominatim..."; sleep 5;
+            done
+            exit 1
+          '
 
-      # 6. Start API server in background
-      - name: Start API server
-        run: |
-          nohup npm start > server.log 2>&1 &
-          for i in {1..20}; do
-            if curl -s http://localhost:18080/api/health; then
-              echo "API is up"
-              break
-            fi
-            echo "Waiting for API..."
-            sleep 3
-          done
-
-      # 7. Run integration tests
       - name: Run integration tests
-        run: npm run test:integration
+        run: docker compose exec -T ci-mytravelapp npm run test:integration
 
-      # 8. Tear down containers
-      - name: Tear down Docker Compose
+      - name: Tear down CI containers
+        if: always()
         run: docker compose -f docker-compose.dev.yml -f docker-compose.ci.yml down -v

@@ -5,7 +5,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Install bash/git/curl (optional)
-RUN apk add --no-cache bash git curl
+RUN apk add --no-cache bash git curl git-lfs
 
 # Copy package.json first (leverage Docker cache)
 COPY package.json ./
