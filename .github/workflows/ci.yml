@@ -45,7 +45,7 @@ jobs:
         run: ls -l ./tests/integration/data
 
       - name: Run integration tests
-        run: docker docker compose exec -T mytravelapp_ci npx jest --config jest.config.js --verbose
+        run: docker compose exec -T mytravelapp_ci npx jest --config jest.config.js --verbose
 
       - name: Tear down CI containers
         if: always()
