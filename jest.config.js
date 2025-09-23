@@ -4,7 +4,9 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: [
     '**/tests/unit/**/*.test.ts',
+    '**/tests/unit/**/*.unit.test.ts',
     '**/tests/integration/**/*.test.ts',
+    '**/tests/integration/**/*.integration.test.ts',
     '**/tests/e2e/**/*.test.ts'
   ],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
