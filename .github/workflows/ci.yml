@@ -29,6 +29,7 @@ jobs:
         run: docker compose -f docker-compose.ci.yml up -d --wait
 
       - name: Show OSRM and Nominatim logs
+        if: always()
         run: |
           echo "=== OSRM Logs ==="
           docker compose logs osrm_ci
