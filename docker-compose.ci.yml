@@ -22,6 +22,9 @@ services:
       
 
   mytravelapp_ci:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: mytravelapp_ci:latest
     depends_on:
       osrm_ci:
