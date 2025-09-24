@@ -45,11 +45,11 @@ jobs:
 
       - name: Bootstrap OSRM data if missing
         run: |
-          if [ ! -f tests/integration/osrm-data/monaco.osrm ]; then
+          if [ ! -f tests/integration/osrm-data/new-zealand-latest.osrm ]; then
             docker run --rm \
               -v $PWD/tests/integration/osrm-data:/data/osrm \
               -v $PWD:/data \
-              osrm/osrm-backend osrm-extract /data/monaco-latest.osm.pbf
+              osrm/osrm-backend osrm-extract /data/new-zealand-latest.osm.pbf
           fi
 
       - name: Start CI containers
