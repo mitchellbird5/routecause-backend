@@ -25,24 +25,39 @@ jobs:
       - name: Build app
         run: npm run build || echo "No build step defined"
 
+      - name: Cache Nominatim data
+        uses: actions/cache@v4
+        with:
+          path: tests/integration/nominatim-data
+          key: ${{ runner.os }}-nominatim-data-v1
+
+      - name: Cache OSRM data
+        uses: actions/cache@v4
+        with:
+          path: tests/integration/osrm-data
+          key: ${{ runner.os }}-osrm-data-v1
+
+      - name: Bootstrap Nominatim data if missing
+        run: |
+          if [ ! -f tests/integration/nominatim-data/PG_VERSION ]; then
+            docker run --rm \
+              -v $PWD/tests/integration/nominatim-data:/var/lib/postgresql/16/main \
+              -v $PWD:/data \
+              mediagis/nominatim:5.1 \
+              sh -c "nominatim import"
+          fi
+
+      - name: Bootstrap OSRM data if missing
+        run: |
+          if [ ! -f tests/integration/osrm-data/monaco.osrm ]; then
+            docker run --rm \
+              -v $PWD/tests/integration/osrm-data:/data/osrm \
+              -v $PWD:/data \
+              osrm/osrm-backend osrm-extract /data/monaco-latest.osm.pbf
+          fi
+
       - name: Start CI containers
         run: docker compose -f docker-compose.ci.yml up -d
-
-      - name: List all containers
-        if: always()
-        run: docker ps -a
-
-      - name: Show logs for all containers
-        if: always()
-        run: |
-          for c in $(docker ps -a -q); do
-            echo "=== Logs for container $c ==="
-            docker logs $c
-          done
-
-      - name: Check OSRM test data
-        if: always()
-        run: ls -l ./tests/integration/data
 
       - name: Run tests
         run: docker compose exec -T mytravelapp_ci npx jest --verbose

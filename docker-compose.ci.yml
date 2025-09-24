@@ -1,29 +1,16 @@
 services:
   nominatim_ci:
-    image: mitchellbird5/nominatim-test-data:latest
+    image: mediagis/nominatim:5.1
     container_name: nominatim_ci
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 'http://localhost:8080/search?q=Casino+de+Monte-Carlo' || exit 1"]
-      interval: 5s
-      retries: 20
-      timeout: 300s
-      start_period: 60s
-
+    volumes:
+      - ./tests/integration/nominatim-data:/var/lib/postgresql/16/main
 
   osrm_ci:
     image: osrm/osrm-backend:latest
     container_name: osrm_ci
     volumes:
-      - ./tests/integration/data:/data/osrm
+      - ./tests/integration/osrm-data:/data/osrm
     command: osrm-routed --algorithm mld /data/osrm/test.osrm
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
-      interval: 5s
-      retries: 20
-      timeout: 300s
-      start_period: 60s
-
-      
 
   mytravelapp_ci:
     build:
