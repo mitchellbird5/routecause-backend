@@ -40,11 +40,7 @@ jobs:
       - name: Bootstrap Nominatim data if missing
         run: |
           if [ ! -f tests/integration/nominatim-data/PG_VERSION ]; then
-            docker run --rm \
-              -v $PWD/tests/integration/nominatim-data:/var/lib/postgresql/16/main \
-              -v $PWD/tests/integration/data:/data \
-              mediagis/nominatim:5.1 \
-              nominatim import --osm-file /data/new-zealand-latest.osm.pbf
+            docker compose -f docker-compose.ci.yml up nominatim_ci
           fi
 
       - name: Bootstrap OSRM data if missing
