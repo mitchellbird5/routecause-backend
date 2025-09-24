@@ -19,20 +19,22 @@ services:
     container_name: osrm
     volumes:
       - osrm-data:/data/osrm
-    working_dir: /data/osrm
     command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
 
   nominatim:
     image: mediagis/nominatim:5.1
     container_name: nominatim
     volumes:
-      - osm-new-zealand-data:/var/lib/postgresql/16/main
+      - nominatim-data:/var/lib/postgresql/16/main
     environment:
       PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
-      IMPORT: 0
+      IMPORT: "0"
 
 volumes:
   node-modules:
   osrm-data:
-  osm-new-zealand-data:
     external: true
+    name: mytravelapp_osrm-data
+  nominatim-data:
+    external: true
+    name: mytravelapp_nominatim-data
