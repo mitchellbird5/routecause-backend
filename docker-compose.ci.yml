@@ -5,7 +5,6 @@ services:
     volumes:
       - ./tests/integration/nominatim-data:/var/lib/postgresql/16/main
       - ./tests/integration/data:/data
-    command: nominatim import --osm-file /data/new-zealand-latest.osm.pbf
 
   osrm_ci:
     image: osrm/osrm-backend:latest
