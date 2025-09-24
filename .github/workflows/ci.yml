@@ -42,9 +42,9 @@ jobs:
           if [ ! -f tests/integration/nominatim-data/PG_VERSION ]; then
             docker run --rm \
               -v $PWD/tests/integration/nominatim-data:/var/lib/postgresql/16/main \
-              -v $PWD:/data \
+              -v $PWD/tests/integration/data:/data \
               mediagis/nominatim:5.1 \
-              sh -c "nominatim import --osm-file /data/new-zealand-latest.osm.pbf"
+              nominatim import --osm-file /data/new-zealand-latest.osm.pbf
           fi
 
       - name: Bootstrap OSRM data if missing
