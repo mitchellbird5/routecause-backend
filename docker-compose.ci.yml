@@ -1,5 +1,5 @@
 services:
-  nominatim:
+  nominatim_ci:
     image: mediagis/nominatim:5.1
     container_name: nominatim_ci
     volumes:
@@ -15,7 +15,7 @@ services:
         echo 'Starting nominatim...';
         nominatim start"
 
-  osrm:
+  osrm_ci:
     image: osrm/osrm-backend
     container_name: osrm_ci
     volumes:
@@ -38,8 +38,8 @@ services:
     volumes:
       - .:/app:cached
     depends_on:
-      - osrm_ci
-      - nominatim_ci
+      - osrm
+      - nominatim
     environment:
       NODE_ENV: test
       OSRM_URL: http://osrm_ci:5000
