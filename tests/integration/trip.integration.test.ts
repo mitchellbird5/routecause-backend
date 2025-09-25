@@ -15,8 +15,6 @@ describe("Integration: /api/trip", () => {
       })
       .set("Accept", "application/json");
 
-    console.log("Response body:", res.body);
-
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("distance_km");
     expect(res.body).toHaveProperty("hours");
