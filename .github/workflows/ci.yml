@@ -33,23 +33,6 @@ jobs:
       - name: View logs for nominatim_ci
         run: docker compose -f docker-compose.ci.yml logs nominatim_ci
 
-
-      - name: Wait for Nominatim
-        run: |
-          echo "Waiting for nominatim_ci to be ready..."
-          until docker compose exec -T nominatim_ci curl -s http://nominatim_ci:8080/status | grep -q "OK"; do
-            echo "Nominatim not ready yet..."
-            sleep 5
-          done
-
-      - name: Wait for OSRM
-        run: |
-          echo "Waiting for osrm_ci to be ready..."
-          until docker compose exec -T osrm_ci curl -s http://nominatim_ci:5000/health | grep -q "OK"; do
-            echo "OSRM not ready yet..."
-            sleep 5
-          done
-
       - name: Run tests
         run: docker compose exec -T mytravelapp_ci npx jest --verbose --runInBand
 
