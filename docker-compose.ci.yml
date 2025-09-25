@@ -47,4 +47,4 @@ services:
     command: tail -f /dev/null
 
 volumes:
-  nominatim-data
+  nominatim-data: {}
