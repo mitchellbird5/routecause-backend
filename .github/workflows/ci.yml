@@ -27,6 +27,13 @@ jobs:
       - name: Start CI containers
         run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
 
+      - name: List running containers
+        run: docker compose -f docker-compose.ci.yml ps
+
+      - name: View logs for nominatim_ci
+        run: docker compose -f docker-compose.ci.yml logs nominatim_ci
+
+
       - name: Wait for Nominatim
         run: |
           echo "Waiting for nominatim_ci to be ready..."
@@ -44,7 +51,7 @@ jobs:
           done
 
       - name: Run tests
-        run: docker compose exec -T mytravelapp_ci npx jest --verbose
+        run: docker compose exec -T mytravelapp_ci npx jest --verbose --runInBand
 
       - name: Tear down CI containers
         if: always()
