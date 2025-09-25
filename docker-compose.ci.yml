@@ -8,6 +8,8 @@ services:
     environment:
       PBF_PATH: /nominatim/data/test.osm.pbf
       IMPORT: 1
+    ports:
+    - "8080:8080"
 
   osrm_ci:
     image: osrm/osrm-backend
