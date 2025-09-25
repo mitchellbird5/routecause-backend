@@ -1,19 +1,13 @@
 services:
+
   nominatim_ci:
     image: mediagis/nominatim:5.1
-    container_name: nominatim_ci
     volumes:
-      - ./tests/integration/data/test.osm.pbf:/data/test.osm.pbf:ro
-      - nominatim-data:/var/lib/postgresql/15/main
-    command: >
-      /bin/bash -c "
-        if [ ! -d /var/lib/postgresql/15/main/base ]; then
-          echo 'Importing OSM data...';
-          mkdir -p /var/lib/postgresql/15/main;
-          nominatim import --osm-file /data/test.osm.pbf --threads 2 --osm2pgsql-cache 512;
-        fi
-        echo 'Starting nominatim...';
-        nominatim start"
+      - ./tests/integration/data/test.osm.pbf:/nominatim/data/test.osm.pbf
+      - nominatim-data-ci:/var/lib/postgresql/15/main
+    environment:
+      PBF_PATH: /nominatim/data/test.osm.pbf
+      IMPORT: 1
 
   osrm_ci:
     image: osrm/osrm-backend
@@ -22,12 +16,12 @@ services:
       - ./tests/integration/data/test.osm.pbf:/data/test.osm.pbf:ro
     command: >
       /bin/bash -c "
-        if [ ! -f /data/test.osm.pbf.osrm ]; then
+        if [ ! -f /data/test.osrm ]; then
           osrm-extract -p /opt/car.lua /data/test.osm.pbf;
-          osrm-partition /data/test.osm.pbf.osrm;
-          osrm-customize /data/test.osm.pbf.osrm;
+          osrm-partition /data/test.osrm;
+          osrm-customize /data/test.osrm;
         fi
-        osrm-routed --algorithm mld /data/test.osm.pbf.osrm"
+        osrm-routed --algorithm mld /data/test.osrm"
 
   mytravelapp_ci:
     build:
@@ -47,4 +41,4 @@ services:
     command: tail -f /dev/null
 
 volumes:
-  nominatim-data: {}
+  nominatim-data-ci: {}
