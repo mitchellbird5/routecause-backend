@@ -38,8 +38,8 @@ services:
     volumes:
       - .:/app:cached
     depends_on:
-      - osrm
-      - nominatim
+      - osrm_ci
+      - nominatim_ci
     environment:
       NODE_ENV: test
       OSRM_URL: http://osrm_ci:5000
