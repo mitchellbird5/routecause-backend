@@ -1,17 +1,33 @@
 services:
-  nominatim_ci:
+  nominatim:
     image: mediagis/nominatim:5.1
     container_name: nominatim_ci
     volumes:
-      - ./tests/integration/nominatim-data:/var/lib/postgresql/16/main
-      - ./tests/integration/data:/data
+      - ./tests/integration/data/test.osm.pbf:/data/test.osm.pbf:ro
+      - nominatim-data:/var/lib/postgresql/15/main
+    command: >
+      /bin/bash -c "
+        if [ ! -d /var/lib/postgresql/15/main/base ]; then
+          echo 'Importing OSM data...';
+          mkdir -p /var/lib/postgresql/15/main;
+          nominatim import --osm-file /data/test.osm.pbf --threads 2 --osm2pgsql-cache 512;
+        fi
+        echo 'Starting nominatim...';
+        nominatim start"
 
-  osrm_ci:
-    image: osrm/osrm-backend:latest
+  osrm:
+    image: osrm/osrm-backend
     container_name: osrm_ci
     volumes:
-      - ./tests/integration/osrm-data:/data/osrm
-    command: osrm-routed --algorithm mld /data/osrm/test.osrm
+      - ./tests/integration/data/test.osm.pbf:/data/test.osm.pbf:ro
+    command: >
+      /bin/bash -c "
+        if [ ! -f /data/test.osm.pbf.osrm ]; then
+          osrm-extract -p /opt/car.lua /data/test.osm.pbf;
+          osrm-partition /data/test.osm.pbf.osrm;
+          osrm-customize /data/test.osm.pbf.osrm;
+        fi
+        osrm-routed --algorithm mld /data/test.osm.pbf.osrm"
 
   mytravelapp_ci:
     build:
@@ -19,6 +35,8 @@ services:
       dockerfile: Dockerfile
     image: mytravelapp_ci:latest
     working_dir: /app
+    volumes:
+      - .:/app:cached
     depends_on:
       - osrm_ci
       - nominatim_ci
@@ -26,3 +44,7 @@ services:
       NODE_ENV: test
       OSRM_URL: http://osrm_ci:5000
       NOMINATIM_URL: http://nominatim_ci:8080
+    command: tail -f /dev/null
+
+volumes:
+  nominatim-data

@@ -1,7 +1,3 @@
 node_modules/
 
 .vscode/
-
-/tests/integration/data/
-/tests/integration/osrm-data/
-/tests/integration/nominatim-data/

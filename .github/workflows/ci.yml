@@ -25,36 +25,8 @@ jobs:
       - name: Build app
         run: npm run build || echo "No build step defined"
 
-      - name: Cache Nominatim data
-        uses: actions/cache@v4
-        with:
-          path: tests/integration/nominatim-data
-          key: ${{ runner.os }}-nominatim-data-v1
-
-      - name: Cache OSRM data
-        uses: actions/cache@v4
-        with:
-          path: tests/integration/osrm-data
-          key: ${{ runner.os }}-osrm-data-v1
-
-      - name: Bootstrap Nominatim data if missing
-        run: |
-          if [ ! -f tests/integration/nominatim-data/PG_VERSION ]; then
-            docker compose -f docker-compose.ci.yml run --rm nominatim_ci \
-              nominatim import --osm-file /data/new-zealand-latest.osm.pbf
-          fi
-
-      - name: Bootstrap OSRM data if missing
-        run: |
-          if [ ! -f tests/integration/osrm-data/new-zealand-latest.osrm ]; then
-            docker run --rm \
-              -v $PWD/tests/integration/osrm-data:/data/osrm \
-              -v $PWD:/data \
-              osrm/osrm-backend osrm-extract /data/new-zealand-latest.osm.pbf
-          fi
-
       - name: Start CI containers
-        run: docker compose -f docker-compose.ci.yml up -d
+        run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
 
       - name: Run tests
         run: docker compose exec -T mytravelapp_ci npx jest --verbose

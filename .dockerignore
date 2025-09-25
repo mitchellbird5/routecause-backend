@@ -3,3 +3,6 @@ node-modules/
 .vscode/
 
 .git
+
+tests/integration/osrm-data/
+tests/integration/nominatim-data/
