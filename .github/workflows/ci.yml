@@ -33,6 +33,12 @@ jobs:
       - name: View logs for nominatim_ci
         run: docker compose -f docker-compose.ci.yml logs nominatim_ci
 
+      - name: View logs for osrm_ci
+        run: docker compose -f docker-compose.ci.yml logs osrm_ci
+
+      - name: View logs for mytravelapp_ci
+        run: docker compose -f docker-compose.ci.yml logs mytravelapp_ci
+
       - name: Run tests
         run: docker compose exec -T mytravelapp_ci npx jest --verbose --runInBand
 
