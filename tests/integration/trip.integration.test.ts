@@ -10,8 +10,8 @@ describe("Integration: /api/trip", () => {
           make: "Toyota",
           model: "Corolla",
           model_year: "2008",
-          start: "Jervois Quay, Wellington Central, Wellington, 6040, New Zealand",
-          end: "Tony's Tyre Service Jervois Quay, 54, Jervois Quay, Lambton, Wellington Central, Wellington, 6011, New Zealand"
+          start: "Place du Casino, Monte Carlo, Monaco",
+          end: "Port Hercules, Monaco"
         })
         .set("Accept", "application/json");
 

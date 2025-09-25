@@ -3,25 +3,25 @@ services:
   nominatim_ci:
     image: mediagis/nominatim:5.1
     volumes:
-      - ./tests/integration/data/test.osm.pbf:/nominatim/data/test.osm.pbf
+      - ./tests/integration/data/monaco.osm.pbf:/nominatim/data/monaco.osm.pbf
       - nominatim-data-ci:/var/lib/postgresql/15/main
     environment:
-      PBF_PATH: /nominatim/data/test.osm.pbf
+      PBF_PATH: /nominatim/data/monaco.osm.pbf
       IMPORT: 1
 
   osrm_ci:
     image: osrm/osrm-backend
     container_name: osrm_ci
     volumes:
-      - ./tests/integration/data/test.osm.pbf:/data/test.osm.pbf:ro
+      - ./tests/integration/data/monaco.osm.pbf:/data/monaco.osm.pbf:ro
     command: >
       /bin/bash -c "
-        if [ ! -f /data/test.osrm ]; then
-          osrm-extract -p /opt/car.lua /data/test.osm.pbf;
-          osrm-partition /data/test.osrm;
-          osrm-customize /data/test.osrm;
+        if [ ! -f /data/monaco.osrm ]; then
+          osrm-extract -p /opt/car.lua /data/monaco.osm.pbf;
+          osrm-partition /data/monaco.osrm;
+          osrm-customize /data/monaco.osrm;
         fi
-        osrm-routed --algorithm mld /data/test.osrm"
+        osrm-routed --algorithm mld /data/monaco.osrm"
 
   mytravelapp_ci:
     build:
