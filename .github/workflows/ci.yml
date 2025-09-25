@@ -26,7 +26,7 @@ jobs:
         run: npm run build || echo "No build step defined"
 
       - name: Start CI containers
-        run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
+        run: docker compose -p ci -f docker-compose.ci.yml up -d --remove-orphans
 
       - name: Run tests
         run: docker compose exec -T mytravelapp_ci npx jest --verbose
