@@ -24,14 +24,6 @@ jobs:
       - name: Build app
         run: npm run build || echo "No build step defined"
       
-      - name: Prepare OSRM data volume
-        run: |
-          docker volume create osrm-data-ci
-          docker run --rm \
-            -v osrm-data-ci:/data \
-            -v $GITHUB_WORKSPACE/tests/integration/data:/src:ro \
-            alpine sh -c "cp /src/monaco.osm.pbf /data/"
-
       - name: Start CI containers
         run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
 

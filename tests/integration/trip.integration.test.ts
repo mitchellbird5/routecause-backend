@@ -11,7 +11,7 @@ describe("Integration: /api/trip", () => {
           model: "Corolla",
           model_year: "2008",
           start: "Place du Casino, Monte Carlo, Monaco",
-          end: "Port Hercules, Monaco"
+          end: "Prince’s Palace of Monaco"
         })
         .set("Accept", "application/json");
 
