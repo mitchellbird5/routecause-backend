@@ -3,10 +3,10 @@ services:
   nominatim_ci:
     image: mediagis/nominatim:5.1
     volumes:
-      - ./tests/integration/data/monaco.osm.pbf:/nominatim/data/monaco.osm.pbf
+      - ./tests/integration/data/wellington.osm.pbf:/nominatim/data/wellington.osm.pbf
       - nominatim-data-ci:/var/lib/postgresql/15/main
     environment:
-      PBF_PATH: /nominatim/data/monaco.osm.pbf
+      PBF_PATH: /nominatim/data/wellington.osm.pbf
       IMPORT: 1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://nominatim_ci:8080/search?q=test&format=json&limit=1"]
@@ -21,10 +21,10 @@ services:
       - ./tests/integration/data:/data
     command: >
       /bin/bash -c "
-        osrm-extract -p /opt/car.lua /data/monaco.osm.pbf &&
-        osrm-partition /data/monaco.osrm &&
-        osrm-customize /data/monaco.osrm &&
-        osrm-routed --algorithm mld /data/monaco.osrm
+        osrm-extract -p /opt/car.lua /data/wellington.osm.pbf &&
+        osrm-partition /data/wellington.osrm &&
+        osrm-customize /data/wellington.osrm &&
+        osrm-routed --algorithm mld /data/wellington.osrm
       "
 
   mytravelapp_ci:
