@@ -27,11 +27,11 @@ services:
         osrm-routed --algorithm mld /data/wellington.osrm
       "
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 'http://localhost:5000/route/v1/driving/0,0;0,0?overview=false' | grep -q 'NoRoute'"]
+      test: ["CMD-SHELL", "wget -qO- 'http://osrm_ci:5000/route/v1/driving/0,0;0,0?overview=false' | grep -q 'NoRoute'"]
       interval: 10s
       timeout: 5s
       retries: 5
-      
+
   mytravelapp_ci:
     build:
       context: .
