@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -24,9 +26,9 @@ jobs:
       - name: Build app
         run: npm run build || echo "No build step defined"
 
-      - name: Create OSRM data folder
-        run: mkdir -p osrm-data
-      
+      - name: Verify OSRM PBF file
+        run: ls -lh tests/integration/data/monaco.osm.pbf && head -c 100 tests/integration/data/monaco.osm.pbf | xxd
+
       - name: Start CI containers
         run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
 
