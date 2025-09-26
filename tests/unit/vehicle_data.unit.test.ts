@@ -1,0 +1,236 @@
+import axios from "axios";
+import {
+  toFloatOrNaN,
+  makeVehicleFromRecord,
+  datasetIdForYear,
+  selectVehicle,
+  fetchVehicleRecords,
+  emptyVehicleEntry
+} from "../../src/vehicle/vehicle_data";
+import { VehicleData } from "../../src/vehicle/vehicle_types";
+
+jest.mock("axios");
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+// make sure this has same entries as actual API data
+const mockRecords = () => [
+  {
+    "Make": "Toyota",
+    "Model": "Corolla",
+    "Model year": "2020",
+    "Vehicle class": "Compact",
+    "Engine size (L)": "1.8",
+    "Cylinders": "4",
+    "Transmission": "Automatic",
+    "Fuel type": "Gasoline",
+    "City (L/100 km)": "7.9",
+    "Highway (L/100 km)": "6.1",
+    "Combined (L/100 km)": "32.0",
+    "CO2 emissions (g/km)": "180.0",
+  },
+  {
+    "Make": "Honda",
+    "Model": "Civic",
+    "Model year": "2019",
+    "Vehicle class": "Compact",
+    "Engine size (L)": "2.0",
+    "Cylinders": "4",
+    "Transmission": "Manual",
+    "Fuel type": "Gasoline",
+    "City (L/100 km)": "8.5",
+    "Highway (L/100 km)": "6.8",
+    "Combined (L/100 km)": "30.0",
+    "CO2 emissions (g/km)": "185.0",
+  },
+];
+
+
+const mockVehicleData: VehicleData[] = [
+  {
+    make: "Toyota",
+    model: "Corolla",
+    model_year: "2020",
+    vehicle_class: "Compact",
+    engine_size: 1.8,
+    cylinders: 4,
+    transmission: "Automatic",
+    fuel_type: "Gasoline",
+    fuel_consumption_city: 7.9,
+    fuel_consumption_hwy: 6.1,
+    fuel_consumption_comb: 32.0,
+    co2_emissions: 180.0,
+  },
+  {
+    make: "Honda",
+    model: "Civic",
+    model_year: "2019",
+    vehicle_class: "Compact",
+    engine_size: 2.0,
+    cylinders: 4,
+    transmission: "Manual",
+    fuel_type: "Gasoline",
+    fuel_consumption_city: 8.5,
+    fuel_consumption_hwy: 6.8,
+    fuel_consumption_comb: 30.0,
+    co2_emissions: 185.0,
+  },
+];
+
+
+describe("toFloatOrNaN", () => {
+  it("converts valid strings to floats", () => {
+    expect(toFloatOrNaN("3.14")).toBeCloseTo(3.14);
+    expect(toFloatOrNaN("-2.71")).toBeCloseTo(-2.71);
+    expect(toFloatOrNaN("0")).toBe(0);
+  });
+
+  it("returns NaN for invalid numbers", () => {
+    expect(Number.isNaN(toFloatOrNaN("abc"))).toBe(true);
+    expect(Number.isNaN(toFloatOrNaN(""))).toBe(true);
+  });
+});
+
+describe("makeVehicleFromRecord", () => {
+  it("parses fields correctly", () => {
+    const record = mockRecords()[0];
+    const v = makeVehicleFromRecord(record);
+
+    expect(v.make).toBe("Toyota");
+    expect(v.model).toBe("Corolla");
+    expect(v.model_year).toBe("2020");
+    expect(v.vehicle_class).toBe("Compact");
+    expect(v.engine_size).toBe(1.8);
+    expect(v.cylinders).toBe(4);
+    expect(v.transmission).toBe("Automatic");
+    expect(v.fuel_type).toBe("Gasoline");
+    expect(v.fuel_consumption_city).toBe(7.9);
+    expect(v.fuel_consumption_hwy).toBe(6.1);
+    expect(v.fuel_consumption_comb).toBe(32.0);
+    expect(v.co2_emissions).toBe(180.0);
+  });
+});
+
+describe("datasetIdForYear", () => {
+  it("returns correct dataset for 2000", () => {
+    expect(datasetIdForYear(2000)).toBe("42495676-28b7-40f3-b0e0-3d7fe005ca56");
+  });
+
+  it("returns correct dataset for 2020", () => {
+    expect(datasetIdForYear(2020)).toBe("e10efaa3-a8cc-4072-845a-13e03d996c30");
+  });
+
+  it("returns undefined for out-of-range year", () => {
+    expect(datasetIdForYear(1800)).toBeUndefined();
+    expect(datasetIdForYear(3000)).toBeUndefined();
+  });
+});
+
+describe("selectVehicle", () => {
+  it("returns correct entry when index is valid", () => {
+    const vehicle_data = mockVehicleData;
+    const v = selectVehicle(vehicle_data, 1);
+
+    expect(v.make).toBe("Honda");
+    expect(v.model).toBe("Civic");
+    expect(v.model_year).toBe("2019");
+    expect(v.vehicle_class).toBe("Compact");
+    expect(v.engine_size).toBe(2.0);
+    expect(v.cylinders).toBe(4);
+    expect(v.transmission).toBe("Manual");
+    expect(v.fuel_type).toBe("Gasoline");
+    expect(v.fuel_consumption_city).toBe(8.5);
+    expect(v.fuel_consumption_hwy).toBe(6.8);
+    expect(v.fuel_consumption_comb).toBe(30.0);
+    expect(v.co2_emissions).toBe(185.0);
+  });
+
+  it("returns emptyVehicleEntry for invalid index", () => {
+    const vehicle_data = mockVehicleData;
+    expect(selectVehicle(vehicle_data, 99)).toEqual(emptyVehicleEntry);
+    expect(selectVehicle([], 0)).toEqual(emptyVehicleEntry);
+  });
+});
+
+describe("fetchVehicleRecords", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("returns [] if model_year is not a number", async () => {
+    const result = await fetchVehicleRecords("Honda", "Civic", "notayear");
+    expect(result).toEqual([]);
+  });
+
+  it("returns [] if datasetIdForYear is undefined", async () => {
+    const result = await fetchVehicleRecords("Ford", "Model T", "1800");
+    expect(result).toEqual([]);
+  });
+
+  it("returns records if axios succeeds", async () => {
+    mockedAxios.get.mockResolvedValueOnce({
+      status: 200,
+      data: { result: { records: mockRecords()} },
+    });
+
+    const result = await fetchVehicleRecords("Toyota", "Corolla", "2020");
+    expect(result).toHaveLength(2);
+    expect(result[0].make).toBe("Toyota");
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries 3 times then returns [] if axios keeps failing", async () => {
+    mockedAxios.get.mockRejectedValue(new Error("network error"));
+    const result = await fetchVehicleRecords("Toyota", "Corolla", "2020");
+    expect(result).toEqual([]);
+    expect(mockedAxios.get).toHaveBeenCalledTimes(3);
+  });
+
+  it("succeeds on retry (2nd attempt)", async () => {
+    mockedAxios.get
+      .mockRejectedValueOnce(new Error("first fail"))
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { result: { records: mockRecords() } },
+      });
+
+    const result = await fetchVehicleRecords("Honda", "Civic", "2019");
+    expect(result).toHaveLength(2);
+    expect(result[1].model).toBe("Civic");
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("makeVehicleFromRecord", () => {
+  it("should throw an error if any required field is missing", () => {
+    const incompleteRec = {
+      Make: "Toyota",
+      Model: "Corolla",
+      "Model year": "2020",
+      // missing "Vehicle class" and others
+    };
+
+    expect(() => makeVehicleFromRecord(incompleteRec)).toThrowError(
+      /missing required fields: Vehicle class, Engine size \(L\), Cylinders, Transmission, Fuel type, City \(L\/100 km\), Highway \(L\/100 km\), Combined \(L\/100 km\), CO2 emissions \(g\/km\)/
+    );
+  });
+
+  it("should return a VehicleData object if all fields exist", () => {
+    const completeRec = {
+      "Make": "Toyota",
+      "Model": "Corolla",
+      "Model year": "2020",
+      "Vehicle class": "Compact",
+      "Engine size (L)": "1.8",
+      "Cylinders": "4",
+      "Transmission": "Automatic",
+      "Fuel type": "Gasoline",
+      "City (L/100 km)": "7.9",
+      "Highway (L/100 km)": "6.1",
+      "Combined (L/100 km)": "6.8",
+      "CO2 emissions (g/km)": "155"
+    };
+
+    const vehicle = makeVehicleFromRecord(completeRec);
+    expect(vehicle.make).toBe("Toyota");
+    expect(vehicle.model_year).toBe("2020");
+    expect(vehicle.cylinders).toBe(4);
+  });
+});

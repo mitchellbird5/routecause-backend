@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build || echo "No build step defined"
+
+      - name: Start CI containers
+        run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
+
+      - name: OSRM CI Logs
+        if: always()
+        run: docker compose -f docker-compose.ci.yml logs osrm_ci
+
+      - name: Run tests
+        run: docker compose exec -T mytravelapp_ci npx jest --verbose --runInBand
+
+      - name: Tear down CI containers
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v

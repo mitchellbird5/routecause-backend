@@ -1,0 +1,40 @@
+services:
+  mytravelapp-dev:
+    image: mytravelapp-dev:latest
+    build: .
+    volumes:
+      - .:/app:cached
+      - node-modules:/app/node_modules
+      - osrm-data:/data/osrm
+    depends_on:
+      - osrm
+      - nominatim
+    environment:
+      OSRM_URL: http://osrm:5000
+      NOMINATIM_URL: http://nominatim:8080
+      NODE_ENV: development
+
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: osrm
+    volumes:
+      - osrm-data:/data/osrm
+    command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
+
+  nominatim:
+    image: mediagis/nominatim:5.1
+    container_name: nominatim
+    volumes:
+      - nominatim-data:/var/lib/postgresql/16/main
+    environment:
+      PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
+      IMPORT: "0"
+
+volumes:
+  node-modules:
+  osrm-data:
+    external: true
+    name: mytravelapp_osrm-data
+  nominatim-data:
+    external: true
+    name: mytravelapp_nominatim-data
