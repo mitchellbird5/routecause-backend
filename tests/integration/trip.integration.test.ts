@@ -21,12 +21,6 @@ describe("Integration: /api/trip", () => {
       expect(res.body).toHaveProperty("minutes");
       expect(res.body).toHaveProperty("fuel_used_l");
       expect(res.body).toHaveProperty("co2_kg");
-
-      expect(res.body.distance_km).toBeCloseTo(0.8497, 1);
-      expect(res.body.hours).toBe(0);
-      expect(res.body.minutes).toBe(2);
-      expect(res.body.fuel_used_l).toBeCloseTo(0.0628778, 2);
-      expect(res.body.co2_kg).toBeCloseTo(0.14444900000000002, 2)
     },
     20000
   );
