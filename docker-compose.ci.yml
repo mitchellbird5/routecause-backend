@@ -37,3 +37,6 @@ services:
       OSRM_URL: http://osrm_ci:5000
       NOMINATIM_URL: http://nominatim_ci:8080
     command: tail -f /dev/null
+
+volumes:
+  nominatim-data-ci: {}
