@@ -26,12 +26,6 @@ services:
         osrm-customize /data/wellington.osrm &&
         osrm-routed --algorithm mld /data/wellington.osrm
       "
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 'http://osrm_ci:5000/route/v1/driving/174.7772,-41.2893;174.7786,-41.2965?overview=false' | grep -q 'routes'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
 
   mytravelapp_ci:
     build:
@@ -45,7 +39,7 @@ services:
       nominatim_ci:
         condition: service_healthy
       osrm_ci:
-        condition: service_healthy
+        condition: service_started
     environment:
       NODE_ENV: test
       OSRM_URL: http://osrm_ci:5000
