@@ -13,7 +13,7 @@ services:
     image: osrm/osrm-backend
     container_name: osrm_ci
     volumes:
-      - ./tests/integration/data/monaco.osm.pbf:/data/monaco.osm.pbf:ro
+      - osrm-data-ci:/data
     command: >
       /bin/bash -c "
         if [ ! -f /data/monaco.osrm ]; then
@@ -42,3 +42,4 @@ services:
 
 volumes:
   nominatim-data-ci: {}
+  osrm-data-ci:
