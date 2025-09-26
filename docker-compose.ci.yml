@@ -13,7 +13,7 @@ services:
     container_name: osrm_ci
     command: >
       /bin/bash -c "
-        wget -O /data/monaco.osm.pbf https://download.geofabrik.de/europe/monaco-latest.osm.pbf;
+        curl -O /data/monaco.osm.pbf https://download.geofabrik.de/europe/monaco-latest.osm.pbf;
 
         osrm-extract -p /opt/car.lua /data/monaco.osm.pbf;
         osrm-partition /data/monaco.osrm;
