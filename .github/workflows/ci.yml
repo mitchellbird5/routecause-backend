@@ -26,15 +26,6 @@ jobs:
 
       - name: Create OSRM data folder
         run: mkdir -p osrm-data
-
-      - name: Download Monaco OSM data
-        run: wget -O osrm-data/monaco.osm.pbf https://download.geofabrik.de/europe/monaco-latest.osm.pbf
-
-      - name: Run OSRM preprocess
-        run: |
-          docker run --rm -v ${PWD}/osrm-data:/data osrm/osrm-backend osrm-extract -p /opt/car.lua /data/monaco.osm.pbf
-          docker run --rm -v ${PWD}/osrm-data:/data osrm/osrm-backend osrm-partition /data/monaco.osrm
-          docker run --rm -v ${PWD}/osrm-data:/data osrm/osrm-backend osrm-customize /data/monaco.osrm
       
       - name: Start CI containers
         run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
