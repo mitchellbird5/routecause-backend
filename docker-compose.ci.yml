@@ -27,7 +27,7 @@ services:
         osrm-routed --algorithm mld /data/wellington.osrm
       "
     healthcheck:
-      test: ["CMD-SHELL", "until wget -qO- 'http://osrm_ci:5000/route/v1/driving/0,0;0,0?overview=false' | grep -q 'NoRoute'; do sleep 1; done"]
+      test: ["CMD-SHELL", "wget -qO- 'http://osrm_ci:5000/route/v1/driving/174.7772,-41.2893;174.7786,-41.2965?overview=false' | grep -q 'routes'"]
       interval: 10s
       timeout: 5s
       retries: 10
