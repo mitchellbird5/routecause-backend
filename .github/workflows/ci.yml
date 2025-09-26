@@ -26,23 +26,8 @@ jobs:
       - name: Build app
         run: npm run build || echo "No build step defined"
 
-      - name: Verify OSRM PBF file
-        run: ls -lh tests/integration/data/monaco.osm.pbf && head -c 100 tests/integration/data/monaco.osm.pbf | xxd
-
       - name: Start CI containers
         run: docker compose -f docker-compose.ci.yml up -d --remove-orphans
-
-      - name: List running containers
-        run: docker compose -f docker-compose.ci.yml ps
-
-      - name: View logs for nominatim_ci
-        run: docker compose -f docker-compose.ci.yml logs nominatim_ci
-
-      - name: View logs for osrm_ci
-        run: docker compose -f docker-compose.ci.yml logs osrm_ci
-
-      - name: View logs for mytravelapp_ci
-        run: docker compose -f docker-compose.ci.yml logs mytravelapp_ci
 
       - name: Run tests
         run: docker compose exec -T mytravelapp_ci npx jest --verbose --runInBand
