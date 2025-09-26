@@ -25,7 +25,7 @@ describe("Integration: /api/trip", () => {
       expect(res.body.distance_km).toBeCloseTo(0.8497, 1);
       expect(res.body.hours).toBe(0);
       expect(res.body.minutes).toBe(2);
-      expect(res.body.fuel_used_l).toBeCloseTo(1.0, 1);
+      expect(res.body.fuel_used_l).toBeCloseTo(0.0628778, 2);
       expect(res.body.co2_kg).toBeCloseTo(1.0, 1)
     },
     20000
