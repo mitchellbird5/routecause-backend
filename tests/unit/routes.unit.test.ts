@@ -91,8 +91,7 @@ describe("API Routes (mocked external APIs)", () => {
       make: "Toyota",
       model: "Corolla",
       model_year: "2008",
-      start: "Christchurch",
-      end: "Queenstown"
+      locations: ["Christchurch", "Queenstown"]
     };
 
     const fakeVehicle: VehicleDataType[] = [

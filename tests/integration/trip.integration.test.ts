@@ -10,8 +10,7 @@ describe("Integration: /api/trip", () => {
           make: "Toyota",
           model: "Corolla",
           model_year: "2008",
-          start: "Cuba Street, Wellington, New Zealand",
-          end: "Te Papa Museum, Wellington, New Zealand"
+          locations: ["Cuba Street, Wellington, New Zealand", "Te Papa Museum, Wellington, New Zealand"]
         })
         .set("Accept", "application/json");
 

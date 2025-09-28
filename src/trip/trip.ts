@@ -60,3 +60,42 @@ export async function calculateTrip(
         co2_kg: emissions_used,
     };
 }
+
+export async function calculateMultiStopTrip(
+  locations: string[],
+  vehicle_data: VehicleData,
+  deps: TripDependencies
+): Promise<TripResult> {
+  if (locations.length < 2) {
+    throw new Error("At least two locations (start and end) are required");
+  }
+
+  let totalDistance = 0;
+  let totalMinutes = 0;
+  let totalFuel = 0;
+  let totalEmissions = 0;
+
+  for (let i = 0; i < locations.length - 1; i++) {
+    const legTrip = await calculateTrip(
+      locations[i],
+      locations[i + 1],
+      vehicle_data,
+      deps
+    );
+
+    totalDistance += legTrip.distance_km;
+    totalMinutes += legTrip.hours * 60 + legTrip.minutes;
+    totalFuel += legTrip.fuel_used_l;
+    totalEmissions += legTrip.co2_kg;
+  }
+
+  const dur = deps.convertMinutes(totalMinutes);
+
+  return {
+    distance_km: totalDistance,
+    hours: dur.hours,
+    minutes: dur.minutes,
+    fuel_used_l: totalFuel,
+    co2_kg: totalEmissions,
+  };
+}
