@@ -2,12 +2,15 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  rootDir: '.',
+  roots: [
+    "<rootDir>/tests/unit",
+    "<rootDir>/tests/integration",
+  ],
   testMatch: [
-    '**/tests/unit/**/*.test.ts',
-    '**/tests/unit/**/*.unit.test.ts',
-    '**/tests/integration/**/*.test.ts',
-    '**/tests/integration/**/*.integration.test.ts',
-    '**/tests/e2e/**/*.test.ts'
+    "**/*.test.ts",
+    "**/*.unit.test.ts",
+    "**/*.integration.test.ts"
   ],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   globals: {
