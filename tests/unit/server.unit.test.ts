@@ -72,8 +72,7 @@ describe("Server routes (with mocks)", () => {
         make: "Toyota",
         model: "Corolla",
         model_year: "2020",
-        start: "A",
-        end: "B",
+        locations: ["A", "B"]
       });
 
       expect(res.status).toBe(400);
@@ -83,7 +82,7 @@ describe("Server routes (with mocks)", () => {
     it("should return 200 with mocked trip result", async () => {
       (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([mockVehicle]);
       (vehicleData.selectVehicle as jest.Mock).mockReturnValue(mockVehicle);
-      (tripModule.calculateTrip as jest.Mock).mockResolvedValue(mockTripResult);
+      (tripModule.calculateMultiStopTrip as jest.Mock).mockResolvedValue(mockTripResult);
       (tripModule.tripResultToJson as jest.Mock).mockImplementation((trip) => trip);
 
       const res = await request(app).post("/api/trip").send({
@@ -91,8 +90,7 @@ describe("Server routes (with mocks)", () => {
         make: "Toyota",
         model: "Corolla",
         model_year: "2020",
-        start: "A",
-        end: "B",
+        locations: ["A", "B"]
       });
 
       expect(res.status).toBe(200);
@@ -100,22 +98,21 @@ describe("Server routes (with mocks)", () => {
 
       expect(vehicleData.fetchVehicleRecords).toHaveBeenCalledWith("Toyota", "Corolla", "2020");
       expect(vehicleData.selectVehicle).toHaveBeenCalledWith([mockVehicle], 0);
-      expect(tripModule.calculateTrip).toHaveBeenCalled();
+      expect(tripModule.calculateMultiStopTrip).toHaveBeenCalled();
       expect(tripModule.tripResultToJson).toHaveBeenCalledWith(mockTripResult);
     });
 
-    it("should return 500 if calculateTrip throws", async () => {
+    it("should return 500 if calculateMultiStopTrip throws", async () => {
       (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([mockVehicle]);
       (vehicleData.selectVehicle as jest.Mock).mockReturnValue(mockVehicle);
-      (tripModule.calculateTrip as jest.Mock).mockRejectedValue(new Error("Route API error"));
+      (tripModule.calculateMultiStopTrip as jest.Mock).mockRejectedValue(new Error("Route API error"));
 
       const res = await request(app).post("/api/trip").send({
         vehicle_id: 1,
         make: "Toyota",
         model: "Corolla",
         model_year: "2020",
-        start: "A",
-        end: "B",
+        locations: ["A", "B"]
       });
 
       expect(res.status).toBe(500);
