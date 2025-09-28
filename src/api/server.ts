@@ -13,10 +13,10 @@ app.use(express.json());
 app.use("/api", apiRouter);
 
 if (require.main === module) {
-  const PORT = 18080;
+  const PORT = parseInt(String(process.env.PORT), 10);
 
-  server = app.listen(PORT, "127.0.0.1", () => {
-    console.log(`Server listening on http://localhost:${PORT}`);
+  server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server listening on http://0.0.0.0:${PORT}`);
   });
 
   server.on("error", (err: any) => {
