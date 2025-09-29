@@ -72,17 +72,40 @@ describe("Server routes (with mocks)", () => {
         make: "Toyota",
         model: "Corolla",
         model_year: "2020",
-        locations: ["A", "B"]
+        locations: ["A", "B"],
+        overview: 'false'
       });
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty("error", "Vehicle not found");
     });
 
-    it("should return 200 with mocked trip result", async () => {
+    it("should return 600 if overview not in Enum", async () => {
+      (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([]);
+      (vehicleData.selectVehicle as jest.Mock).mockReturnValue(null);
+
+      const res = await request(app).post("/api/trip").send({
+        vehicle_id: 1,
+        make: "Toyota",
+        model: "Corolla",
+        model_year: "2020",
+        locations: ["A", "B"],
+        overview: 'not an entry'
+      });
+
+      expect(res.status).toBe(600);
+      expect(res.body).toHaveProperty("error", "Invalid overview value. Must be equal to 'full' or 'false'.");
+    });
+
+    it("should return 200 with mocked trip result and false route", async () => {
+      const mockTripWithoutGeometry = {
+        ...mockTripResult,
+        geometry: undefined, 
+      };
+
       (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([mockVehicle]);
       (vehicleData.selectVehicle as jest.Mock).mockReturnValue(mockVehicle);
-      (tripModule.calculateMultiStopTrip as jest.Mock).mockResolvedValue(mockTripResult);
+      (tripModule.calculateMultiStopTrip as jest.Mock).mockResolvedValue(mockTripWithoutGeometry);
       (tripModule.tripResultToJson as jest.Mock).mockImplementation((trip) => trip);
 
       const res = await request(app).post("/api/trip").send({
@@ -90,16 +113,49 @@ describe("Server routes (with mocks)", () => {
         make: "Toyota",
         model: "Corolla",
         model_year: "2020",
-        locations: ["A", "B"]
+        locations: ["A", "B"],
+        overview: 'false'
       });
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual(mockTripResult);
+      expect(res.body).toEqual(mockTripWithoutGeometry);
 
       expect(vehicleData.fetchVehicleRecords).toHaveBeenCalledWith("Toyota", "Corolla", "2020");
       expect(vehicleData.selectVehicle).toHaveBeenCalledWith([mockVehicle], 0);
       expect(tripModule.calculateMultiStopTrip).toHaveBeenCalled();
-      expect(tripModule.tripResultToJson).toHaveBeenCalledWith(mockTripResult);
+      expect(tripModule.tripResultToJson).toHaveBeenCalledWith(mockTripWithoutGeometry);
+    });
+
+    it("should return 200 with mocked trip result and full route", async () => {
+    const mockTripWithGeometry = {
+        ...mockTripResult,
+        geometry: [
+          [172.655, -43.531],
+          [168.738, -45.021],
+        ],
+      };
+
+      (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([mockVehicle]);
+      (vehicleData.selectVehicle as jest.Mock).mockReturnValue(mockVehicle);
+      (tripModule.calculateMultiStopTrip as jest.Mock).mockResolvedValue(mockTripWithGeometry);
+      (tripModule.tripResultToJson as jest.Mock).mockImplementation((trip) => trip);
+
+      const res = await request(app).post("/api/trip").send({
+        vehicle_id: 1,
+        make: "Toyota",
+        model: "Corolla",
+        model_year: "2020",
+        locations: ["A", "B"],
+        overview: 'full'
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockTripWithGeometry);
+
+      expect(vehicleData.fetchVehicleRecords).toHaveBeenCalledWith("Toyota", "Corolla", "2020");
+      expect(vehicleData.selectVehicle).toHaveBeenCalledWith([mockVehicle], 0);
+      expect(tripModule.calculateMultiStopTrip).toHaveBeenCalled();
+      expect(tripModule.tripResultToJson).toHaveBeenCalledWith(mockTripWithGeometry);
     });
 
     it("should return 500 if calculateMultiStopTrip throws", async () => {
@@ -112,7 +168,8 @@ describe("Server routes (with mocks)", () => {
         make: "Toyota",
         model: "Corolla",
         model_year: "2020",
-        locations: ["A", "B"]
+        locations: ["A", "B"],
+        overview: "false"
       });
 
       expect(res.status).toBe(500);

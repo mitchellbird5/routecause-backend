@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
 import { fetchVehicleRecords, selectVehicle } from "../vehicle/vehicle_data";
 import { calculateMultiStopTrip, tripResultToJson } from "../trip/trip";
-import { getOsrmRoute, geocodeAddress, queryOsrm } from "../distance/distance";
-import { convertMinutes } from "../distance/distance";
+import { getOsrmRoute, geocodeAddress, queryOsrm, convertMinutes } from "../distance/distance";
+import { OsrmOverview } from "../distance/distance.types";
 
 export const router = Router();
 
@@ -38,8 +38,10 @@ router.post("/trip", async (req: Request, res: Response) => {
         return;
     }
 
-    const locations: string[] = body.locations || [];
-    const vehicle_id = parseInt(body.vehicle_id);
+    if (!Object.values(OsrmOverview).includes(body.overview)) {
+        return res.status(600).json({ error: "Invalid overview value. Must be equal to 'full' or 'false'." });
+    }
+    const overview = body.overview as OsrmOverview;
 
     try {
         const vehicles = await fetchVehicleRecords(
@@ -47,7 +49,7 @@ router.post("/trip", async (req: Request, res: Response) => {
             body.model,
             body.model_year
         );
-        const vehicle = selectVehicle(vehicles, vehicle_id - 1);
+        const vehicle = selectVehicle(vehicles, parseInt(body.vehicle_id) - 1);
 
         if (!vehicle || !vehicle.make) {
             res.status(400).json({ error: "Vehicle not found" });
@@ -55,14 +57,15 @@ router.post("/trip", async (req: Request, res: Response) => {
         }
 
         const trip = await calculateMultiStopTrip(
-            locations, 
+            body.locations, 
             vehicle, 
             {
                 getOsrmRoute,
                 convertMinutes,
                 geocodeAddress,
                 queryOsrm,
-            }
+            },
+            overview
         );
 
         res.status(200).json(tripResultToJson(trip));

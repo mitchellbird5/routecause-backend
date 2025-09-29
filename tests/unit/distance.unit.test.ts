@@ -1,6 +1,7 @@
 import axios from "axios";
 import { convertMinutes, haversineKm } from "../../src/distance/distance";
 import { getOsrmRoute, geocodeAddress, queryOsrm } from "../../src/distance/distance";
+import { OsrmOverview, geocodeAddressFn, queryOsrmFn } from "../../src/distance/distance.types";
 
 jest.mock("axios"); // Mock the entire axios module
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -91,7 +92,33 @@ describe("geocodeAddress", () => {
 });
 
 describe("queryOsrm", () => {
-  it("returns mocked OSRM route", async () => {
+  it("returns mocked OSRM route with route", async () => {
+    // Arrange: mock axios.get to return a fake OSRM response
+    mockedAxios.get.mockResolvedValue({
+      data: {
+        routes: [{ distance: 0, duration: 0, geometry: "test" }], // distance in meters, duration in seconds
+      },
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    const start = { latitude: -43.531, longitude: 172.655 };
+    const end = { latitude: -45.021, longitude: 168.738 };
+
+    // Act
+    const result = await queryOsrm(start, end, OsrmOverview.FULL);
+
+    // Assert
+    expect(result.distance_km).toBe(0);
+    expect(result.duration_min).toBe(0);
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+    expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full`));
+    expect(result.route).toEqual([[-3.54411, 0]]);
+  });
+
+  it("returns mocked OSRM route without route", async () => {
     // Arrange: mock axios.get to return a fake OSRM response
     mockedAxios.get.mockResolvedValue({
       data: {
@@ -103,25 +130,66 @@ describe("queryOsrm", () => {
       config: {},
     });
 
-    const start = { latitude: 0, longitude: 0 };
-    const end = { latitude: 0, longitude: 0 };
+    const start = { latitude: -43.531, longitude: 172.655 };
+    const end = { latitude: -45.021, longitude: 168.738 };
 
     // Act
-    const result = await queryOsrm(start, end);
+    const result = await queryOsrm(start, end, OsrmOverview.FALSE);
 
     // Assert
-    expect(result).toEqual({ distance_km: 0, duration_min: 0 });
+    expect(result.distance_km).toBe(0);
+    expect(result.duration_min).toBe(0);
     expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-    expect(mockedAxios.get).toHaveBeenCalledWith(
-      expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false`)
-    );
+    expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false`));
   });
 });
 
 describe("getOsrmRoute with dependency injection", () => {
-  it("uses mocked functions", async () => {
+  it("uses mocked functions with route", async () => {
     // Mocked geocodeAddress
-    const mockGeocodeAddress = async (address: string) => {
+    const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
+      switch (address) {
+        case "New Brighton Pier, Christchurch, Canterbury":
+          return { latitude: -43.531, longitude: 172.655 };
+        case "Queenstown Airport, Queenstown, Otago":
+          return { latitude: -45.021, longitude: 168.738 };
+        default:
+          return { latitude: -43.5321, longitude: 172.6362 };
+      }
+    };
+
+    // Mocked queryOsrm that includes route
+    const mockQueryOsrm: queryOsrmFn = async () => ({
+      distance_km: 486.4,
+      duration_min: 364,
+      route: [
+        [172.655, -43.531],
+        [168.738, -45.021],
+      ],
+    });
+
+    const result = await getOsrmRoute(
+      "New Brighton Pier, Christchurch, Canterbury",
+      "Queenstown Airport, Queenstown, Otago",
+      {
+        geocodeAddress: mockGeocodeAddress,
+        queryOsrm: mockQueryOsrm,
+      },
+      OsrmOverview.FULL
+    );
+
+    expect(result.distance_km).toBe(486.4);
+    expect(result.duration_min).toBe(364);
+    expect(result.route).toEqual([
+      [172.655, -43.531],
+      [168.738, -45.021],
+    ]);
+  });
+
+
+  it("uses mocked functions without route", async () => {
+    // Mocked geocodeAddress
+    const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
       switch (address) {
         case "New Brighton Pier, Christchurch, Canterbury":
           return { latitude: -43.531, longitude: 172.655 };
@@ -133,7 +201,7 @@ describe("getOsrmRoute with dependency injection", () => {
     };
 
     // Mocked queryOsrm
-    const mockQueryOsrm = async () => ({
+    const mockQueryOsrm: queryOsrmFn = async () => ({
       distance_km: 486.4,
       duration_min: 364,
     });
@@ -144,7 +212,8 @@ describe("getOsrmRoute with dependency injection", () => {
       {
         geocodeAddress: mockGeocodeAddress,
         queryOsrm: mockQueryOsrm,
-      }
+      },
+      OsrmOverview.FALSE
     );
 
     expect(result.distance_km).toBe(486.4);
@@ -165,13 +234,16 @@ describe("Distance Tests", () => {
       { totalMinutes: 45, expectedHours: 0, expectedMinutes: 45 },
       { totalMinutes: 0, expectedHours: 0, expectedMinutes: 0 },
       { totalMinutes: 150, expectedHours: 2, expectedMinutes: 30 },
+      { totalMinutes: 160.1, expectedHours: 2, expectedMinutes: 40.1 },
+      { totalMinutes: 160.5, expectedHours: 2, expectedMinutes: 40.5 },
+      { totalMinutes: 160.9, expectedHours: 2, expectedMinutes: 40.9 },
     ];
 
     cases.forEach(tc => {
       it(`converts ${tc.totalMinutes} minutes to ${tc.expectedHours}h ${tc.expectedMinutes}m`, () => {
         const result = convertMinutes(tc.totalMinutes);
-        expect(result.hours).toBe(tc.expectedHours);
-        expect(result.minutes).toBe(tc.expectedMinutes);
+        expect(result.hours).toBeCloseTo(tc.expectedHours, 1);
+        expect(result.minutes).toBeCloseTo(tc.expectedMinutes, 1);
       });
     });
   });

@@ -1,8 +1,9 @@
 import { calculateTrip, calculateMultiStopTrip } from "../../src/trip/trip";
-import { VehicleData } from "../../src/vehicle/vehicle_types";
+import { VehicleData } from "../../src/vehicle/vehicle.types";
+import { OsrmOverview } from "../../src/distance/distance.types";
 
 describe("calculateTrip", () => {
-  it("calculates distance, time, fuel, and emissions correctly with mocked dependencies", async () => {
+  it("calculates distance, time, fuel, and emissions correctly with mocked dependencies and false route", async () => {
     // -------------------------
     // Mock dependencies
     // -------------------------
@@ -49,16 +50,22 @@ describe("calculateTrip", () => {
         convertMinutes: mockConvertMinutes,
         geocodeAddress: mockGeocodeAddress,
         queryOsrm: mockQueryOsrm,
-      }
+      },
+      OsrmOverview.FALSE
     );
 
     // -------------------------
     // Assertions
     // -------------------------
-    expect(mockGetOsrmRoute).toHaveBeenCalledWith("Start Address", "End Address", {
-      geocodeAddress: mockGeocodeAddress,
-      queryOsrm: mockQueryOsrm,
-    });
+    expect(mockGetOsrmRoute).toHaveBeenCalledWith(
+      "Start Address", 
+      "End Address", 
+      {
+        geocodeAddress: mockGeocodeAddress,
+        queryOsrm: mockQueryOsrm,
+      },
+      OsrmOverview.FALSE
+    );
 
     expect(mockConvertMinutes).toHaveBeenCalledWith(130);
 
@@ -76,7 +83,7 @@ describe("calculateTrip", () => {
     expect(result.co2_kg).toBeCloseTo(30.0);
   });
 
-  it("calculates totals correctly for multiple stops (3 legs, 4 locations)", async () => {
+  it("calculates totals correctly for multiple stops (3 legs, 4 locations) without route", async () => {
     const mockGetOsrmRoute = jest
       .fn()
       .mockResolvedValueOnce({ distance_km: 100, duration_min: 60 }) // Start → Stop1
@@ -114,7 +121,8 @@ describe("calculateTrip", () => {
         convertMinutes: mockConvertMinutes,
         geocodeAddress: mockGeocodeAddress,
         queryOsrm: mockQueryOsrm,
-      }
+      },
+      OsrmOverview.FALSE
     );
 
     // Total distances: 100 + 150 + 75 = 325 km

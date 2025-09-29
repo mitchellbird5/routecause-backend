@@ -7,7 +7,7 @@ import {
   fetchVehicleRecords,
   emptyVehicleEntry
 } from "../../src/vehicle/vehicle_data";
-import { VehicleData } from "../../src/vehicle/vehicle_types";
+import { VehicleData } from "../../src/vehicle/vehicle.types";
 
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
