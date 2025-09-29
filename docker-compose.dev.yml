@@ -4,7 +4,6 @@ services:
     build: .
     volumes:
       - .:/app:cached
-      - node-modules:/app/node_modules
       - osrm-data:/data/osrm
     expose:
       - 5000
@@ -40,7 +39,6 @@ services:
       - mytravelapp-network
 
 volumes:
-  node-modules:
   osrm-data:
     external: true
     name: mytravelapp_osrm-data

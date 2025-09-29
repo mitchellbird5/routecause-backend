@@ -1,13 +1,26 @@
 // src/distance/distance.ts
-import { TimeHM, Coordinates, OsrmResult } from "./distance_types";
+import { 
+  TimeHM, 
+  Coordinates, 
+  OsrmResult, 
+  OsrmRoute, 
+  queryOsrmFn, 
+  geocodeAddressFn, 
+  getOsrmRouteFn, 
+  OsrmOverview,
+  convertMinutesFn 
+} from "./distance.types";
 import axios from "axios";
+import polyline from "@mapbox/polyline";
 
 
 /**
  * Geocode an address using OpenStreetMap Nominatim API
  * openstreetmap.org/copyright
  */
-export async function geocodeAddress(address: string): Promise<Coordinates> {
+export const geocodeAddress: geocodeAddressFn = async (
+  address: string
+): Promise<Coordinates> => {
   // Use NOMINATIM_URL from environment, default to public API if not set
   const baseUrl = process.env.NOMINATIM_URL || "https://nominatim.openstreetmap.org";
   const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}`;
@@ -44,52 +57,81 @@ export async function geocodeAddress(address: string): Promise<Coordinates> {
  * Query OSRM server for distance and duration
  * https://project-osrm.org/
  */
-export async function queryOsrm(
+export const queryOsrm: queryOsrmFn = async (
   start: Coordinates,
-  end: Coordinates
-): Promise<OsrmResult> {
+  end: Coordinates,
+  overview: OsrmOverview
+): Promise<OsrmResult> => {
   const startStr = `${start.longitude},${start.latitude}`;
   const endStr = `${end.longitude},${end.latitude}`;
-  const url = `${process.env.OSRM_URL}/route/v1/driving/${startStr};${endStr}?overview=false`;
+  const url = `${process.env.OSRM_URL}/route/v1/driving/${startStr};${endStr}?overview=${overview}&geometries=polyline`;
 
-  const response = await axios.get(url);
+  try {
+    const response = await axios.get(url);
 
-  if (response.status !== 200) {
-    throw new Error(`OSRM request failed: ${response.status} ${response.statusText}`);
+    if (response.status !== 200) {
+      throw new Error(
+        `OSRM request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const route = response.data.routes[0];
+
+    let geometryCoords: OsrmRoute = [];
+
+    if (route.geometry) {
+      geometryCoords = polyline.decode(route.geometry) as OsrmRoute;
+    }
+
+    const result: OsrmResult = {
+      distance_km: route.distance / 1000,
+      duration_min: route.duration / 60,
+    };
+
+    if (geometryCoords.length > 0) {
+      result.route = geometryCoords;
+    }
+
+    return result;
+  } catch (err: any) {
+    console.error("Error in queryOsrm:", err);
+    throw new Error(`OSRM request failed: ${err.message}`);
   }
-
-  const route = response.data.routes[0];
-  return { distance_km: route.distance / 1000, duration_min: route.duration / 60 };
-}
+};
 
 
 /**
  * Get OSRM route by addresses
  * https://project-osrm.org/
  */
-export async function getOsrmRoute(
+export const getOsrmRoute: getOsrmRouteFn = async (
   startAddress: string, 
   endAddress: string,
   deps: {
-    geocodeAddress: (address: string) => Promise<{ latitude: number; longitude: number }>,
-    queryOsrm: (start: { latitude: number; longitude: number }, end: { latitude: number; longitude: number }) => Promise<OsrmResult>
-  }
-): Promise<OsrmResult> {
+    geocodeAddress: geocodeAddressFn,
+    queryOsrm: queryOsrmFn
+  },
+  overview: OsrmOverview
+): Promise<OsrmResult> => {
   const startCoords = await deps.geocodeAddress(startAddress);
   const endCoords = await deps.geocodeAddress(endAddress);
 
   try {
-    return await deps.queryOsrm(startCoords, endCoords);
+    return await deps.queryOsrm(startCoords, endCoords, overview);
   } catch (err: any) {
-    throw new Error(`Error querying OSRM: Start=(${startCoords.latitude},${startCoords.longitude}), End=(${endCoords.latitude},${endCoords.longitude}) ${err.message}`);
+    throw new Error(
+      `Error querying OSRM: Start=(${startCoords.latitude},${startCoords.longitude}), End=(${endCoords.latitude},${endCoords.longitude}) ${err.message}`
+    );
   }
-}
+};
 
 
 /**
  * Converts total minutes into hours and minutes.
  */
-export function convertMinutes(totalMinutes: number): TimeHM {
+export const convertMinutes: convertMinutesFn = (
+  totalMinutes: number
+): TimeHM => {
   if (totalMinutes < 0) throw new Error("totalMinutes cannot be negative");
   return { hours: Math.floor(totalMinutes / 60), minutes: totalMinutes % 60 };
 }

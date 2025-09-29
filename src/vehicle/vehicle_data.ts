@@ -1,5 +1,5 @@
 import axios from "axios";
-import { VehicleData } from "./vehicle_types";
+import { VehicleData } from "./vehicle.types";
 
 export const NAN_F = NaN;
 
