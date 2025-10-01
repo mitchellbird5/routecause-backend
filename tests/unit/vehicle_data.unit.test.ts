@@ -1,12 +1,14 @@
 import axios from "axios";
 import {
-  toFloatOrNaN,
   makeVehicleFromRecord,
-  datasetIdForYear,
   selectVehicle,
   fetchVehicleRecords,
   emptyVehicleEntry
 } from "../../src/vehicle/vehicle_data";
+import {
+  toFloatOrNaN,
+  datasetIdForYear
+} from "../../src/vehicle/api_refactor";
 import { VehicleData } from "../../src/vehicle/vehicle.types";
 
 jest.mock("axios");
@@ -22,7 +24,7 @@ const mockRecords = () => [
     "Engine size (L)": "1.8",
     "Cylinders": "4",
     "Transmission": "Automatic",
-    "Fuel type": "Gasoline",
+    "Fuel type": "Petrol",
     "City (L/100 km)": "7.9",
     "Highway (L/100 km)": "6.1",
     "Combined (L/100 km)": "32.0",
@@ -36,7 +38,7 @@ const mockRecords = () => [
     "Engine size (L)": "2.0",
     "Cylinders": "4",
     "Transmission": "Manual",
-    "Fuel type": "Gasoline",
+    "Fuel type": "Petrol",
     "City (L/100 km)": "8.5",
     "Highway (L/100 km)": "6.8",
     "Combined (L/100 km)": "30.0",
@@ -102,7 +104,7 @@ describe("makeVehicleFromRecord", () => {
     expect(v.engine_size).toBe(1.8);
     expect(v.cylinders).toBe(4);
     expect(v.transmission).toBe("Automatic");
-    expect(v.fuel_type).toBe("Gasoline");
+    expect(v.fuel_type).toBe("Petrol");
     expect(v.fuel_consumption_city).toBe(7.9);
     expect(v.fuel_consumption_hwy).toBe(6.1);
     expect(v.fuel_consumption_comb).toBe(32.0);
@@ -112,16 +114,16 @@ describe("makeVehicleFromRecord", () => {
 
 describe("datasetIdForYear", () => {
   it("returns correct dataset for 2000", () => {
-    expect(datasetIdForYear(2000)).toBe("42495676-28b7-40f3-b0e0-3d7fe005ca56");
+    expect(datasetIdForYear("2000")).toBe("42495676-28b7-40f3-b0e0-3d7fe005ca56");
   });
 
   it("returns correct dataset for 2020", () => {
-    expect(datasetIdForYear(2020)).toBe("e10efaa3-a8cc-4072-845a-13e03d996c30");
+    expect(datasetIdForYear("2020")).toBe("e10efaa3-a8cc-4072-845a-13e03d996c30");
   });
 
   it("returns undefined for out-of-range year", () => {
-    expect(datasetIdForYear(1800)).toBeUndefined();
-    expect(datasetIdForYear(3000)).toBeUndefined();
+    expect(datasetIdForYear("1800")).toBeUndefined();
+    expect(datasetIdForYear("3000")).toBeUndefined();
   });
 });
 
