@@ -30,7 +30,7 @@ export const VEHICLE_FIELD_MAP: VehicleFieldMap = {
   co2_emissions: { source: "CO2 emissions (g/km)", parser: toFloatOrNaN, default: NaN },
 };
 
-type VehicleRecord = Record<string, any>;
+export type VehicleRecord = Record<string, any>;
 
 const TRANSMISSION_MAP: Record<string, string> = {
   A: "Automatic",
@@ -50,14 +50,34 @@ const FUEL_TYPE_MAP: Record<string, string> = {
 
 /**
  * Cleans and normalizes raw API data for vehicle records.
- * This allows for column renaming and value mapping.
+ * Handles transmission codes (with optional trailing gear numbers)
+ * and fuel type codes.
  */
 export function normalizeVehicleRecord(rec: VehicleRecord): VehicleRecord {
   const normalized: VehicleRecord = { ...rec };
 
   if ("Transmission" in rec && typeof rec["Transmission"] === "string") {
-    const code = rec["Transmission"].trim();
-    normalized["Transmission"] = TRANSMISSION_MAP[code] ?? rec["Transmission"];
+    const raw = rec["Transmission"].trim();
+
+    // Separate prefix and possible trailing number
+    const match = raw.match(/^([A-Z]+)(\d+)?$/i);
+
+    if (match) {
+      const [, code, num] = match;
+      const mapped = TRANSMISSION_MAP[code];
+      if (mapped) {
+        normalized["Transmission"] =
+          num && !isNaN(Number(num))
+            ? `${mapped}, ${num} speed`
+            : mapped;
+      } else {
+        // Unknown code → leave unchanged
+        normalized["Transmission"] = raw;
+      }
+    } else {
+      // Fallback: keep original
+      normalized["Transmission"] = raw;
+    }
   }
 
   if ("Fuel type" in rec && typeof rec["Fuel type"] === "string") {

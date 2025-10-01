@@ -7,7 +7,9 @@ import {
 } from "../../src/vehicle/vehicle_data";
 import {
   toFloatOrNaN,
-  datasetIdForYear
+  datasetIdForYear,
+  VehicleRecord,
+  normalizeVehicleRecord
 } from "../../src/vehicle/api_refactor";
 import { VehicleData } from "../../src/vehicle/vehicle.types";
 
@@ -112,20 +114,6 @@ describe("makeVehicleFromRecord", () => {
   });
 });
 
-describe("datasetIdForYear", () => {
-  it("returns correct dataset for 2000", () => {
-    expect(datasetIdForYear("2000")).toBe("42495676-28b7-40f3-b0e0-3d7fe005ca56");
-  });
-
-  it("returns correct dataset for 2020", () => {
-    expect(datasetIdForYear("2020")).toBe("e10efaa3-a8cc-4072-845a-13e03d996c30");
-  });
-
-  it("returns undefined for out-of-range year", () => {
-    expect(datasetIdForYear("1800")).toBeUndefined();
-    expect(datasetIdForYear("3000")).toBeUndefined();
-  });
-});
 
 describe("selectVehicle", () => {
   it("returns correct entry when index is valid", () => {
@@ -235,4 +223,74 @@ describe("makeVehicleFromRecord", () => {
     expect(vehicle.model_year).toBe("2020");
     expect(vehicle.cylinders).toBe(4);
   });
+});
+
+describe("Vehicle API specific tests", () => {
+
+  describe("datasetIdForYear", () => {
+    it("returns correct dataset for 2000", () => {
+      expect(datasetIdForYear("2000")).toBe("42495676-28b7-40f3-b0e0-3d7fe005ca56");
+    });
+
+    it("returns correct dataset for 2020", () => {
+      expect(datasetIdForYear("2020")).toBe("e10efaa3-a8cc-4072-845a-13e03d996c30");
+    });
+
+    it("returns undefined for out-of-range year", () => {
+      expect(datasetIdForYear("1800")).toBeUndefined();
+      expect(datasetIdForYear("3000")).toBeUndefined();
+    });
+  });
+
+
+  describe("normalizeVehicleRecord", () => {
+    it("should map transmission codes with gear numbers", () => {
+      const rec: VehicleRecord = { Transmission: "A4", "Fuel type": "X" };
+      const result = normalizeVehicleRecord(rec);
+      expect(result.Transmission).toBe("Automatic, 4 speed");
+      expect(result["Fuel type"]).toBe("Petrol");
+    });
+
+    it("should map automated manual with gears", () => {
+      const rec: VehicleRecord = { Transmission: "AM6", "Fuel type": "D" };
+      const result = normalizeVehicleRecord(rec);
+      expect(result.Transmission).toBe("Automated manual, 6 speed");
+      expect(result["Fuel type"]).toBe("Diesel");
+    });
+
+    it("should map manual with gears", () => {
+      const rec: VehicleRecord = { Transmission: "M5", "Fuel type": "N" };
+      const result = normalizeVehicleRecord(rec);
+      expect(result.Transmission).toBe("Manual, 5 speed");
+      expect(result["Fuel type"]).toBe("Natural Gas");
+    });
+
+    it("should map transmission code without gears", () => {
+      const rec: VehicleRecord = { Transmission: "AS", "Fuel type": "Z" };
+      const result = normalizeVehicleRecord(rec);
+      expect(result.Transmission).toBe("Automatic with select shift");
+      expect(result["Fuel type"]).toBe("Petrol");
+    });
+
+    it("should map continuously variable without gears", () => {
+      const rec: VehicleRecord = { Transmission: "AV", "Fuel type": "E" };
+      const result = normalizeVehicleRecord(rec);
+      expect(result.Transmission).toBe("Continuously variable");
+      expect(result["Fuel type"]).toBe("E85");
+    });
+
+    it("should return unknown codes unchanged", () => {
+      const rec: VehicleRecord = { Transmission: "Unknown7", "Fuel type": "Q" };
+      const result = normalizeVehicleRecord(rec);
+      expect(result.Transmission).toBe("Unknown7");
+      expect(result["Fuel type"]).toBe("Q");
+    });
+
+    it("should handle missing transmission or fuel type", () => {
+      const rec: VehicleRecord = {};
+      const result = normalizeVehicleRecord(rec);
+      expect(result).toEqual({});
+    });
+  });
+
 });
