@@ -2,7 +2,7 @@ import request from "supertest";
 import { app } from "../../src/api/server";
 
 describe("Integration: /api/trip", () => {
-  it("calculates a trip using real OSRM + Nominatim with route", async () => {
+  it("calculates a trip using real OSRM + Nominatim with route returned", async () => {
       const res = await request(app)
         .post("/api/trip")
         .send({
@@ -25,7 +25,7 @@ describe("Integration: /api/trip", () => {
     20000
   );
 
-  it("calculates a trip using real OSRM + Nominatim without route", async () => {
+  it("calculates a trip using real OSRM + Nominatim without route returned", async () => {
       const res = await request(app)
         .post("/api/trip")
         .send({
