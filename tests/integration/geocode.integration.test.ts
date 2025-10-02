@@ -10,7 +10,7 @@ describe("Integration: /api/geocode (real API)", () => {
   it("returns coordinates for a valid address", async () => {
     const res = await request(app)
       .get("/api/geocode")
-      .query({ address: "Christchurch, New Zealand" });
+      .query({ address: "Cuba Street, Wellington, New Zealand" });
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("latitude");
