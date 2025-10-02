@@ -1,7 +1,23 @@
-import { Router, Request, Response } from "express";
-import { fetchVehicleRecords, selectVehicle } from "../vehicle/vehicle_data";
-import { calculateMultiStopTrip, tripResultToJson } from "../trip/trip";
-import { getOsrmRoute, geocodeAddress, queryOsrm, convertMinutes } from "../distance/distance";
+import {
+    Router, 
+    Request, 
+    Response 
+} from "express";
+import { 
+    fetchVehicleRecords, 
+    selectVehicle 
+} from "../vehicle/vehicle_data";
+import { 
+    calculateMultiStopTrip, 
+    tripResultToJson 
+} from "../trip/trip";
+import { 
+    getOsrmRoute, 
+    geocodeAddress, 
+    queryOsrm, 
+    convertMinutes,
+    reverseGeocodeCoordinates 
+} from "../distance/distance";
 import { OsrmOverview } from "../distance/distance.types";
 
 export const router = Router();
@@ -73,3 +89,23 @@ router.post("/trip", async (req: Request, res: Response) => {
         res.status(500).json({ error: (err as Error).message });
     }
 });
+
+/**
+ * GET /reverse-geocode?lat=...&lon=...
+ */
+router.get("/reverse-geocode", async (req: Request, res: Response) => {
+  const lat = parseFloat(req.query.lat as string);
+  const lon = parseFloat(req.query.lon as string);
+
+  if (isNaN(lat) || isNaN(lon)) {
+    return res.status(400).json({ error: "Invalid latitude or longitude" });
+  }
+
+  try {
+    const address = await reverseGeocodeCoordinates(lat, lon);
+    res.status(200).json({ address });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
