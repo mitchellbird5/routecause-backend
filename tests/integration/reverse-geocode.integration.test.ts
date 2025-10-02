@@ -34,6 +34,18 @@ describe("Integration: /api/reverse-geocode (real API)", () => {
       .query({ lat: -43.5321 });
     expect(res2.status).toBe(400);
     expect(res2.body).toHaveProperty("error");
+
+    const res3 = await request(app)
+      .get("/api/reverse-geocode")
+      .query({ lat: 45, lon: "abc" });
+    expect(res3.status).toBe(400);
+    expect(res3.body).toHaveProperty("error");
+
+    const res4 = await request(app)
+      .get("/api/reverse-geocode")
+      .query({ lon: -43.5321 });
+    expect(res4.status).toBe(400);
+    expect(res4.body).toHaveProperty("error");
   });
 
   it("returns 500 if coordinates are unlikely to resolve", async () => {
