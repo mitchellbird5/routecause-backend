@@ -109,3 +109,22 @@ router.get("/reverse-geocode", async (req: Request, res: Response) => {
   }
 });
 
+
+/**
+ * GET /geocode?address=...
+ * Returns latitude/longitude for a given address using Nominatim
+ */
+router.get("/geocode", async (req: Request, res: Response) => {
+  const { address } = req.query;
+
+  if (!address || typeof address !== "string") {
+    return res.status(400).json({ error: "Missing or invalid 'address' query param" });
+  }
+
+  try {
+    const coords = await geocodeAddress(address);
+    return res.status(200).json(coords);
+  } catch (err) {
+    return res.status(500).json({ error: (err as Error).message });
+  }
+});
