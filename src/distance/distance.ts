@@ -22,7 +22,7 @@ export const geocodeAddress: geocodeAddressFn = async (
   address: string
 ): Promise<Coordinates> => {
   // Use NOMINATIM_URL from environment, default to public API if not set
-  const baseUrl = process.env.NOMINATIM_URL || "https://nominatim.openstreetmap.org";
+  const baseUrl = process.env.NOMINATIM_URL;
   const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}`;
 
   let response;
@@ -50,6 +50,34 @@ export const geocodeAddress: geocodeAddressFn = async (
     longitude: response.data[0].lon,
   };
 }
+
+/**
+ * Reverse geocode coordinates using OpenStreetMap Nominatim API
+ * openstreetmap.org/copyright
+ */
+export const reverseGeocodeCoordinates = async (
+  latitude: number,
+  longitude: number
+): Promise<string> => {
+  const baseUrl = process.env.NOMINATIM_URL;
+  const url = `${baseUrl}/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: { "User-Agent": "MyTravelApp/1.0" },
+      timeout: 10000, // 10s timeout
+    });
+
+    if (!response.data || !response.data.display_name) {
+      throw new Error("Address not found for coordinates");
+    }
+
+    return response.data.display_name;
+  } catch (err: any) {
+    console.error("Reverse geocode request failed:", err);
+    throw new Error(`Failed to reverse geocode coordinates: ${err.message}`);
+  }
+};
 
 
 

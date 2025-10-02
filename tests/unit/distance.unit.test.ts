@@ -1,7 +1,17 @@
 import axios from "axios";
-import { convertMinutes, haversineKm } from "../../src/distance/distance";
-import { getOsrmRoute, geocodeAddress, queryOsrm } from "../../src/distance/distance";
-import { OsrmOverview, geocodeAddressFn, queryOsrmFn } from "../../src/distance/distance.types";
+import { 
+  convertMinutes,
+  haversineKm,
+  getOsrmRoute,
+  geocodeAddress,
+  queryOsrm,
+  reverseGeocodeCoordinates
+} from "../../src/distance/distance";
+import { 
+  OsrmOverview, 
+  geocodeAddressFn, 
+  queryOsrmFn 
+} from "../../src/distance/distance.types";
 
 jest.mock("axios"); // Mock the entire axios module
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -88,6 +98,45 @@ describe("geocodeAddress", () => {
     );
   });
 
+describe("reverseGeocodeCoordinates", () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("returns an address when Nominatim responds with display_name", async () => {
+    const mockAddress = "123 Example Street, Test City, Country";
+    mockedAxios.get.mockResolvedValueOnce({
+      data: { display_name: mockAddress },
+    });
+
+    const result = await reverseGeocodeCoordinates(-43.5321, 172.6362);
+
+    expect(result).toBe(mockAddress);
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      expect.stringContaining("/reverse"),
+      expect.objectContaining({
+        headers: expect.objectContaining({ "User-Agent": "MyTravelApp/1.0" }),
+        timeout: 10000,
+      })
+    );
+  });
+
+  it("throws an error if Nominatim response does not include display_name", async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: {} });
+
+    await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
+      "Address not found for coordinates"
+    );
+  });
+
+  it("throws an error if axios request fails", async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
+
+    await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
+      "Failed to reverse geocode coordinates: Network error"
+    );
+  });
+});
 
 });
 

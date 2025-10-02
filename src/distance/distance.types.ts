@@ -37,3 +37,5 @@ export type getOsrmRouteFn = (
 ) => Promise<OsrmResult>;
 
 export type convertMinutesFn = (minutes: number) => TimeHM;
+
+export type reverseGeocodeFn = (latitude: number, longitude: number) => Promise<string>;
