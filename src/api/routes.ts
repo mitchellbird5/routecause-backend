@@ -68,9 +68,9 @@ router.get("/geocode", async (req: Request, res: Response) => {
 });
 
 // -------------------------------
-// GET /filter
+// GET /emissions
 // -------------------------------
-router.get("/filter", async (req: Request, res: Response) => {
+router.get("/emissions", async (req: Request, res: Response) => {
   const column = req.query.column as string;
   const value = req.query.value as string;
 

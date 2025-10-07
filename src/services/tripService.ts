@@ -1,7 +1,7 @@
 import {
   fetchVehicleRecords,
   selectVehicle,
-} from "../vehicle/vehicle_data";
+} from "../vehicle/vehicle";
 import {
   calculateMultiStopTrip,
   tripResultToJson,
@@ -25,12 +25,12 @@ interface TripRequestBody {
 
 export async function getTripService(body: TripRequestBody) {
   if (!body.vehicle_id || !body.make || !body.model || !body.model_year) {
-    throw { status: 400, message: "Missing vehicle_id or vehicle info" };
+    throw { status: 400, message: "Missing Vehicle ID or vehicle info." };
   }
 
   if (!Object.values(OsrmOverview).includes(body.overview)) {
     throw {
-      status: 600,
+      status: 400,
       message:
         "Invalid overview value. Must be equal to 'full' or 'false'.",
     };

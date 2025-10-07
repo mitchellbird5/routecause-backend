@@ -1,4 +1,4 @@
-import { fetchVehicleRecords } from "../vehicle/vehicle_data";
+import { fetchVehicleRecords } from "../vehicle/vehicle";
 
 export async function getVehiclesService(
   make: string,

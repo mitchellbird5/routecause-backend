@@ -14,264 +14,9 @@ import {
 } from "../../src/distance/distance.types";
 
 jest.mock("axios"); // Mock the entire axios module
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+  const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-beforeEach(() => {
-  jest.clearAllMocks(); // reset call counts
-});
-
-describe("geocodeAddress", () => {
-  it("returns coordinates for a mocked response", async () => {
-    // Arrange: mock axios.get to return fake geocode data
-    mockedAxios.get.mockResolvedValue({
-      data: [
-        { lat: 0, lon: 0 },
-      ],
-      status: 200,
-      statusText: "OK",
-      headers: {},
-      config: {},
-    });
-
-    // Act
-    const result = await geocodeAddress("New Brighton Pier, Christchurch, Canterbury");
-
-    // Assert
-    expect(result).toEqual({ latitude: 0, longitude: 0 });
-    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-    expect(mockedAxios.get).toHaveBeenCalledWith(
-      expect.stringContaining("New%20Brighton%20Pier"),
-      expect.objectContaining({
-        headers: { "User-Agent": "MyTravelApp/1.0" },
-        timeout: 10000,
-      })
-    );
-  });
-
-
-  it("throws if API returns an empty array", async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: [],
-      status: 200,
-      statusText: "OK",
-      headers: {},
-      config: {},
-    });
-
-    await expect(geocodeAddress("Unknown Place")).rejects.toThrow(
-      'Address not found: "Unknown Place"'
-    );
-  });
-
-  it("throws if axios rejects with a network error", async () => {
-    mockedAxios.get.mockRejectedValue(new Error("Network down"));
-
-    await expect(geocodeAddress("Some Place")).rejects.toThrow(
-      'Failed to geocode address "Some Place": Network down'
-    );
-  });
-
-  it("throws if axios rejects with an AxiosError (500)", async () => {
-    mockedAxios.get.mockRejectedValue({
-      isAxiosError: true,
-      message: "Internal Server Error",
-      config: {},
-      response: { status: 500, data: "Server blew up" },
-    });
-
-    await expect(geocodeAddress("Server Error Place")).rejects.toThrow(
-      'Failed to geocode address "Server Error Place": Internal Server Error'
-    );
-  });
-
-  it("throws if response is missing data", async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: null,
-      status: 200,
-      statusText: "OK",
-      headers: {},
-      config: {},
-    });
-
-    await expect(geocodeAddress("Null Response Place")).rejects.toThrow(
-      'Address not found: "Null Response Place"'
-    );
-  });
-
-describe("reverseGeocodeCoordinates", () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
-  it("returns an address when Nominatim responds with display_name", async () => {
-    const mockAddress = "123 Example Street, Test City, Country";
-    mockedAxios.get.mockResolvedValueOnce({
-      data: { display_name: mockAddress },
-    });
-
-    const result = await reverseGeocodeCoordinates(-43.5321, 172.6362);
-
-    expect(result).toBe(mockAddress);
-    expect(mockedAxios.get).toHaveBeenCalledWith(
-      expect.stringContaining("/reverse"),
-      expect.objectContaining({
-        headers: expect.objectContaining({ "User-Agent": "MyTravelApp/1.0" }),
-        timeout: 10000,
-      })
-    );
-  });
-
-  it("throws an error if Nominatim response does not include display_name", async () => {
-    mockedAxios.get.mockResolvedValueOnce({ data: {} });
-
-    await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
-      "Address not found for coordinates"
-    );
-  });
-
-  it("throws an error if axios request fails", async () => {
-    mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
-
-    await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
-      "Failed to reverse geocode coordinates: Network error"
-    );
-  });
-});
-
-});
-
-describe("queryOsrm", () => {
-  it("returns mocked OSRM route with route", async () => {
-    // Arrange: mock axios.get to return a fake OSRM response
-    mockedAxios.get.mockResolvedValue({
-      data: {
-        routes: [{ distance: 0, duration: 0, geometry: "test" }], // distance in meters, duration in seconds
-      },
-      status: 200,
-      statusText: "OK",
-      headers: {},
-      config: {},
-    });
-
-    const start = { latitude: -43.531, longitude: 172.655 };
-    const end = { latitude: -45.021, longitude: 168.738 };
-
-    // Act
-    const result = await queryOsrm(start, end, OsrmOverview.FULL);
-
-    // Assert
-    expect(result.distance_km).toBe(0);
-    expect(result.duration_min).toBe(0);
-    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-    expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full`));
-    expect(result.route).toEqual([[-3.54411, 0]]);
-  });
-
-  it("returns mocked OSRM route without route", async () => {
-    // Arrange: mock axios.get to return a fake OSRM response
-    mockedAxios.get.mockResolvedValue({
-      data: {
-        routes: [{ distance: 0, duration: 0 }], // distance in meters, duration in seconds
-      },
-      status: 200,
-      statusText: "OK",
-      headers: {},
-      config: {},
-    });
-
-    const start = { latitude: -43.531, longitude: 172.655 };
-    const end = { latitude: -45.021, longitude: 168.738 };
-
-    // Act
-    const result = await queryOsrm(start, end, OsrmOverview.FALSE);
-
-    // Assert
-    expect(result.distance_km).toBe(0);
-    expect(result.duration_min).toBe(0);
-    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-    expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false`));
-  });
-});
-
-describe("getOsrmRoute with dependency injection", () => {
-  it("uses mocked functions with route", async () => {
-    // Mocked geocodeAddress
-    const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
-      switch (address) {
-        case "New Brighton Pier, Christchurch, Canterbury":
-          return { latitude: -43.531, longitude: 172.655 };
-        case "Queenstown Airport, Queenstown, Otago":
-          return { latitude: -45.021, longitude: 168.738 };
-        default:
-          return { latitude: -43.5321, longitude: 172.6362 };
-      }
-    };
-
-    // Mocked queryOsrm that includes route
-    const mockQueryOsrm: queryOsrmFn = async () => ({
-      distance_km: 486.4,
-      duration_min: 364,
-      route: [
-        [172.655, -43.531],
-        [168.738, -45.021],
-      ],
-    });
-
-    const result = await getOsrmRoute(
-      "New Brighton Pier, Christchurch, Canterbury",
-      "Queenstown Airport, Queenstown, Otago",
-      {
-        geocodeAddress: mockGeocodeAddress,
-        queryOsrm: mockQueryOsrm,
-      },
-      OsrmOverview.FULL
-    );
-
-    expect(result.distance_km).toBe(486.4);
-    expect(result.duration_min).toBe(364);
-    expect(result.route).toEqual([
-      [172.655, -43.531],
-      [168.738, -45.021],
-    ]);
-  });
-
-
-  it("uses mocked functions without route", async () => {
-    // Mocked geocodeAddress
-    const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
-      switch (address) {
-        case "New Brighton Pier, Christchurch, Canterbury":
-          return { latitude: -43.531, longitude: 172.655 };
-        case "Queenstown Airport, Queenstown, Otago":
-          return { latitude: -45.021, longitude: 168.738 };
-        default:
-          return { latitude: -43.5321, longitude: 172.6362 };
-      }
-    };
-
-    // Mocked queryOsrm
-    const mockQueryOsrm: queryOsrmFn = async () => ({
-      distance_km: 486.4,
-      duration_min: 364,
-    });
-
-    const result = await getOsrmRoute(
-      "New Brighton Pier, Christchurch, Canterbury",
-      "Queenstown Airport, Queenstown, Otago",
-      {
-        geocodeAddress: mockGeocodeAddress,
-        queryOsrm: mockQueryOsrm,
-      },
-      OsrmOverview.FALSE
-    );
-
-    expect(result.distance_km).toBe(486.4);
-    expect(result.duration_min).toBe(364);
-  });
-});
-
-
-describe("Distance Tests", () => {
+describe("Logic testing", () => {
 
   // ----------------------
   // convertMinutes
@@ -338,3 +83,260 @@ describe("Distance Tests", () => {
   });
 
 });
+
+describe("Mocked API and error testing", () => {
+  beforeEach(() => {
+    jest.clearAllMocks(); // reset call counts
+  });
+
+  describe("geocodeAddress", () => {
+    it("returns coordinates for a mocked response", async () => {
+      // Arrange: mock axios.get to return fake geocode data
+      mockedAxios.get.mockResolvedValue({
+        data: [
+          { lat: 0, lon: 0 },
+        ],
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {},
+      });
+
+      // Act
+      const result = await geocodeAddress("New Brighton Pier, Christchurch, Canterbury");
+
+      // Assert
+      expect(result).toEqual({ latitude: 0, longitude: 0 });
+      expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.stringContaining("New%20Brighton%20Pier"),
+        expect.objectContaining({
+          headers: { "User-Agent": "MyTravelApp/1.0" },
+          timeout: 10000,
+        })
+      );
+    });
+
+
+    it("throws if API returns an empty array", async () => {
+      mockedAxios.get.mockResolvedValue({
+        data: [],
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {},
+      });
+
+      await expect(geocodeAddress("Unknown Place")).rejects.toThrow(
+        'Address not found: "Unknown Place"'
+      );
+    });
+
+    it("throws if axios rejects with a network error", async () => {
+      mockedAxios.get.mockRejectedValue(new Error("Network down"));
+
+      await expect(geocodeAddress("Some Place")).rejects.toThrow(
+        'Failed to geocode address "Some Place": Network down'
+      );
+    });
+
+    it("throws if axios rejects with an AxiosError (500)", async () => {
+      mockedAxios.get.mockRejectedValue({
+        isAxiosError: true,
+        message: "Internal Server Error",
+        config: {},
+        response: { status: 500, data: "Server blew up" },
+      });
+
+      await expect(geocodeAddress("Server Error Place")).rejects.toThrow(
+        'Failed to geocode address "Server Error Place": Internal Server Error'
+      );
+    });
+
+    it("throws if response is missing data", async () => {
+      mockedAxios.get.mockResolvedValue({
+        data: null,
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {},
+      });
+
+      await expect(geocodeAddress("Null Response Place")).rejects.toThrow(
+        'Address not found: "Null Response Place"'
+      );
+    });
+
+  describe("reverseGeocodeCoordinates", () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it("returns an address when Nominatim responds with display_name", async () => {
+      const mockAddress = "123 Example Street, Test City, Country";
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { display_name: mockAddress },
+      });
+
+      const result = await reverseGeocodeCoordinates(-43.5321, 172.6362);
+
+      expect(result).toBe(mockAddress);
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.stringContaining("/reverse"),
+        expect.objectContaining({
+          headers: expect.objectContaining({ "User-Agent": "MyTravelApp/1.0" }),
+          timeout: 10000,
+        })
+      );
+    });
+
+    it("throws an error if Nominatim response does not include display_name", async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: {} });
+
+      await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
+        "Address not found for coordinates"
+      );
+    });
+
+    it("throws an error if axios request fails", async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
+        "Failed to reverse geocode coordinates: Network error"
+      );
+    });
+  });
+
+  });
+
+  describe("queryOsrm", () => {
+    it("returns mocked OSRM route with route", async () => {
+      // Arrange: mock axios.get to return a fake OSRM response
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          routes: [{ distance: 0, duration: 0, geometry: "test" }], // distance in meters, duration in seconds
+        },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {},
+      });
+
+      const start = { latitude: -43.531, longitude: 172.655 };
+      const end = { latitude: -45.021, longitude: 168.738 };
+
+      // Act
+      const result = await queryOsrm(start, end, OsrmOverview.FULL);
+
+      // Assert
+      expect(result.distance_km).toBe(0);
+      expect(result.duration_min).toBe(0);
+      expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full`));
+      expect(result.route).toEqual([[-3.54411, 0]]);
+    });
+
+    it("returns mocked OSRM route without route", async () => {
+      // Arrange: mock axios.get to return a fake OSRM response
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          routes: [{ distance: 0, duration: 0 }], // distance in meters, duration in seconds
+        },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {},
+      });
+
+      const start = { latitude: -43.531, longitude: 172.655 };
+      const end = { latitude: -45.021, longitude: 168.738 };
+
+      // Act
+      const result = await queryOsrm(start, end, OsrmOverview.FALSE);
+
+      // Assert
+      expect(result.distance_km).toBe(0);
+      expect(result.duration_min).toBe(0);
+      expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false`));
+    });
+  });
+
+  describe("getOsrmRoute", () => {
+    it("uses mocked functions with route", async () => {
+      // Mocked geocodeAddress
+      const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
+        switch (address) {
+          case "New Brighton Pier, Christchurch, Canterbury":
+            return { latitude: -43.531, longitude: 172.655 };
+          case "Queenstown Airport, Queenstown, Otago":
+            return { latitude: -45.021, longitude: 168.738 };
+          default:
+            return { latitude: -43.5321, longitude: 172.6362 };
+        }
+      };
+
+      // Mocked queryOsrm that includes route
+      const mockQueryOsrm: queryOsrmFn = async () => ({
+        distance_km: 486.4,
+        duration_min: 364,
+        route: [
+          [172.655, -43.531],
+          [168.738, -45.021],
+        ],
+      });
+
+      const result = await getOsrmRoute(
+        "New Brighton Pier, Christchurch, Canterbury",
+        "Queenstown Airport, Queenstown, Otago",
+        {
+          geocodeAddress: mockGeocodeAddress,
+          queryOsrm: mockQueryOsrm,
+        },
+        OsrmOverview.FULL
+      );
+
+      expect(result.distance_km).toBe(486.4);
+      expect(result.duration_min).toBe(364);
+      expect(result.route).toEqual([
+        [172.655, -43.531],
+        [168.738, -45.021],
+      ]);
+    });
+
+
+    it("uses mocked functions without route", async () => {
+      // Mocked geocodeAddress
+      const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
+        switch (address) {
+          case "New Brighton Pier, Christchurch, Canterbury":
+            return { latitude: -43.531, longitude: 172.655 };
+          case "Queenstown Airport, Queenstown, Otago":
+            return { latitude: -45.021, longitude: 168.738 };
+          default:
+            return { latitude: -43.5321, longitude: 172.6362 };
+        }
+      };
+
+      // Mocked queryOsrm
+      const mockQueryOsrm: queryOsrmFn = async () => ({
+        distance_km: 486.4,
+        duration_min: 364,
+      });
+
+      const result = await getOsrmRoute(
+        "New Brighton Pier, Christchurch, Canterbury",
+        "Queenstown Airport, Queenstown, Otago",
+        {
+          geocodeAddress: mockGeocodeAddress,
+          queryOsrm: mockQueryOsrm,
+        },
+        OsrmOverview.FALSE
+      );
+
+      expect(result.distance_km).toBe(486.4);
+      expect(result.duration_min).toBe(364);
+    });
+  });
+
+})

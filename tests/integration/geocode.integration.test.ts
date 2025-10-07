@@ -1,96 +1,109 @@
 import request from "supertest";
 import express from "express";
 import { router as apiRouter } from "../../src/api/routes";
+import * as geocodeService from "../../src/services/geocodeService";
 
 const app = express();
 app.use(express.json());
 app.use("/api", apiRouter);
 
-describe("Integration: /api/geocode (real API)", () => {
+describe("/geocode and API Routes (mocked external APIs)", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it("returns coordinates for a valid address", async () => {
+    jest.spyOn(geocodeService, "getGeocodeService").mockResolvedValue({
+      latitude: -43.5321,
+      longitude: 172.6362,
+    });
+
     const res = await request(app)
       .get("/api/geocode")
-      .query({ address: "Cuba Street, Wellington, New Zealand" });
+      .query({ address: "Test Address" });
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("latitude");
-    expect(res.body).toHaveProperty("longitude");
-  }, 20000);
+    expect(res.body).toEqual({
+      latitude: -43.5321,
+      longitude: 172.6362,
+    });
+  });
 
   it("returns 400 if address is missing", async () => {
     const res = await request(app).get("/api/geocode");
+
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error");
+    expect(res.body).toHaveProperty("error", "Missing or invalid 'address' query param.");
   });
 
-  it("handles an address that likely does not exist", async () => {
+  it("returns 500 if service throws an error", async () => {
+    jest.spyOn(geocodeService, "getGeocodeService").mockRejectedValue(
+      new Error("Service failure")
+    );
+
     const res = await request(app)
       .get("/api/geocode")
-      .query({ address: "asdlkfjasdlfkjasdlfkj" }); // nonsense
+      .query({ address: "Fail Address" });
 
-    // It might be 500 if Nominatim can’t resolve
-    expect([200, 500]).toContain(res.status);
-  }, 20000);
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty("error", "Service failure");
+  });
 });
 
+describe("/reverse-geocode and API Routes (mocked external APIs)", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
 
-describe("Integration: /api/reverse-geocode (real API)", () => {
-  it("returns an address for valid latitude and longitude", async () => {
-    const lat = -43.5321; // Christchurch
-    const lon = 172.6362;
+  it("returns an address for valid lat/lon", async () => {
+    jest.spyOn(geocodeService, "getReverseGeocodeService").mockResolvedValue(
+      "123 Mocked Street, Test City"
+    );
 
     const res = await request(app)
       .get("/api/reverse-geocode")
-      .query({ lat, lon })
-      .set("Accept", "application/json");
+      .query({ lat: -43.5321, lon: 172.6362 });
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("address");
-    expect(typeof res.body.address).toBe("string");
-    expect(res.body.address.length).toBeGreaterThan(0);
-  }, 20000); // Allow 20s timeout for real API call
+    expect(res.body).toHaveProperty("address", "123 Mocked Street, Test City");
+  });
 
   it("returns 400 for missing or invalid lat/lon", async () => {
     const res1 = await request(app)
       .get("/api/reverse-geocode")
       .query({ lat: "abc", lon: 172.6362 });
     expect(res1.status).toBe(400);
-    expect(res1.body).toHaveProperty("error");
+    expect(res1.body).toHaveProperty("error", "Invalid latitude or longitude.");
 
     const res2 = await request(app)
       .get("/api/reverse-geocode")
       .query({ lat: -43.5321 });
     expect(res2.status).toBe(400);
-    expect(res2.body).toHaveProperty("error");
+    expect(res2.body).toHaveProperty("error", "Invalid latitude or longitude.");
 
     const res3 = await request(app)
       .get("/api/reverse-geocode")
       .query({ lat: 45, lon: "abc" });
     expect(res3.status).toBe(400);
-    expect(res3.body).toHaveProperty("error");
+    expect(res3.body).toHaveProperty("error", "Invalid latitude or longitude.");
 
     const res4 = await request(app)
       .get("/api/reverse-geocode")
       .query({ lon: -43.5321 });
     expect(res4.status).toBe(400);
-    expect(res4.body).toHaveProperty("error");
+    expect(res4.body).toHaveProperty("error", "Invalid latitude or longitude.");
   });
 
-  it("returns 500 if coordinates are unlikely to resolve", async () => {
-    // coordinates in the middle of the ocean
-    const lat = 0;
-    const lon = 0;
+  it("returns 500 if service throws an error", async () => {
+    jest.spyOn(geocodeService, "getReverseGeocodeService").mockRejectedValue(
+      new Error("Service failure")
+    );
 
     const res = await request(app)
       .get("/api/reverse-geocode")
-      .query({ lat, lon });
+      .query({ lat: -43.5321, lon: 172.6362 });
 
-    expect([200, 500]).toContain(res.status); 
-    // Nominatim sometimes returns a result even for ocean, sometimes not
-    if (res.status === 200) {
-      expect(res.body.address).toBeTruthy();
-    } else {
-      expect(res.body).toHaveProperty("error");
-    }
-  }, 20000);
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty("error", "Service failure");
+  });
 });
