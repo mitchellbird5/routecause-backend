@@ -14,7 +14,7 @@ export async function getEmissionsService(column: string, value: string) {
 
   try {
     const result = await pool.query(
-      `SELECT * FROM emissions WHERE ${column} = $1`,
+      `SELECT * FROM emission_data WHERE LOWER(${column}) = LOWER($1)`,
       [value]
     );
     return result.rows;

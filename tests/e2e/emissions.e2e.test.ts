@@ -6,7 +6,7 @@ describe("End-to-End: /emissions", () => {
   it("should return emissions for valid category value", async () => {
     const res = await request(app)
       .get("/api/emissions")
-      .query({ column: "category", value: "Food" })
+      .query({ column: "category", value: "food" })
       .set("Accept", "application/json");
 
     expect(res.status).toBe(200);

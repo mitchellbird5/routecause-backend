@@ -13,15 +13,15 @@ describe("/emissions and API Routes (mocked external APIs)", () => {
   });
 
   it("should query the database when valid column and value are provided", async () => {
-    (pool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ category: "Food" }] });
+    (pool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ category: "food" }] });
 
     const result = await getEmissionsService(EmissionDBColumn.CATEGORY, EmissionDBCategoryValue.FOOD);
 
     expect(pool.query).toHaveBeenCalledWith(
-      "SELECT * FROM emissions WHERE category = $1",
-      ["Food"]
+      "SELECT * FROM emission_data WHERE LOWER(category) = LOWER($1)",
+      ["food"]
     );
-    expect(result).toEqual([{ category: "Food" }]);
+    expect(result).toEqual([{ category: "food" }]);
   });
 
   it("should throw 400 if column is invalid", async () => {
