@@ -40,6 +40,10 @@ describe("Logic testing", () => {
         expect(result.minutes).toBeCloseTo(tc.expectedMinutes, 1);
       });
     });
+
+    it("should throw an error if totalMinutes is negative", () => {
+      expect(() => convertMinutes(-5)).toThrowError("totalMinutes cannot be negative");
+    });
   });
 
   // ----------------------

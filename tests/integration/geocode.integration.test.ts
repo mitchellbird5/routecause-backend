@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use("/api", apiRouter);
 
-describe("/geocode and API Routes (mocked external APIs)", () => {
+describe("/geocode API Route (mocked external APIs)", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
   });
@@ -50,7 +50,7 @@ describe("/geocode and API Routes (mocked external APIs)", () => {
   });
 });
 
-describe("/reverse-geocode and API Routes (mocked external APIs)", () => {
+describe("/reverse-geocode API Route (mocked external APIs)", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
   });

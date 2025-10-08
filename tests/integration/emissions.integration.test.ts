@@ -1,51 +1,65 @@
-// tests/unit/emissions.service.test.ts
-import { getEmissionsService } from "../../src/services/emissionsService";
-import pool from "../../src/emissions/emissionsDatabase";
-import { EmissionDBColumn, EmissionDBCategoryValue } from "../../src/emissions/emissions.type";
+// tests/integration/emissions.api.test.ts
+import request from "supertest";
+import express, { Request, Response } from "express";
+import { router as apiRouter } from "../../src/api/routes";
+import * as emissionsService from "../../src/services/emissionsService";
 
-jest.mock("../../src/emissions/emissionsDatabase", () => ({
-  query: jest.fn(),
-}));
+const app = express();
+app.use(express.json());
+app.use("/api", apiRouter);
 
-describe("/emissions and API Routes (mocked external APIs)", () => {
+jest.mock("../../src/services/emissionsService");
+
+describe("/emissions-comparison API Route", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should query the database when valid column and value are provided", async () => {
-    (pool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ category: "food" }] });
+  it("returns 200 with emission equivalents", async () => {
+    (emissionsService.getEmissionsService as jest.Mock).mockResolvedValue([
+      {
+        label: "Beef",
+        category: "food",
+        emission_equivalent_value: 0.1,
+        emission_equivalent_unit: "kg CO2eq"
+      }
+    ]);
 
-    const result = await getEmissionsService(EmissionDBColumn.CATEGORY, EmissionDBCategoryValue.FOOD);
+    const res = await request(app)
+      .get("/api/emissions-comparison")
+      .query({ column: "category", filter: "food", emissions: "10" });
 
-    expect(pool.query).toHaveBeenCalledWith(
-      "SELECT * FROM emission_data WHERE LOWER(category) = LOWER($1)",
-      ["food"]
-    );
-    expect(result).toEqual([{ category: "food" }]);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        label: "Beef",
+        category: "food",
+        emission_equivalent_value: 0.1,
+        emission_equivalent_unit: "kg CO2eq"
+      }
+    ]);
   });
 
-  it("should throw 400 if column is invalid", async () => {
-    await expect(getEmissionsService("invalid_column", "Food")).rejects.toMatchObject({
-      status: 400,
-      message: "Invalid column name",
-    });
+  it("returns 400 if parameters are missing or invalid", async () => {
+    const res = await request(app)
+      .get("/api/emissions-comparison")
+      .query({ column: "invalid", filter: "food", emissions: "10" });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error");
   });
 
-  it("should throw 400 if category value is invalid", async () => {
-    await expect(getEmissionsService("category", "InvalidValue")).rejects.toMatchObject({
-      status: 400,
-      message: "Invalid category value",
-    });
-  });
-
-  it("should throw 500 if database query fails", async () => {
-    (pool.query as jest.Mock).mockRejectedValueOnce(new Error("Connection lost"));
-
-    await expect(
-      getEmissionsService(EmissionDBColumn.CATEGORY, EmissionDBCategoryValue.FOOD)
-    ).rejects.toMatchObject({
+  it("returns 500 if service throws", async () => {
+    (emissionsService.getEmissionsService as jest.Mock).mockRejectedValue({
       status: 500,
-      message: "Database query failed",
+      message: "Database query failed"
     });
+
+    const res = await request(app)
+      .get("/api/emissions-comparison")
+      .query({ column: "category", filter: "food", emissions: "10" });
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty("error", "Database query failed");
   });
 });

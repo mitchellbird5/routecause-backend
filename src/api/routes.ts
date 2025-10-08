@@ -70,12 +70,13 @@ router.get("/geocode", async (req: Request, res: Response) => {
 // -------------------------------
 // GET /emissions
 // -------------------------------
-router.get("/emissions", async (req: Request, res: Response) => {
+router.get("/emissions-comparison", async (req: Request, res: Response) => {
   const column = req.query.column as string;
-  const value = req.query.value as string;
+  const filter = req.query.filter as string;
+  const emissions = parseFloat(req.query.emissions as string);
 
   try {
-    const results = await getEmissionsService(column, value);
+    const results = await getEmissionsService(column, filter, emissions);
     res.status(200).json(results);
   } catch (err) {
     const status = (err as any).status || 500;
