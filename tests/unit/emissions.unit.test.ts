@@ -34,7 +34,7 @@ describe("Logic testing", () => {
     });
 });
 
-describe("Mocked API and error testing", async () => {
+describe("Mocked API and error testing", () => {
     describe("getEmissionsService", () => {
         beforeEach(() => {
             jest.clearAllMocks();
@@ -45,7 +45,7 @@ describe("Mocked API and error testing", async () => {
             (getDistinctColumnValues as jest.Mock).mockResolvedValue(["food"]);
             (pool.query as jest.Mock).mockResolvedValue({
             rows: [
-                { label: "Beef", category: "food", value: 100, unitnorm: "kg CO2eq" }
+                { label: "Beef", category: "food", value: 100, unitnorm: "kg" }
             ]
             });
 
@@ -56,7 +56,7 @@ describe("Mocked API and error testing", async () => {
             label: "Beef",
             category: "food",
             emission_equivalent_value: 0.1,
-            emission_equivalent_unit: "kg CO2eq"
+            emission_equivalent_unit: "kg"
             });
         });
 
@@ -65,7 +65,7 @@ describe("Mocked API and error testing", async () => {
             (getDistinctColumnValues as jest.Mock).mockResolvedValue(["food"]);
             (pool.query as jest.Mock).mockResolvedValue({
             rows: [
-                { label: "Chicken", category: "food", value: 50, unitnorm: "kg CO2eq" }
+                { label: "Chicken", category: "food", value: 50, unitnorm: "kg" }
             ]
             });
 

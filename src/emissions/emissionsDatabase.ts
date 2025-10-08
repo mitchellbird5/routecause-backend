@@ -50,7 +50,8 @@ export async function getDistinctColumnValues(
   `;
   const result = await pool.query(query);
 
-  const values = result.rows.map(row => String(Object.values(row)[0]));
+  const values = result.rows.map(row => String(Object.values(row)[0]).toLowerCase());
+
   cachedFilterValues[tableName] = cachedFilterValues[tableName] || {};
   cachedFilterValues[tableName][columnName] = values;
 

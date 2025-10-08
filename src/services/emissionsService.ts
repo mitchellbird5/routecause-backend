@@ -27,9 +27,10 @@ export async function getEmissionsService(
 
   // Validate filter value exists in that column
   const validFilters = await getDistinctColumnValues("emission_data", column);
-  if (!validFilters.includes(filter)) {
+  if (!validFilters.includes(filter.toLowerCase())) {
     throw { status: 400, message: `Invalid filter value: ${filter}` };
   }
+
 
   try {
     const query = `

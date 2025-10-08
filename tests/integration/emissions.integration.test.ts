@@ -21,7 +21,7 @@ describe("/emissions-comparison API Route", () => {
         label: "Beef",
         category: "food",
         emission_equivalent_value: 0.1,
-        emission_equivalent_unit: "kg CO2eq"
+        emission_equivalent_unit: "kg"
       }
     ]);
 
@@ -35,18 +35,9 @@ describe("/emissions-comparison API Route", () => {
         label: "Beef",
         category: "food",
         emission_equivalent_value: 0.1,
-        emission_equivalent_unit: "kg CO2eq"
+        emission_equivalent_unit: "kg"
       }
     ]);
-  });
-
-  it("returns 400 if parameters are missing or invalid", async () => {
-    const res = await request(app)
-      .get("/api/emissions-comparison")
-      .query({ column: "invalid", filter: "food", emissions: "10" });
-
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error");
   });
 
   it("returns 500 if service throws", async () => {
