@@ -18,8 +18,7 @@ services:
     image: osrm/osrm-backend
     container_name: osrm_ci
     volumes:
-      - osrm-data-ci:/data
-      - ./tests/data/wellington.osm.pbf:/tmp/wellington.osm.pbf:ro
+      - ./tests/data:/data
     command: >
       /bin/bash -c "
         osrm-extract -p /opt/car.lua /data/wellington.osm.pbf &&
@@ -49,4 +48,3 @@ services:
 
 volumes:
   nominatim-data-ci: {}
-  osrm-data-ci:
