@@ -20,5 +20,6 @@ module.exports = {
       tsconfig: 'tsconfig.json'
     }
   },
-  verbose: true
+  verbose: false,
+  silent: true
 };
