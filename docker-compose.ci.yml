@@ -3,7 +3,7 @@ services:
   nominatim_ci:
     image: mediagis/nominatim:5.1
     volumes:
-      - ./tests/integration/data/wellington.osm.pbf:/nominatim/data/wellington.osm.pbf
+      - ./tests/data/wellington.osm.pbf:/nominatim/data/wellington.osm.pbf
       - nominatim-data-ci:/var/lib/postgresql/15/main
     environment:
       PBF_PATH: /nominatim/data/wellington.osm.pbf
@@ -18,7 +18,8 @@ services:
     image: osrm/osrm-backend
     container_name: osrm_ci
     volumes:
-      - ./tests/integration/data:/data
+      - osrm-data-ci:/data
+      - ./tests/data/wellington.osm.pbf:/tmp/wellington.osm.pbf:ro
     command: >
       /bin/bash -c "
         osrm-extract -p /opt/car.lua /data/wellington.osm.pbf &&
@@ -48,3 +49,4 @@ services:
 
 volumes:
   nominatim-data-ci: {}
+  osrm-data-ci:
