@@ -3,7 +3,7 @@ services:
   nominatim_ci:
     image: mediagis/nominatim:5.1
     volumes:
-      - ./tests/integration/data/wellington.osm.pbf:/nominatim/data/wellington.osm.pbf
+      - ./tests/data-ci/wellington.osm.pbf:/nominatim/data/wellington.osm.pbf
       - nominatim-data-ci:/var/lib/postgresql/15/main
     environment:
       PBF_PATH: /nominatim/data/wellington.osm.pbf
@@ -18,7 +18,7 @@ services:
     image: osrm/osrm-backend
     container_name: osrm_ci
     volumes:
-      - ./tests/integration/data:/data
+      - ./tests/data-ci/wellington.osm.pbf:/data/wellington.osm.pbf
     command: >
       /bin/bash -c "
         osrm-extract -p /opt/car.lua /data/wellington.osm.pbf &&
@@ -26,6 +26,21 @@ services:
         osrm-customize /data/wellington.osrm &&
         osrm-routed --algorithm mld /data/wellington.osrm
       "
+
+  emission_db_ci:
+    image: postgres:16
+    container_name: emission_db_ci
+    volumes:
+      - ./tests/data-ci:/docker-entrypoint-initdb.d
+      - pgdata-ci:/var/lib/postgresql/data
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    expose:
+      - "5432"
 
   mytravelapp_ci:
     build:
@@ -40,11 +55,19 @@ services:
         condition: service_healthy
       osrm_ci:
         condition: service_started
+      emission_db_ci: 
+        condition: service_started
     environment:
       NODE_ENV: test
       OSRM_URL: http://osrm_ci:5000
       NOMINATIM_URL: http://nominatim_ci:8080
+      POSTGRES_HOST: emission_db_ci
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     command: tail -f /dev/null
 
 volumes:
   nominatim-data-ci: {}
+  pgdata-ci:

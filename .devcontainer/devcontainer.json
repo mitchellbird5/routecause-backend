@@ -14,7 +14,6 @@
         "eamodio.gitlens",
         "christian-kohler.path-intellisense",
         "ms-azuretools.vscode-docker",
-        // "firsttris.vscode-jest-runner"
         "Orta.vscode-jest"
       ],
       "settings": {
