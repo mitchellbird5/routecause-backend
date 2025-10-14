@@ -12,7 +12,17 @@ jest.mock("../../src/emissions/emissionsDatabase", () => {
     default: {
       query: jest.fn()
     },
-    getTableColumns: jest.fn().mockResolvedValue(["category", "label", "value", "unitnorm"]),
+    getTableColumns: jest.fn().mockResolvedValue(
+        [
+            "category", 
+            "label", 
+            "value", 
+            "equivalent_unit", 
+            "description", 
+            "source", 
+            "equivalent_description"
+        ]
+    ),
     getDistinctColumnValues: jest.fn().mockImplementation((_, col) => {
       if (col === "category") return Promise.resolve(["food", "transport"]);
       return Promise.resolve([]);
@@ -45,7 +55,15 @@ describe("Mocked API and error testing", () => {
             (getDistinctColumnValues as jest.Mock).mockResolvedValue(["food"]);
             (pool.query as jest.Mock).mockResolvedValue({
             rows: [
-                { label: "Beef", category: "food", value: 100, unitnorm: "kg" }
+                { 
+                    label: "Beef", 
+                    category: "food", 
+                    value: 100, 
+                    equivalent_unit: "kg", 
+                    description: "description",
+                    source: "source",
+                    equivalent_description: "equivalent_description" 
+                }
             ]
             });
 
@@ -53,10 +71,13 @@ describe("Mocked API and error testing", () => {
 
             expect(result).toHaveLength(1);
             expect(result[0]).toMatchObject({
-            label: "Beef",
-            category: "food",
-            emission_equivalent_value: 0.1,
-            emission_equivalent_unit: "kg"
+                label: "Beef",
+                category: "food",
+                emission_equivalent_value: 0.1,
+                emission_equivalent_unit: "kg",
+                description: "description",
+                source: "source",
+                equivalent_description: "equivalent_description"
             });
         });
 
@@ -65,7 +86,15 @@ describe("Mocked API and error testing", () => {
             (getDistinctColumnValues as jest.Mock).mockResolvedValue(["food"]);
             (pool.query as jest.Mock).mockResolvedValue({
             rows: [
-                { label: "Chicken", category: "food", value: 50, unitnorm: "kg" }
+                { 
+                    label: "Chicken", 
+                    category: "food", 
+                    value: 50,
+                    equivalent_unit: "kg", 
+                    description: "description",
+                    source: "source",
+                    equivalent_description: "equivalent_description" 
+                }
             ]
             });
 
@@ -106,7 +135,17 @@ describe("Mocked API and error testing", () => {
             (getTableColumns as jest.Mock).mockResolvedValue(["category"]);
             (getDistinctColumnValues as jest.Mock).mockResolvedValue(["food"]);
             (pool.query as jest.Mock).mockResolvedValue({
-            rows: [{ label: "Beef", category: "food", value: null, unitnorm: "kg CO2eq" }]
+            rows: [
+                    { 
+                        label: "Beef", 
+                        category: "food", 
+                        value: null, 
+                        equivalent_unit: "kg", 
+                        description: "description",
+                        source: "source",
+                        equivalent_description: "equivalent_description" 
+                    }
+                ]
             });
 
             await expect(getEmissionsService("category", "food", 1)).rejects.toMatchObject({

@@ -20,6 +20,7 @@ describe("End-to-End: /emissions-comparison", () => {
       expect(item).toHaveProperty("emission_equivalent_unit");
       expect(item).toHaveProperty("description");
       expect(item).toHaveProperty("source");
+      expect(item).toHaveProperty("equivalent_description");
 
       // Optional: check types
       expect(typeof item.label).toBe("string");

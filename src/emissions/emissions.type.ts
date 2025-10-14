@@ -2,9 +2,10 @@ export interface EmissionDataRow {
   label: string;
   category: string;
   value: number;
-  unitnorm: string;
+  equivalent_unit: string;
   description: string;
   source: string;
+  equivalent_description: string;
 }
 
 export interface EmissionEquivalentRow {
@@ -14,6 +15,7 @@ export interface EmissionEquivalentRow {
   emission_equivalent_unit: string;
   description: string;
   source: string;
+  equivalent_description: string;
 }
 
 export function validateEmissionRow(row: any): row is EmissionDataRow {
@@ -21,6 +23,9 @@ export function validateEmissionRow(row: any): row is EmissionDataRow {
     typeof row.label === "string" &&
     typeof row.category === "string" &&
     typeof row.value === "number" &&
-    typeof row.unitnorm === "string"
+    typeof row.equivalent_unit === "string" &&
+    typeof row.description === "string" &&
+    typeof row.source === "string" &&
+    typeof row.equivalent_description === "string"
   );
 }
