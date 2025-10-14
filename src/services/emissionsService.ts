@@ -34,7 +34,7 @@ export async function getEmissionsService(
 
   try {
     const query = `
-      SELECT label, category, value, unitnorm
+      SELECT label, category, value, unitnorm, description, source
       FROM emission_data
       WHERE LOWER(${column}) = LOWER($1)
     `;
@@ -49,7 +49,9 @@ export async function getEmissionsService(
         label: row.label,
         category: row.category,
         emission_equivalent_value: calculateEmissionEquivalent(trip_emissions_kg, row.value),
-        emission_equivalent_unit: row.unitnorm
+        emission_equivalent_unit: row.unitnorm,
+        description: row.description,
+        source: row.source
       };
     });
   } catch (error) {

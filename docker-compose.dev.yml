@@ -1,5 +1,6 @@
 services:
   mytravelapp-backend-dev:
+    container_name: mytravelapp-backend-dev
     image: mytravelapp/backend-dev:latest
     build: .
     volumes:

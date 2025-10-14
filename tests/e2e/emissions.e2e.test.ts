@@ -18,12 +18,16 @@ describe("End-to-End: /emissions-comparison", () => {
       expect(item).toHaveProperty("category");
       expect(item).toHaveProperty("emission_equivalent_value");
       expect(item).toHaveProperty("emission_equivalent_unit");
+      expect(item).toHaveProperty("description");
+      expect(item).toHaveProperty("source");
 
       // Optional: check types
       expect(typeof item.label).toBe("string");
       expect(typeof item.category).toBe("string");
       expect(typeof item.emission_equivalent_value).toBe("number");
       expect(typeof item.emission_equivalent_unit).toBe("string");
+      expect(typeof item.description).toBe("string");
+      expect(typeof item.source).toBe("string");
     }
   });
 });
