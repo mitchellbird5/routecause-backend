@@ -3,6 +3,8 @@ export interface EmissionDataRow {
   category: string;
   value: number;
   unitnorm: string;
+  description: string;
+  source: string;
 }
 
 export interface EmissionEquivalentRow {
@@ -10,6 +12,8 @@ export interface EmissionEquivalentRow {
   category: string;
   emission_equivalent_value: number;
   emission_equivalent_unit: string;
+  description: string;
+  source: string;
 }
 
 export function validateEmissionRow(row: any): row is EmissionDataRow {
