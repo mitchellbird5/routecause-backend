@@ -8,15 +8,16 @@ CREATE TABLE IF NOT EXISTS emission_data (
   label TEXT,
   value REAL,
   unit TEXT,
-  unitnorm TEXT,
+  equivalent_unit TEXT,
   description TEXT,
-  source TEXT
+  source TEXT,
+  equivalent_description TEXT
 );
 SQL
 
 echo "Importing CSV data..."
 psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-  -c "\copy emission_data(category, label, value, unit, unitnorm, description, source)
+  -c "\copy emission_data(category, label, value, unit, equivalent_unit, description, source, equivalent_description)
       FROM '/docker-entrypoint-initdb.d/emission_data.csv' CSV HEADER;"
 
 echo "Database initialization complete."
