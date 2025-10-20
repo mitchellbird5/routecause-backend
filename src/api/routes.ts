@@ -71,11 +71,11 @@ router.get("/geocode", async (req: Request, res: Response) => {
 // GET /geocode-multi
 // -------------------------------
 router.get("/geocode-multi", async (req: Request, res: Response) => {
-  const query = req.query.q as string;
+  const address = req.query.address as string;
   const limit = parseInt(req.query.limit as string);
 
   try {
-    const suggestions = await getGeocodeMultiService(query, limit);
+    const suggestions = await getGeocodeMultiService(address, limit);
     res.status(200).json(suggestions);
   } catch (err) {
     const status = (err as any).status || 500;
