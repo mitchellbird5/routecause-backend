@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { getVehiclesService } from "../services/vehicleService";
 import { getTripService } from "../services/tripService";
-import { getGeocodeService, getReverseGeocodeService } from "../services/geocodeService";
+import { getGeocodeService, getGeocodeMultiService, getReverseGeocodeService } from "../services/geocodeService";
 import { getEmissionsService } from "../services/emissionsService";
 
 export const router = Router();
@@ -66,6 +66,23 @@ router.get("/geocode", async (req: Request, res: Response) => {
     res.status(status).json({ error: (err as Error).message || (err as any).message });
   }
 });
+
+// -------------------------------
+// GET /geocode-multi
+// -------------------------------
+router.get("/geocode-multi", async (req: Request, res: Response) => {
+  const query = req.query.q as string;
+  const limit = parseInt(req.query.limit as string);
+
+  try {
+    const suggestions = await getGeocodeMultiService(query, limit);
+    res.status(200).json(suggestions);
+  } catch (err) {
+    const status = (err as any).status || 500;
+    res.status(status).json({ error: (err as Error).message || (err as any).message });
+  }
+});
+
 
 // -------------------------------
 // GET /emissions

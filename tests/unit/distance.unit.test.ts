@@ -4,6 +4,7 @@ import {
   haversineKm,
   getOsrmRoute,
   geocodeAddress,
+  geocodeMultiAddress,
   queryOsrm,
   reverseGeocodeCoordinates
 } from "../../src/distance/distance";
@@ -169,7 +170,92 @@ describe("Mocked API and error testing", () => {
       await expect(geocodeAddress("Null Response Place")).rejects.toThrow(
         'Address not found: "Null Response Place"'
       );
+  });
+
+  describe("geocodeMultiAddress", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
     });
+
+    it("returns multiple addresses when API responds with several results", async () => {
+      const mockData = [
+        { display_name: "Place 1", lat: "1.1", lon: "2.1" },
+        { display_name: "Place 2", lat: "3.3", lon: "4.4" },
+      ];
+      mockedAxios.get.mockResolvedValueOnce({ data: mockData });
+
+      const result = await geocodeMultiAddress("Test Address", 2);
+
+      expect(result).toEqual([
+        { 
+          address: "Place 1", 
+          coordinates: {
+            latitude: 1.1, 
+            longitude: 2.1 
+          }
+        },
+        { 
+          address: "Place 2", 
+          coordinates: {
+            latitude: 3.3, 
+            longitude: 4.4
+          } 
+        },
+      ]);
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.stringContaining("Test%20Address&limit=2"),
+        expect.objectContaining({
+          headers: { "User-Agent": "MyTravelApp/1.0" },
+          timeout: 10000,
+        })
+      );
+    });
+
+    it("throws an error if API returns empty array", async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: [] });
+
+      await expect(geocodeMultiAddress("Empty Address", 1)).rejects.toThrow(
+        'Address not found: "Empty Address"'
+      );
+    });
+
+    it("throws an error if API returns null", async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: null });
+
+      await expect(geocodeMultiAddress("Null Address", 1)).rejects.toThrow(
+        'Address not found: "Null Address"'
+      );
+    });
+
+    it("throws an error if API returns non-array data", async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: { something: "invalid" } });
+
+      await expect(geocodeMultiAddress("Invalid Data", 1)).rejects.toThrow(
+        "API return not an array"
+      );
+    });
+
+    it("throws an error if axios request fails with a normal Error", async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(geocodeMultiAddress("Fail Address", 1)).rejects.toThrow(
+        'Failed to geocode address "Fail Address": Network error'
+      );
+    });
+
+    it("throws an error if axios request fails with AxiosError object", async () => {
+      mockedAxios.get.mockRejectedValueOnce({
+        isAxiosError: true,
+        message: "Internal Server Error",
+        config: {},
+        response: { status: 500, data: "Server blew up" },
+      });
+
+      await expect(geocodeMultiAddress("Server Error Address", 1)).rejects.toThrow(
+        'Failed to geocode address "Server Error Address": Internal Server Error'
+      );
+    });
+  });
 
   describe("reverseGeocodeCoordinates", () => {
     beforeEach(() => {

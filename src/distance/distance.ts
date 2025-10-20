@@ -6,6 +6,8 @@ import {
   OsrmRoute, 
   queryOsrmFn, 
   geocodeAddressFn, 
+  geocodeMultiAddressFn,
+  AddressCoordinates,
   getOsrmRouteFn, 
   OsrmOverview,
   convertMinutesFn 
@@ -50,6 +52,46 @@ export const geocodeAddress: geocodeAddressFn = async (
     longitude: response.data[0].lon,
   };
 }
+
+export const geocodeMultiAddress: geocodeMultiAddressFn = async (
+  address: string,
+  limit: number
+): Promise<AddressCoordinates[]> => {
+  const baseUrl = process.env.NOMINATIM_URL;
+  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}&limit=${limit}`;
+
+  let response;
+  try {
+    response = await axios.get(url, {
+      headers: { "User-Agent": "MyTravelApp/1.0" },
+      timeout: 10000, // 10s timeout
+    });
+    console.log("Geocode response:", response.data);
+  } catch (err) {
+    console.error("Geocode request failed:", err);
+    if (axios.isAxiosError(err)) {
+      console.error("Axios error config:", err.config);
+      console.error("Axios response:", err.response?.status, err.response?.data);
+    }
+    throw new Error(`Failed to geocode address "${address}": ${(err as Error).message}`);
+  }
+
+  if (!response.data || response.data.length === 0) {
+    throw new Error(`Address not found: "${address}"`);
+  }
+  if (!Array.isArray(response.data)) {
+    throw new Error('API return not an array');
+  }
+
+  return response.data.map((item: any) => ({
+    address: item.display_name,
+    coordinates : {
+      latitude: parseFloat(item.lat),
+      longitude: parseFloat(item.lon),
+    },
+  }));
+};
+
 
 /**
  * Reverse geocode coordinates using OpenStreetMap Nominatim API
