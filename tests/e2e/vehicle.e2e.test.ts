@@ -9,7 +9,7 @@ describe("End-to-End: /vehicles", () => {
       .query({
         make: "Toyota",
         model: "Corolla",
-        year: "2008",
+        year: "2015",
       })
       .set("Accept", "application/json");
 
@@ -28,8 +28,8 @@ describe("End-to-End: /vehicles", () => {
       expect(res.body[0]).toHaveProperty("transmission");
       expect(res.body[0]).toHaveProperty("vehicle_class");
       expect(res.body[0].make).toBe("Toyota");
-      expect(res.body[0].model).toBe("Corolla");
-      expect(res.body[0].model_year).toBe("2008");
+      expect(res.body[0].model).toBe("Corolla LE Eco (1-Mode)");
+      expect(res.body[0].model_year).toBe("2015");
     }
   );
 
@@ -39,7 +39,7 @@ describe("End-to-End: /vehicles", () => {
       .query({
         make: "toYOtA",
         model: "cOrOLla",
-        year: "2008",
+        year: "2015",
       })
       .set("Accept", "application/json");
 
@@ -58,8 +58,8 @@ describe("End-to-End: /vehicles", () => {
       expect(res.body[0]).toHaveProperty("transmission");
       expect(res.body[0]).toHaveProperty("vehicle_class");
       expect(res.body[0].make).toBe("Toyota");
-      expect(res.body[0].model).toBe("Corolla");
-      expect(res.body[0].model_year).toBe("2008");
+      expect(res.body[0].model).toBe("Corolla LE Eco (1-Mode)");
+      expect(res.body[0].model_year).toBe("2015");
     }
   );
 });

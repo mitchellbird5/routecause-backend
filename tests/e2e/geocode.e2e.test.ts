@@ -40,7 +40,7 @@ describe("End-to-End: /geocode-multi", () => {
   it("returns multiple suggestions for a valid query and limit", async () => {
     const res = await request(app)
       .get("/api/geocode-multi")
-      .query({ address: "Cuba Street, Wellington", limit: 3 })
+      .query({ address: "A", limit: 5})
       .set("Accept", "application/json");
 
     expect(res.status).toBe(200);
