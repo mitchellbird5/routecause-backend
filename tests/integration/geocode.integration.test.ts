@@ -50,6 +50,78 @@ describe("/geocode API Route (mocked external APIs)", () => {
   });
 });
 
+describe("/geocode-multi API Route (mocked external APIs)", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("returns multiple address suggestions for a valid query and limit", async () => {
+    const mockSuggestions = [
+      { 
+        address: "Place 1", 
+        coordinates: {
+          latitude: 1.1, 
+          longitude: 2.1 
+        }
+      },
+      { address: "Place 2", 
+        coordinates: {
+          latitude: 3.3, 
+          longitude: 4.4 
+        }
+      },
+    ];
+
+    jest.spyOn(geocodeService, "getGeocodeMultiService").mockResolvedValue(mockSuggestions);
+
+    const res = await request(app)
+      .get("/api/geocode-multi")
+      .query({ q: "Test Query", limit: 2 });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(mockSuggestions);
+  });
+
+  it("returns 400 if query is missing", async () => {
+    const res = await request(app)
+      .get("/api/geocode-multi")
+      .query({ limit: 2 });
+
+    // Mocked service throws 400 if query is missing
+    jest.spyOn(geocodeService, "getGeocodeMultiService").mockImplementation(() => {
+      throw { status: 400, message: "Missing or invalid 'address' parameter." };
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 if service throws an error", async () => {
+    jest.spyOn(geocodeService, "getGeocodeMultiService").mockRejectedValue(
+      new Error("Service failure")
+    );
+
+    const res = await request(app)
+      .get("/api/geocode-multi")
+      .query({ q: "Fail Query", limit: 2 });
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty("error", "Service failure");
+  });
+
+  it("handles invalid limit parameter gracefully", async () => {
+    jest.spyOn(geocodeService, "getGeocodeMultiService").mockRejectedValue(
+      new Error("Invalid limit")
+    );
+
+    const res = await request(app)
+      .get("/api/geocode-multi")
+      .query({ q: "Test Query", limit: "abc" });
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty("error", "Invalid limit");
+  });
+});
+
 describe("/reverse-geocode API Route (mocked external APIs)", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -107,3 +179,4 @@ describe("/reverse-geocode API Route (mocked external APIs)", () => {
     expect(res.body).toHaveProperty("error", "Service failure");
   });
 });
+

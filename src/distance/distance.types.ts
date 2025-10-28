@@ -16,7 +16,19 @@ export interface OsrmResult {
   route?: OsrmRoute
 }
 
-export type geocodeAddressFn = (address: string) => Promise<Coordinates>;
+export type geocodeAddressFn = (
+  address: string
+) => Promise<Coordinates>;
+
+export interface AddressCoordinates {
+  address: string;
+  coordinates: Coordinates
+}
+
+export type geocodeMultiAddressFn = (
+  address: string, 
+  limit: number
+) => Promise<AddressCoordinates[]>;
 
 export enum OsrmOverview {
   FALSE = "false",
