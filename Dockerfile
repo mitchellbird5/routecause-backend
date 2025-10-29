@@ -25,7 +25,7 @@ RUN npm run build
 # ============================
 FROM node:22-alpine AS development
 WORKDIR /app
-RUN apk add --no-cache bash git curl dos2unix
+RUN apk add --no-cache bash git curl git-lfs dos2unix
 
 COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY package*.json ./
