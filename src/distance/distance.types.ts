@@ -8,12 +8,12 @@ export interface TimeHM {
   minutes: number;
 }
 
-export type OsrmRoute = [number, number][]
+export type RouteCoordinates = [number, number][]
 
-export interface OsrmResult {
+export interface RouteResult {
   distance_km: number;
   duration_min: number;
-  route?: OsrmRoute
+  route?: RouteCoordinates
 }
 
 export type geocodeAddressFn = (
@@ -30,23 +30,16 @@ export type geocodeMultiAddressFn = (
   limit: number
 ) => Promise<AddressCoordinates[]>;
 
-export enum OsrmOverview {
-  FALSE = "false",
-  FULL = "full",
-}
-
-export type queryOsrmFn = (
+export type queryRouteFn = (
   start: Coordinates,
   end: Coordinates,
-  overview: OsrmOverview
-) => Promise<OsrmResult>;
+) => Promise<RouteResult>;
 
-export type getOsrmRouteFn = (
+export type getRouteFn = (
   startAddress: string,
   endAddress: string,
-  deps: { geocodeAddress: geocodeAddressFn; queryOsrm: queryOsrmFn },
-  overview: OsrmOverview
-) => Promise<OsrmResult>;
+  deps: { geocodeAddress: geocodeAddressFn; queryRoute: queryRouteFn },
+) => Promise<RouteResult>;
 
 export type convertMinutesFn = (minutes: number) => TimeHM;
 

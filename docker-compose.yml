@@ -1,47 +1,29 @@
 services:
   mytravelapp-backend:
-    image: mytravelapp/backend:1.0.0
-    build: .
-    depends_on:
-      - osrm
-      - nominatim
+    container_name: mytravelapp-backend
+    image: mytravelapp/backend:latest
+    build:
+      context: .
+      target: production
+    ports:
+      - "5000:5000"
     environment:
-      OSRM_URL: http://osrm:5000
-      NOMINATIM_URL: http://nominatim:8080
       NODE_ENV: production
-    restart: unless-stopped
+      PORT: 5000
+
+      # External routing/geocoding APIs
+      ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
+      GEOCODE_URL: https://api.openrouteservice.org/geocode
+      ORS_API_KEY: ${ORS_API_KEY}
+
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
     networks:
       - mytravelapp-network
-
-  osrm:
-    image: osrm/osrm-backend
-    container_name: osrm
-    volumes:
-      - osrm-data:/data/osrm
-    command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
-    restart: unless-stopped
-    networks:
-      - mytravelapp-network
-
-  nominatim:
-    image: mediagis/nominatim:5.1
-    container_name: nominatim
-    volumes:
-      - nominatim-data:/var/lib/postgresql/16/main
-    environment:
-      PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
-      IMPORT: "0"
-    restart: unless-stopped
-    networks:
-      - mytravelapp-network
-
-volumes:
-  osrm-data:
-    external: true
-    name: mytravelapp_osrm-data
-  nominatim-data:
-    external: true
-    name: mytravelapp_nominatim-data
 
 networks:
   mytravelapp-network:

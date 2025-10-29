@@ -2,7 +2,9 @@ services:
   mytravelapp-backend-dev:
     container_name: mytravelapp-backend-dev
     image: mytravelapp/backend-dev:latest
-    build: .
+    build:
+      context: .
+      target: development
     volumes:
       - .:/app:cached
       - osrm-data:/data/osrm
@@ -14,8 +16,8 @@ services:
       - nominatim
     environment:
       PORT: 5000
-      OSRM_URL: http://osrm:5000
-      NOMINATIM_URL: http://nominatim:8080
+      ROUTER_URL: http://osrm:5000
+      GEOCODE_URL: http://nominatim:8080
       NODE_ENV: development
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}

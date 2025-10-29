@@ -7,33 +7,23 @@ import {
   tripResultToJson,
 } from "../trip/trip";
 import {
-  getOsrmRoute,
+  getRoute,
   geocodeAddress,
-  queryOsrm,
   convertMinutes,
+  queryRoute
 } from "../distance/distance";
-import { OsrmOverview } from "../distance/distance.types";
 
 interface TripRequestBody {
   vehicle_id: number;
   make: string;
   model: string;
   model_year: string;
-  overview: OsrmOverview;
   locations: any[];
 }
 
 export async function getTripService(body: TripRequestBody) {
   if (!body.vehicle_id || !body.make || !body.model || !body.model_year) {
     throw { status: 400, message: "Missing Vehicle ID or vehicle info." };
-  }
-
-  if (!Object.values(OsrmOverview).includes(body.overview)) {
-    throw {
-      status: 400,
-      message:
-        "Invalid overview value. Must be equal to 'full' or 'false'.",
-    };
   }
 
   const vehicles = await fetchVehicleRecords(
@@ -51,12 +41,11 @@ export async function getTripService(body: TripRequestBody) {
     body.locations,
     vehicle,
     {
-      getOsrmRoute,
+      getRoute,
       convertMinutes,
       geocodeAddress,
-      queryOsrm,
-    },
-    body.overview
+      queryRoute,
+    }
   );
 
   return tripResultToJson(trip);

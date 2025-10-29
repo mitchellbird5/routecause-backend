@@ -12,7 +12,7 @@ app.use("/api", apiRouter);
 describe("/trip API Route (mocked external APIs)", () => {
 
   beforeAll(() => {
-    // Mock geocodeAddress and queryOsrm
+    // Mock geocodeAddress and queryRoute
     jest.spyOn(distanceModule, "geocodeAddress").mockImplementation(async (address: string) => {
       switch (address) {
         case "Christchurch":
@@ -24,7 +24,7 @@ describe("/trip API Route (mocked external APIs)", () => {
       }
     });
 
-    jest.spyOn(distanceModule, "queryOsrm").mockImplementation(async () => {
+    jest.spyOn(distanceModule, "queryRoute").mockImplementation(async () => {
       return { distance_km: 486.4, duration_min: 364 };
     });
 
@@ -147,21 +147,4 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(res.body).toHaveProperty("error", "Vehicle not found");
     });
 
-
-  it("should return 400 if overview not in Enum", async () => {
-    (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([]);
-    (vehicleData.selectVehicle as jest.Mock).mockReturnValue(null);
-
-    const res = await request(app).post("/api/trip").send({
-        vehicle_id: 1,
-        make: "Toyota",
-        model: "Corolla",
-        model_year: "2020",
-        locations: ["A", "B"],
-        overview: 'not an entry'
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error", "Invalid overview value. Must be equal to 'full' or 'false'.");
-    });
 });

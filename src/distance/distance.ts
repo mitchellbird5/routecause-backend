@@ -2,29 +2,31 @@
 import { 
   TimeHM, 
   Coordinates, 
-  OsrmResult, 
-  OsrmRoute, 
-  queryOsrmFn, 
+  RouteResult, 
+  RouteCoordinates, 
+  queryRouteFn, 
   geocodeAddressFn, 
   geocodeMultiAddressFn,
   AddressCoordinates,
-  getOsrmRouteFn, 
-  OsrmOverview,
-  convertMinutesFn 
+  convertMinutesFn, 
+  getRouteFn,
+  reverseGeocodeFn
 } from "./distance.types";
 import axios from "axios";
 import polyline from "@mapbox/polyline";
-
 
 /**
  * Geocode an address using OpenStreetMap Nominatim API
  * openstreetmap.org/copyright
  */
-export const geocodeAddress: geocodeAddressFn = async (
+const geocodeAddressLocal: geocodeAddressFn = async (
   address: string
 ): Promise<Coordinates> => {
   // Use NOMINATIM_URL from environment, default to public API if not set
-  const baseUrl = process.env.NOMINATIM_URL;
+  const baseUrl = process.env.GEOCODE_URL!;
+  if (!baseUrl)
+    throw new Error("GEOCODE_URL not defined in production environment");
+
   const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}`;
 
   let response;
@@ -53,13 +55,20 @@ export const geocodeAddress: geocodeAddressFn = async (
   };
 }
 
-export const geocodeMultiAddress: geocodeMultiAddressFn = async (
-  address: string,
-  limit: number
-): Promise<AddressCoordinates[]> => {
-  const baseUrl = process.env.NOMINATIM_URL;
-  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}&limit=${limit}`;
+const geocodeAddressORS: geocodeAddressFn = async (
+  address: string
+): Promise<Coordinates> => {
 
+  const apiKey = process.env.ORS_API_KEY;
+  if (!apiKey)
+    throw new Error("ORS_API_KEY not defined in production environment");
+
+  const baseUrl = process.env.GEOCODE_URL!;
+  if (!baseUrl)
+    throw new Error("GEOCODE_URL not defined in production environment");
+
+  const url = `${baseUrl}/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&size=1`;
+  
   let response;
   try {
     response = await axios.get(url, {
@@ -79,13 +88,51 @@ export const geocodeMultiAddress: geocodeMultiAddressFn = async (
   if (!response.data || response.data.length === 0) {
     throw new Error(`Address not found: "${address}"`);
   }
-  if (!Array.isArray(response.data)) {
-    throw new Error('API return not an array');
+
+  const coords = response.data.features[0].geometry.coordinates;
+  return { longitude: coords[0], latitude: coords[1] };
+}
+
+export const geocodeAddress: geocodeAddressFn = async (
+  address: string,
+): Promise<Coordinates> => {
+  const isProduction = process.env.NODE_ENV === "production";
+  try {
+    if (isProduction){
+      return geocodeAddressORS(address);
+    } else {
+      return geocodeAddressLocal(address)
+    }
+  } catch (err) {
+    console.error("Geocode request failed:", err);
+    throw new Error(
+      `Failed to geocode address "${address}": ${(err as Error).message}`
+    );
+  }
+}
+
+const geocodeMultiLocal: geocodeMultiAddressFn = async (
+  address: string,
+  limit: number
+): Promise<AddressCoordinates[]> => {
+  const baseUrl = process.env.GEOCODE_URL!;
+  if (!baseUrl)
+    throw new Error("GEOCODE_URL not defined in production environment");
+
+  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}&limit=${limit}`;
+
+  const response = await axios.get(url, {
+    headers: { "User-Agent": "MyTravelApp/1.0" },
+    timeout: 10000,
+  });
+
+  if (!Array.isArray(response.data) || response.data.length === 0) {
+    throw new Error(`Address not found: "${address}"`);
   }
 
   return response.data.map((item: any) => ({
     address: item.display_name,
-    coordinates : {
+    coordinates: {
       latitude: parseFloat(item.lat),
       longitude: parseFloat(item.lon),
     },
@@ -93,108 +140,264 @@ export const geocodeMultiAddress: geocodeMultiAddressFn = async (
 };
 
 
-/**
- * Reverse geocode coordinates using OpenStreetMap Nominatim API
- * openstreetmap.org/copyright
- */
-export const reverseGeocodeCoordinates = async (
-  latitude: number,
-  longitude: number
-): Promise<string> => {
-  const baseUrl = process.env.NOMINATIM_URL;
-  const url = `${baseUrl}/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+const geocodeMultiORS: geocodeMultiAddressFn = async (
+  address: string,
+  limit: number,
+): Promise<AddressCoordinates[]> => {
 
-  try {
-    const response = await axios.get(url, {
-      headers: { "User-Agent": "MyTravelApp/1.0" },
-      timeout: 10000, // 10s timeout
-    });
+  const apiKey = process.env.ORS_API_KEY;
+  if (!apiKey)
+    throw new Error("ORS_API_KEY not defined in production environment");
 
-    if (!response.data || !response.data.display_name) {
-      throw new Error("Address not found for coordinates");
-    }
+  const baseUrl = process.env.GEOCODE_URL!;
+  if (!baseUrl)
+    throw new Error("GEOCODE_URL not defined in production environment");
 
-    return response.data.display_name;
-  } catch (err: any) {
-    console.error("Reverse geocode request failed:", err);
-    throw new Error(`Failed to reverse geocode coordinates: ${err.message}`);
+  const url = `${baseUrl}/autocomplete?api_key=${apiKey}&text=${encodeURIComponent(
+    address
+  )}&size=${limit}`;
+
+  const response = await axios.get(url, {
+    headers: { "User-Agent": "MyTravelApp/1.0" },
+    timeout: 10000,
+  });
+
+  if (!response.data?.features?.length) {
+    throw new Error(`Address not found: "${address}"`);
   }
+
+  return response.data.features.map((f: any) => ({
+    address: f.properties.label || f.properties.name,
+    coordinates: {
+      latitude: f.geometry.coordinates[1],
+      longitude: f.geometry.coordinates[0],
+    },
+  }));
 };
 
-
-
-/**
- * Query OSRM server for distance and duration
- * https://project-osrm.org/
- */
-export const queryOsrm: queryOsrmFn = async (
-  start: Coordinates,
-  end: Coordinates,
-  overview: OsrmOverview
-): Promise<OsrmResult> => {
-  const startStr = `${start.longitude},${start.latitude}`;
-  const endStr = `${end.longitude},${end.latitude}`;
-  const url = `${process.env.OSRM_URL}/route/v1/driving/${startStr};${endStr}?overview=${overview}&geometries=polyline`;
+export const geocodeMultiAddress: geocodeMultiAddressFn = async (
+  address: string,
+  limit: number
+): Promise<AddressCoordinates[]> => {
+  const isProduction = process.env.NODE_ENV === "production";
 
   try {
-    const response = await axios.get(url);
-
-    if (response.status !== 200) {
-      throw new Error(
-        `OSRM request failed: ${response.status} ${response.statusText}`
-      );
+    if (isProduction) {
+      return await geocodeMultiORS(address, limit);
+    } else {
+      return await geocodeMultiLocal(address, limit);
     }
-
-    const route = response.data.routes[0];
-
-    let geometryCoords: OsrmRoute = [];
-
-    if (route.geometry) {
-      geometryCoords = polyline.decode(route.geometry) as OsrmRoute;
-    }
-
-    const result: OsrmResult = {
-      distance_km: route.distance / 1000,
-      duration_min: route.duration / 60,
-    };
-
-    if (geometryCoords.length > 0) {
-      result.route = geometryCoords;
-    }
-
-    return result;
-  } catch (err: any) {
-    console.error("Error in queryOsrm:", err);
-    throw new Error(`OSRM request failed: ${err.message}`);
-  }
-};
-
-
-/**
- * Get OSRM route by addresses
- * https://project-osrm.org/
- */
-export const getOsrmRoute: getOsrmRouteFn = async (
-  startAddress: string, 
-  endAddress: string,
-  deps: {
-    geocodeAddress: geocodeAddressFn,
-    queryOsrm: queryOsrmFn
-  },
-  overview: OsrmOverview
-): Promise<OsrmResult> => {
-  const startCoords = await deps.geocodeAddress(startAddress);
-  const endCoords = await deps.geocodeAddress(endAddress);
-
-  try {
-    return await deps.queryOsrm(startCoords, endCoords, overview);
-  } catch (err: any) {
+  } catch (err) {
+    console.error("Geocode request failed:", err);
     throw new Error(
-      `Error querying OSRM: Start=(${startCoords.latitude},${startCoords.longitude}), End=(${endCoords.latitude},${endCoords.longitude}) ${err.message}`
+      `Failed to geocode address "${address}": ${(err as Error).message}`
     );
   }
 };
 
+
+/**
+ * Local reverse geocoder (Nominatim)
+ */
+const reverseGeocodeLocal: reverseGeocodeFn = async (
+  latitude: number,
+  longitude: number,
+): Promise<string> => {
+  const baseUrl = process.env.GEOCODE_URL!;
+  if (!baseUrl)
+    throw new Error("GEOCODE_URL not defined in production environment");
+
+  const url = `${baseUrl}/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+
+  const response = await axios.get(url, {
+    headers: { "User-Agent": "MyTravelApp/1.0" },
+    timeout: 10000,
+  });
+
+  if (!response.data || !response.data.display_name) {
+    throw new Error("Address not found for coordinates");
+  }
+
+  return response.data.display_name;
+};
+
+
+/**
+ * Reverse geocode coordinates using OpenStreetMap Nominatim API
+ * openstreetmap.org/copyright
+ */
+const reverseGeocodeORS: reverseGeocodeFn = async (
+  latitude: number,
+  longitude: number,
+): Promise<string> => {
+
+  const apiKey = process.env.ORS_API_KEY;
+  if (!apiKey)
+    throw new Error("ORS_API_KEY not defined in production environment");
+
+  const baseUrl = process.env.GEOCODE_URL!;
+  if (!baseUrl)
+    throw new Error("GEOCODE_URL not defined in production environment");
+
+  const url = `${baseUrl}/reverse?api_key=${apiKey}&point.lat=${latitude}&point.lon=${longitude}`;
+
+  const response = await axios.get(url, {
+    headers: { "User-Agent": "MyTravelApp/1.0" },
+    timeout: 10000,
+  });
+
+  if (!response.data?.features?.length) {
+    throw new Error("Address not found for coordinates");
+  }
+
+  // Pelias results typically include a "label" property with the full address
+  const label =
+    response.data.features[0].properties.label ||
+    response.data.features[0].properties.name;
+
+  if (!label) {
+    throw new Error("No label found in reverse geocode response");
+  }
+
+  return label;
+};
+
+
+/**
+ * Main function — automatically switches based on environment
+ */
+export const reverseGeocodeCoordinates: reverseGeocodeFn = async (
+  latitude: number,
+  longitude: number
+): Promise<string> => {
+  const isProduction = process.env.NODE_ENV === "production";
+  try {
+    if (isProduction) {
+      return await reverseGeocodeORS(latitude, longitude);
+    } else {
+      return await reverseGeocodeLocal(latitude, longitude);
+    }
+  } catch (err: any) {
+    console.error("Reverse geocode request failed:", err);
+    throw new Error(`Failed to reverse geocode coordinates: ${latitude} ${longitude} - ${err.message}`);
+  }
+};
+
+
+export const queryRouteLocal: queryRouteFn = async (
+  start: Coordinates,
+  end: Coordinates,
+): Promise<RouteResult> => {
+  const baseUrl = process.env.ROUTER_URL!;
+  const startStr = `${start.longitude},${start.latitude}`;
+  const endStr = `${end.longitude},${end.latitude}`;
+  const url = `${baseUrl}/route/v1/driving/${startStr};${endStr}?overview=full&geometries=polyline`;
+
+  const response = await axios.get(url);
+
+  if (response.status !== 200) {
+    throw new Error(`OSRM request failed: ${response.status} ${response.statusText}`);
+  }
+
+  const route = response.data.routes[0];
+  const geometryCoords: RouteCoordinates = route.geometry
+    ? (polyline.decode(route.geometry) as RouteCoordinates)
+    : [];
+
+  const result: RouteResult = {
+    distance_km: route.distance / 1000,
+    duration_min: route.duration / 60,
+  };
+
+  if (geometryCoords.length > 0) result.route = geometryCoords;
+
+  return result;
+};
+
+/**
+ * OpenRouteService query (for production)
+ * https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/get
+ */
+export const queryRouteORS: queryRouteFn = async (
+  start: Coordinates,
+  end: Coordinates,
+): Promise<RouteResult> => {
+
+  const baseUrl = process.env.ROUTER_URL!;
+  const apiKey = process.env.ORS_API_KEY
+
+  const url = `${baseUrl}/driving-car`;
+  const params = {
+    api_key: apiKey,
+    start: `${start.longitude},${start.latitude}`,
+    end: `${end.longitude},${end.latitude}`,
+  };
+
+  const response = await axios.get(url, {
+    params,
+    timeout: 10000,
+    headers: { "User-Agent": "MyTravelApp/1.0" },
+  });
+
+  if (!response.data?.routes?.length) {
+    throw new Error("ORS did not return a valid route");
+  }
+
+  const route = response.data.routes[0];
+  const geometryCoords: RouteCoordinates = route.geometry
+    ? (polyline.decode(route.geometry) as RouteCoordinates)
+    : [];
+
+  const result: RouteResult = {
+    distance_km: route.summary.distance / 1000,
+    duration_min: route.summary.duration / 60,
+  };
+
+  if (geometryCoords.length > 0) result.route = geometryCoords;
+
+  return result;
+};
+
+export const queryRoute: queryRouteFn = async (
+  start: Coordinates,
+  end: Coordinates,
+): Promise<RouteResult> => {
+  const isProduction = process.env.NODE_ENV === "production";
+  try {
+    if (isProduction) {
+      return await queryRouteORS(start, end);
+    } else {
+      return await queryRouteLocal(start, end);
+    }
+  } catch (err: any) {
+    console.error("Query route request failed:", err);
+    throw new Error(`Error querying route: Start=(${start.latitude},${start.longitude}), End=(${end.latitude},${end.longitude}) ${err.message}`
+    );
+  }
+}
+
+/**
+ * Main query function — automatically switches between local OSRM and ORS
+ */
+export const getRoute: getRouteFn = async (
+  startAddress: string,
+  endAddress: string,
+  deps: {
+    geocodeAddress: geocodeAddressFn;
+    queryRoute: queryRouteFn;
+  }
+): Promise<RouteResult> => {
+  const startCoords = await deps.geocodeAddress(startAddress);
+  const endCoords = await deps.geocodeAddress(endAddress);
+
+  try {
+    return await deps.queryRoute(startCoords, endCoords);
+  } catch (err: any) {
+    throw new Error(
+      `Error querying route: Start=(${startCoords.latitude},${startCoords.longitude}), End=(${endCoords.latitude},${endCoords.longitude}) ${err.message}`
+    );
+  }
+};
 
 /**
  * Converts total minutes into hours and minutes.
