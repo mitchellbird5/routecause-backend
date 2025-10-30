@@ -1,13 +1,12 @@
 import { VehicleData } from "../vehicle/vehicle.types";
 import { TripResult } from "./trip.types";
 import { 
-  queryOsrmFn, 
-  convertMinutesFn, 
-  getOsrmRouteFn, 
+  queryRouteFn, 
+  getRouteFn, 
   geocodeAddressFn,
-  OsrmOverview,
-  OsrmRoute 
-} from "../distance/distance.types";
+  RouteCoordinates
+} from "../route/route.types";
+import { convertMinutes } from "../route/duration";
 
 /**
  * Convert TripResult to JSON (for API responses)
@@ -24,10 +23,9 @@ export function tripResultToJson(trip: TripResult) {
 }
 
 export interface TripDependencies {
-    getOsrmRoute: getOsrmRouteFn;
-    convertMinutes: convertMinutesFn;
+    getRoute: getRouteFn;
     geocodeAddress: geocodeAddressFn;
-    queryOsrm: queryOsrmFn;
+    queryRoute: queryRouteFn;
 }
 
 /**
@@ -38,35 +36,33 @@ export async function calculateTrip(
     end_address: string,
     vehicle_data: VehicleData,
     deps: TripDependencies,
-    overview: OsrmOverview
 ): Promise<TripResult> {
-    const { getOsrmRoute, convertMinutes, geocodeAddress, queryOsrm } = deps;
+    const { getRoute, geocodeAddress, queryRoute } = deps;
 
-    const osrm_res = await getOsrmRoute(
+    const result = await getRoute(
       start_address,
       end_address, 
       {
         geocodeAddress,
-        queryOsrm,
+        queryRoute,
       },
-      overview
     );
 
-    const dur = convertMinutes(Math.floor(osrm_res.duration_min));
+    const dur = convertMinutes(Math.floor(result.duration_min));
 
     const fuel_used =
-        (osrm_res.distance_km / 100.0) * vehicle_data.fuel_consumption_comb;
+        (result.distance_km / 100.0) * vehicle_data.fuel_consumption_comb;
 
     const emissions_used =
-        (osrm_res.distance_km * vehicle_data.co2_emissions) / 1000.0; // kg
+        (result.distance_km * vehicle_data.co2_emissions) / 1000.0; // kg
 
     return {
-        distance_km: osrm_res.distance_km,
+        distance_km: result.distance_km,
         hours: dur.hours,
         minutes: dur.minutes,
         fuel_used_l: fuel_used,
         co2_kg: emissions_used,
-        route: osrm_res.route
+        route: result.route
     };
 }
 
@@ -74,7 +70,6 @@ export async function calculateMultiStopTrip(
   locations: string[],
   vehicle_data: VehicleData,
   deps: TripDependencies,
-  overview: OsrmOverview
 ): Promise<TripResult> {
   if (locations.length < 2) {
     throw new Error("At least two locations (start and end) are required");
@@ -84,7 +79,7 @@ export async function calculateMultiStopTrip(
   let totalMinutes = 0;
   let totalFuel = 0;
   let totalEmissions = 0;
-  let fullRoute: OsrmRoute = [];
+  let fullRoute: RouteCoordinates = [];
 
   for (let i = 0; i < locations.length - 1; i++) {
     const legTrip = await calculateTrip(
@@ -92,7 +87,6 @@ export async function calculateMultiStopTrip(
       locations[i + 1],
       vehicle_data,
       deps,
-      overview
     );
 
     totalDistance += legTrip.distance_km;
@@ -105,7 +99,7 @@ export async function calculateMultiStopTrip(
     }
   }
 
-  const dur = deps.convertMinutes(totalMinutes);
+  const dur = convertMinutes(totalMinutes);
 
   return {
     distance_km: totalDistance,

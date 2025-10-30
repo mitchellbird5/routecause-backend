@@ -1,4 +1,6 @@
-import { geocodeAddress, geocodeMultiAddress, reverseGeocodeCoordinates } from "../distance/distance";
+import { geocodeAddress } from "../route/geocodeSearch";
+import { geocodeMultiAddress } from "../route/geocodeMultiSearch";
+import { reverseGeocodeCoordinates } from "../route/reverseGeocode";
 
 export async function getGeocodeService(address: string) {
   if (!address || typeof address !== "string") {

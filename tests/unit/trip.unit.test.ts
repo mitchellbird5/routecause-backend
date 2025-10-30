@@ -1,26 +1,21 @@
 import { calculateTrip, calculateMultiStopTrip } from "../../src/trip/trip";
 import { VehicleData } from "../../src/vehicle/vehicle.types";
-import { OsrmOverview } from "../../src/distance/distance.types";
+import * as timeUtils from "../../src/route/duration";
 
 describe("Logic testing", () => {
 
   describe("calculateTrip", () => {
-    it("calculates distance, time, fuel, and emissions correctly with mocked dependencies and false route", async () => {
+    it("calculates distance, time, fuel, and emissions correctly with mocked dependencies", async () => {
       // -------------------------
       // Mock dependencies
       // -------------------------
-      const mockGetOsrmRoute = jest.fn().mockResolvedValue({
+      const mockGetRoute = jest.fn().mockResolvedValue({
         distance_km: 200,    // 200 km trip
         duration_min: 130,   // 2 hours 10 minutes
       });
 
-      const mockConvertMinutes = jest.fn().mockImplementation((minutes: number) => ({
-        hours: Math.floor(minutes / 60),
-        minutes: minutes % 60,
-      }));
-
       const mockGeocodeAddress = jest.fn();
-      const mockQueryOsrm = jest.fn();
+      const mockqueryRoute = jest.fn();
 
       // -------------------------
       // Fake vehicle data
@@ -48,28 +43,23 @@ describe("Logic testing", () => {
         "End Address",
         vehicleData,
         {
-          getOsrmRoute: mockGetOsrmRoute,
-          convertMinutes: mockConvertMinutes,
+          getRoute: mockGetRoute,
           geocodeAddress: mockGeocodeAddress,
-          queryOsrm: mockQueryOsrm,
-        },
-        OsrmOverview.FALSE
+          queryRoute: mockqueryRoute,
+        }
       );
 
       // -------------------------
       // Assertions
       // -------------------------
-      expect(mockGetOsrmRoute).toHaveBeenCalledWith(
+      expect(mockGetRoute).toHaveBeenCalledWith(
         "Start Address", 
         "End Address", 
         {
           geocodeAddress: mockGeocodeAddress,
-          queryOsrm: mockQueryOsrm,
-        },
-        OsrmOverview.FALSE
+          queryRoute: mockqueryRoute,
+        }
       );
-
-      expect(mockConvertMinutes).toHaveBeenCalledWith(130);
 
       // Distance
       expect(result.distance_km).toBe(200);
@@ -83,25 +73,23 @@ describe("Logic testing", () => {
 
       // Emissions: (200 * 150) / 1000 = 30 kg
       expect(result.co2_kg).toBeCloseTo(30.0);
+
+      expect(result).toHaveProperty("route")
     });
 
   });
 
   describe("calculateMultiStopTrip", () => {
-    it("calculates totals correctly for multiple stops (3 legs, 4 locations) without route", async () => {
-      const mockGetOsrmRoute = jest
+    it("calculates totals correctly for multiple stops (3 legs, 4 locations)", async () => {
+      const mockGetRoute = jest
         .fn()
         .mockResolvedValueOnce({ distance_km: 100, duration_min: 60 }) // Start → Stop1
         .mockResolvedValueOnce({ distance_km: 150, duration_min: 90 }) // Stop1 → Stop2
         .mockResolvedValueOnce({ distance_km: 75, duration_min: 45 }); // Stop2 → End
 
-      const mockConvertMinutes = jest.fn().mockImplementation((minutes: number) => ({
-        hours: Math.floor(minutes / 60),
-        minutes: minutes % 60,
-      }));
-
       const mockGeocodeAddress = jest.fn();
-      const mockQueryOsrm = jest.fn();
+      const mockqueryRoute = jest.fn();
+      jest.spyOn(timeUtils, "convertMinutes");
 
       const vehicleData: VehicleData = {
         make: "Toyota",
@@ -122,12 +110,10 @@ describe("Logic testing", () => {
         ["Start", "Stop1", "Stop2", "End"],
         vehicleData,
         {
-          getOsrmRoute: mockGetOsrmRoute,
-          convertMinutes: mockConvertMinutes,
+          getRoute: mockGetRoute,
           geocodeAddress: mockGeocodeAddress,
-          queryOsrm: mockQueryOsrm,
-        },
-        OsrmOverview.FALSE
+          queryRoute: mockqueryRoute,
+        }
       );
 
       // Total distances: 100 + 150 + 75 = 325 km
@@ -143,10 +129,12 @@ describe("Logic testing", () => {
       // Emissions: (325 * 150) / 1000 = 48.75 kg
       expect(result.co2_kg).toBeCloseTo(48.75, 2);
 
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(1, 60);
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(2, 90);
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(3, 45);
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(4, 195);
+      expect(result).toHaveProperty("route")
+
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(1, 60);
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(2, 90);
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(3, 45);
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(4, 195);
 
     });
   });

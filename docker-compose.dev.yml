@@ -1,8 +1,10 @@
 services:
-  mytravelapp-backend-dev:
-    container_name: mytravelapp-backend-dev
-    image: mytravelapp/backend-dev:latest
-    build: .
+  drivezero-backend-dev:
+    container_name: drivezero-backend-dev
+    image: drivezero/backend-dev:latest
+    build:
+      context: .
+      target: development
     volumes:
       - .:/app:cached
       - osrm-data:/data/osrm
@@ -14,8 +16,8 @@ services:
       - nominatim
     environment:
       PORT: 5000
-      OSRM_URL: http://osrm:5000
-      NOMINATIM_URL: http://nominatim:8080
+      ROUTER_URL: http://osrm:5000
+      GEOCODE_URL: http://nominatim:8080
       NODE_ENV: development
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
@@ -23,7 +25,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     networks:
-      - mytravelapp-network
+      - drivezero-network
 
   osrm:
     image: osrm/osrm-backend:latest
@@ -32,7 +34,7 @@ services:
       - osrm-data:/data/osrm
     command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
     networks:
-      - mytravelapp-network
+      - drivezero-network
 
   nominatim:
     image: mediagis/nominatim:5.1
@@ -43,17 +45,17 @@ services:
       PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
       IMPORT: "0"
     networks:
-      - mytravelapp-network
+      - drivezero-network
 
 volumes:
   osrm-data:
     external: true
-    name: mytravelapp_osrm-data
+    name: drivezero_osrm-data
   nominatim-data:
     external: true
-    name: mytravelapp_nominatim-data
+    name: drivezero_nominatim-data
   node_modules:
 
 networks:
-  mytravelapp-network:
+  drivezero-network:
     external: true

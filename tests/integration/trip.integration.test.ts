@@ -1,7 +1,8 @@
 import request from "supertest";
 import express from "express";
 import { router as apiRouter } from "../../src/api/routes";
-import * as distanceModule from "../../src/distance/distance";
+import * as geocodeSearchModule from "../../src/route/geocodeSearch";
+import * as routeModule from "../../src/route/route";
 import * as vehicleData from "../../src/vehicle/vehicle";
 import { VehicleData as VehicleDataType } from "../../src/vehicle/vehicle.types"
 
@@ -12,8 +13,8 @@ app.use("/api", apiRouter);
 describe("/trip API Route (mocked external APIs)", () => {
 
   beforeAll(() => {
-    // Mock geocodeAddress and queryOsrm
-    jest.spyOn(distanceModule, "geocodeAddress").mockImplementation(async (address: string) => {
+    // Mock geocodeAddress and queryRoute
+    jest.spyOn(geocodeSearchModule, "geocodeAddress").mockImplementation(async (address: string) => {
       switch (address) {
         case "Christchurch":
           return { latitude: -43.5321, longitude: 172.6362 };
@@ -24,7 +25,7 @@ describe("/trip API Route (mocked external APIs)", () => {
       }
     });
 
-    jest.spyOn(distanceModule, "queryOsrm").mockImplementation(async () => {
+    jest.spyOn(routeModule, "queryRoute").mockImplementation(async () => {
       return { distance_km: 486.4, duration_min: 364 };
     });
 
@@ -147,21 +148,4 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(res.body).toHaveProperty("error", "Vehicle not found");
     });
 
-
-  it("should return 400 if overview not in Enum", async () => {
-    (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([]);
-    (vehicleData.selectVehicle as jest.Mock).mockReturnValue(null);
-
-    const res = await request(app).post("/api/trip").send({
-        vehicle_id: 1,
-        make: "Toyota",
-        model: "Corolla",
-        model_year: "2020",
-        locations: ["A", "B"],
-        overview: 'not an entry'
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error", "Invalid overview value. Must be equal to 'full' or 'false'.");
-    });
 });

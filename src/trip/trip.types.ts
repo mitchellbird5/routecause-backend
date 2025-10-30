@@ -1,4 +1,4 @@
-import { OsrmRoute } from "../distance/distance.types";
+import { RouteCoordinates } from "../route/route.types";
 
 export interface TripResult {
     distance_km: number;
@@ -6,6 +6,6 @@ export interface TripResult {
     minutes: number;
     fuel_used_l: number;
     co2_kg: number;
-    route?: OsrmRoute
+    route?: RouteCoordinates
 }
 

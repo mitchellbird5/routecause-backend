@@ -1,18 +1,24 @@
 import axios from "axios";
+// import { 
+//   convertMinutes,
+//   getRoute,
+//   geocodeAddress,
+//   geocodeMultiAddress,
+//   queryRoute,
+//   reverseGeocodeCoordinates
+// } from "../../src/distance/distance";
+import { convertMinutes } from "../../src/route/duration";
 import { 
-  convertMinutes,
-  haversineKm,
-  getOsrmRoute,
-  geocodeAddress,
-  geocodeMultiAddress,
-  queryOsrm,
-  reverseGeocodeCoordinates
-} from "../../src/distance/distance";
+  getRoute, 
+  queryRoute 
+} from "../../src/route/route";
+import { geocodeAddress } from "../../src/route/geocodeSearch";
+import { geocodeMultiAddress } from "../../src/route/geocodeMultiSearch";
+import { reverseGeocodeCoordinates } from "../../src/route/reverseGeocode";
 import { 
-  OsrmOverview, 
   geocodeAddressFn, 
-  queryOsrmFn 
-} from "../../src/distance/distance.types";
+  queryRouteFn 
+} from "../../src/route/route.types";
 
 jest.mock("axios"); // Mock the entire axios module
   const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -47,46 +53,6 @@ describe("Logic testing", () => {
     });
   });
 
-  // ----------------------
-  // haversineKm
-  // ----------------------
-  describe("haversineKm", () => {
-    const cases = [
-      {
-        coord1: { latitude: 34.05, longitude: -118.24 },
-        coord2: { latitude: 40.71, longitude: -74.0 },
-        expected: 3936.06,
-      },
-      {
-        coord1: { latitude: 51.51, longitude: -0.13 },
-        coord2: { latitude: 48.85, longitude: 2.35 },
-        expected: 344.438,
-      },
-      {
-        coord1: { latitude: -33.87, longitude: 151.21 },
-        coord2: { latitude: -37.81, longitude: 144.96 },
-        expected: 713.377,
-      },
-      {
-        coord1: { latitude: 58.09, longitude: 157.91 },
-        coord2: { latitude: 39.56, longitude: 70.04 },
-        expected: 6253.065,
-      },
-    ];
-
-    cases.forEach(({ coord1, coord2, expected }) => {
-      it(`distance between (${coord1.latitude},${coord1.longitude}) and (${coord2.latitude},${coord2.longitude}) ≈ ${expected} km`, () => {
-        const dist = haversineKm(coord1, coord2);
-        expect(dist).toBeCloseTo(expected, 1);
-      });
-    });
-
-    it("returns 0 km for identical coordinates", () => {
-      const coord = { latitude: 10, longitude: 20 };
-      expect(haversineKm(coord, coord)).toBeCloseTo(0);
-    });
-  });
-
 });
 
 describe("Mocked API and error testing", () => {
@@ -116,7 +82,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining("New%20Brighton%20Pier"),
         expect.objectContaining({
-          headers: { "User-Agent": "MyTravelApp/1.0" },
+          headers: { "User-Agent": "DriveZero/1.0" },
           timeout: 10000,
         })
       );
@@ -205,7 +171,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining("Test%20Address&limit=2"),
         expect.objectContaining({
-          headers: { "User-Agent": "MyTravelApp/1.0" },
+          headers: { "User-Agent": "DriveZero/1.0" },
           timeout: 10000,
         })
       );
@@ -224,14 +190,6 @@ describe("Mocked API and error testing", () => {
 
       await expect(geocodeMultiAddress("Null Address", 1)).rejects.toThrow(
         'Address not found: "Null Address"'
-      );
-    });
-
-    it("throws an error if API returns non-array data", async () => {
-      mockedAxios.get.mockResolvedValueOnce({ data: { something: "invalid" } });
-
-      await expect(geocodeMultiAddress("Invalid Data", 1)).rejects.toThrow(
-        "API return not an array"
       );
     });
 
@@ -274,7 +232,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining("/reverse"),
         expect.objectContaining({
-          headers: expect.objectContaining({ "User-Agent": "MyTravelApp/1.0" }),
+          headers: expect.objectContaining({ "User-Agent": "DriveZero/1.0" }),
           timeout: 10000,
         })
       );
@@ -292,14 +250,14 @@ describe("Mocked API and error testing", () => {
       mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
-        "Failed to reverse geocode coordinates: Network error"
+        "Failed to reverse geocode coordinates: 0 0 - Network error"
       );
     });
   });
 
   });
 
-  describe("queryOsrm", () => {
+  describe("queryRoute", () => {
     it("returns mocked OSRM route with route", async () => {
       // Arrange: mock axios.get to return a fake OSRM response
       mockedAxios.get.mockResolvedValue({
@@ -316,7 +274,7 @@ describe("Mocked API and error testing", () => {
       const end = { latitude: -45.021, longitude: 168.738 };
 
       // Act
-      const result = await queryOsrm(start, end, OsrmOverview.FULL);
+      const result = await queryRoute(start, end);
 
       // Assert
       expect(result.distance_km).toBe(0);
@@ -325,34 +283,9 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full`));
       expect(result.route).toEqual([[-3.54411, 0]]);
     });
-
-    it("returns mocked OSRM route without route", async () => {
-      // Arrange: mock axios.get to return a fake OSRM response
-      mockedAxios.get.mockResolvedValue({
-        data: {
-          routes: [{ distance: 0, duration: 0 }], // distance in meters, duration in seconds
-        },
-        status: 200,
-        statusText: "OK",
-        headers: {},
-        config: {},
-      });
-
-      const start = { latitude: -43.531, longitude: 172.655 };
-      const end = { latitude: -45.021, longitude: 168.738 };
-
-      // Act
-      const result = await queryOsrm(start, end, OsrmOverview.FALSE);
-
-      // Assert
-      expect(result.distance_km).toBe(0);
-      expect(result.duration_min).toBe(0);
-      expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false`));
-    });
   });
 
-  describe("getOsrmRoute", () => {
+  describe("getRoute", () => {
     it("uses mocked functions with route", async () => {
       // Mocked geocodeAddress
       const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
@@ -366,8 +299,8 @@ describe("Mocked API and error testing", () => {
         }
       };
 
-      // Mocked queryOsrm that includes route
-      const mockQueryOsrm: queryOsrmFn = async () => ({
+      // Mocked queryRoute that includes route
+      const mockqueryRoute: queryRouteFn = async () => ({
         distance_km: 486.4,
         duration_min: 364,
         route: [
@@ -376,14 +309,13 @@ describe("Mocked API and error testing", () => {
         ],
       });
 
-      const result = await getOsrmRoute(
+      const result = await getRoute(
         "New Brighton Pier, Christchurch, Canterbury",
         "Queenstown Airport, Queenstown, Otago",
         {
           geocodeAddress: mockGeocodeAddress,
-          queryOsrm: mockQueryOsrm,
-        },
-        OsrmOverview.FULL
+          queryRoute: mockqueryRoute,
+        }
       );
 
       expect(result.distance_km).toBe(486.4);
@@ -394,39 +326,6 @@ describe("Mocked API and error testing", () => {
       ]);
     });
 
-
-    it("uses mocked functions without route", async () => {
-      // Mocked geocodeAddress
-      const mockGeocodeAddress: geocodeAddressFn = async (address: string) => {
-        switch (address) {
-          case "New Brighton Pier, Christchurch, Canterbury":
-            return { latitude: -43.531, longitude: 172.655 };
-          case "Queenstown Airport, Queenstown, Otago":
-            return { latitude: -45.021, longitude: 168.738 };
-          default:
-            return { latitude: -43.5321, longitude: 172.6362 };
-        }
-      };
-
-      // Mocked queryOsrm
-      const mockQueryOsrm: queryOsrmFn = async () => ({
-        distance_km: 486.4,
-        duration_min: 364,
-      });
-
-      const result = await getOsrmRoute(
-        "New Brighton Pier, Christchurch, Canterbury",
-        "Queenstown Airport, Queenstown, Otago",
-        {
-          geocodeAddress: mockGeocodeAddress,
-          queryOsrm: mockQueryOsrm,
-        },
-        OsrmOverview.FALSE
-      );
-
-      expect(result.distance_km).toBe(486.4);
-      expect(result.duration_min).toBe(364);
-    });
   });
 
 })

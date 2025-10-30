@@ -1,33 +1,60 @@
 # ============================
-# Stage 1: Builder
+# Stage 1: Base builder
 # ============================
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-# Install bash/git/curl (optional)
 RUN apk add --no-cache bash git curl git-lfs dos2unix
 
-# Copy package.json first (leverage Docker cache)
-COPY package.json ./
-COPY package-lock.json ./
+COPY package*.json ./
+RUN npm ci
 
-# Install dependencies inside container
+COPY ./src ./src
+COPY tsconfig.json ./
+COPY jest.config.js ./
+COPY ./tests ./tests
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+
+# Build the app for production
+RUN npm run build
+
+# ============================
+# Stage 2: Development
+# ============================
+FROM node:22-alpine AS development
+WORKDIR /app
+RUN apk add --no-cache bash git curl git-lfs dos2unix
+
+COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY package*.json ./
 RUN npm install
 
-# Copy source code
 COPY ./src ./src
 COPY tsconfig.json ./
 
-# Copy tests for CI
-COPY jest.config.js ./
-COPY ./tests ./tests
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["npm", "run", "dev"]
 
-# Copy entrypoint script
-COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN dos2unix /usr/local/bin/entrypoint.sh && \
-    chmod +x /usr/local/bin/entrypoint.sh
+# ============================
+# Stage 3: Production
+# ============================
+FROM node:22-alpine AS production
+WORKDIR /app
+RUN apk add --no-cache bash curl
+
+ENV NODE_ENV=production
+
+# Copy only necessary files
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy compiled code from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Default command for dev
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/api/server.js"]
