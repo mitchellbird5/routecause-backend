@@ -10,50 +10,12 @@ import {
   AddressCoordinates,
   convertMinutesFn, 
   getRouteFn,
-  reverseGeocodeFn
+  reverseGeocodeFn,
+  RateLimiter
 } from "./distance.types";
 import axios from "axios";
 import polyline from "@mapbox/polyline";
-
-/**
- * Geocode an address using OpenStreetMap Nominatim API
- * openstreetmap.org/copyright
- */
-const geocodeAddressLocal: geocodeAddressFn = async (
-  address: string
-): Promise<Coordinates> => {
-  // Use NOMINATIM_URL from environment, default to public API if not set
-  const baseUrl = process.env.GEOCODE_URL!;
-  if (!baseUrl)
-    throw new Error("GEOCODE_URL not defined in production environment");
-
-  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}`;
-
-  let response;
-  try {
-    response = await axios.get(url, {
-      headers: { "User-Agent": "DriveZero/1.0" },
-      timeout: 10000, // 10s timeout
-    });
-    console.log("Geocode response:", response.data);
-  } catch (err) {
-    console.error("Geocode request failed:", err);
-    if (axios.isAxiosError(err)) {
-      console.error("Axios error config:", err.config);
-      console.error("Axios response:", err.response?.status, err.response?.data);
-    }
-    throw new Error(`Failed to geocode address "${address}": ${(err as Error).message}`);
-  }
-
-  if (!response.data || response.data.length === 0) {
-    throw new Error(`Address not found: "${address}"`);
-  }
-
-  return {
-    latitude: response.data[0].lat,
-    longitude: response.data[0].lon,
-  };
-}
+import { response } from "express";
 
 function getOrsApiKey() {
   const apiKey = process.env.ORS_API_KEY;
@@ -69,22 +31,9 @@ function getGeocodeBaseUrl(){
   return baseUrl
 }
 
-const geocodeAddressORS: geocodeAddressFn = async (
-  address: string
-): Promise<Coordinates> => {
-
-  let minuteCalls: number[] = [];
-  let dailyCalls: number[] = [];
-
-  const now = Date.now();
-
-  const apiKey = getOrsApiKey();
-  const baseUrl = getGeocodeBaseUrl();
-  
-
-  const url = `${baseUrl}/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&size=1`;
-  
+async function callGeocodeApi(url: string, address: string) {
   let response;
+
   try {
     response = await axios.get(url, {
       headers: { "User-Agent": "DriveZero/1.0" },
@@ -93,16 +42,50 @@ const geocodeAddressORS: geocodeAddressFn = async (
     console.log("Geocode response:", response.data);
   } catch (err) {
     console.error("Geocode request failed:", err);
+
     if (axios.isAxiosError(err)) {
       console.error("Axios error config:", err.config);
       console.error("Axios response:", err.response?.status, err.response?.data);
     }
+
     throw new Error(`Failed to geocode address "${address}": ${(err as Error).message}`);
   }
 
-  if (!response.data || response.data.length === 0) {
+  if (!response.data || !response.data.features || response.data.features.length === 0) {
     throw new Error(`Address not found: "${address}"`);
   }
+
+  return response;
+}
+
+/**
+ * Geocode an address using OpenStreetMap Nominatim API
+ * openstreetmap.org/copyright
+ */
+const geocodeAddressLocal: geocodeAddressFn = async (
+  address: string
+): Promise<Coordinates> => {
+  const baseUrl = getGeocodeBaseUrl();
+  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}`;
+  const response = await callGeocodeApi(url, address);
+  return {
+    latitude: response.data[0].lat,
+    longitude: response.data[0].lon,
+  };
+}
+
+const orsRateLimiter = new RateLimiter(100, 1000);
+const geocodeAddressORS: geocodeAddressFn = async (
+  address: string
+): Promise<Coordinates> => {
+
+  orsRateLimiter.consume();
+  
+  const apiKey = getOrsApiKey();
+  const baseUrl = getGeocodeBaseUrl();
+  const url = `${baseUrl}/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&size=1`;
+  
+  const response = await callGeocodeApi(url, address);
 
   const coords = response.data.features[0].geometry.coordinates;
   return { longitude: coords[0], latitude: coords[1] };
