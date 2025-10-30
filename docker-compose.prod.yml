@@ -1,7 +1,7 @@
 services:
-  mytravelapp-backend:
-    container_name: mytravelapp-backend
-    image: mytravelapp/backend:latest
+  drivezero-backend:
+    container_name: drivezero-backend
+    image: drivezero/backend:latest
     build:
       context: .
       target: production
@@ -23,8 +23,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
 
     networks:
-      - mytravelapp-network
+      - drivezero-network
+
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
 networks:
-  mytravelapp-network:
+  drivezero-network:
     external: true

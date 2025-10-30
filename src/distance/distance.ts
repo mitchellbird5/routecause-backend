@@ -32,7 +32,7 @@ const geocodeAddressLocal: geocodeAddressFn = async (
   let response;
   try {
     response = await axios.get(url, {
-      headers: { "User-Agent": "MyTravelApp/1.0" },
+      headers: { "User-Agent": "DriveZero/1.0" },
       timeout: 10000, // 10s timeout
     });
     console.log("Geocode response:", response.data);
@@ -55,24 +55,39 @@ const geocodeAddressLocal: geocodeAddressFn = async (
   };
 }
 
+function getOrsApiKey() {
+  const apiKey = process.env.ORS_API_KEY;
+  if (!apiKey)
+    throw new Error("ORS_API_KEY not defined in production environment");
+  return apiKey
+};
+
+function getGeocodeBaseUrl(){
+  const baseUrl = process.env.GEOCODE_URL!;
+  if (!baseUrl)
+    throw new Error("GEOCODE_URL not defined in production environment");
+  return baseUrl
+}
+
 const geocodeAddressORS: geocodeAddressFn = async (
   address: string
 ): Promise<Coordinates> => {
 
-  const apiKey = process.env.ORS_API_KEY;
-  if (!apiKey)
-    throw new Error("ORS_API_KEY not defined in production environment");
+  let minuteCalls: number[] = [];
+  let dailyCalls: number[] = [];
 
-  const baseUrl = process.env.GEOCODE_URL!;
-  if (!baseUrl)
-    throw new Error("GEOCODE_URL not defined in production environment");
+  const now = Date.now();
+
+  const apiKey = getOrsApiKey();
+  const baseUrl = getGeocodeBaseUrl();
+  
 
   const url = `${baseUrl}/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&size=1`;
   
   let response;
   try {
     response = await axios.get(url, {
-      headers: { "User-Agent": "MyTravelApp/1.0" },
+      headers: { "User-Agent": "DriveZero/1.0" },
       timeout: 10000, // 10s timeout
     });
     console.log("Geocode response:", response.data);
@@ -122,7 +137,7 @@ const geocodeMultiLocal: geocodeMultiAddressFn = async (
   const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}&limit=${limit}`;
 
   const response = await axios.get(url, {
-    headers: { "User-Agent": "MyTravelApp/1.0" },
+    headers: { "User-Agent": "DriveZero/1.0" },
     timeout: 10000,
   });
 
@@ -158,7 +173,7 @@ const geocodeMultiORS: geocodeMultiAddressFn = async (
   )}&size=${limit}`;
 
   const response = await axios.get(url, {
-    headers: { "User-Agent": "MyTravelApp/1.0" },
+    headers: { "User-Agent": "DriveZero/1.0" },
     timeout: 10000,
   });
 
@@ -210,7 +225,7 @@ const reverseGeocodeLocal: reverseGeocodeFn = async (
   const url = `${baseUrl}/reverse?format=json&lat=${latitude}&lon=${longitude}`;
 
   const response = await axios.get(url, {
-    headers: { "User-Agent": "MyTravelApp/1.0" },
+    headers: { "User-Agent": "DriveZero/1.0" },
     timeout: 10000,
   });
 
@@ -242,7 +257,7 @@ const reverseGeocodeORS: reverseGeocodeFn = async (
   const url = `${baseUrl}/reverse?api_key=${apiKey}&point.lat=${latitude}&point.lon=${longitude}`;
 
   const response = await axios.get(url, {
-    headers: { "User-Agent": "MyTravelApp/1.0" },
+    headers: { "User-Agent": "DriveZero/1.0" },
     timeout: 10000,
   });
 
@@ -336,7 +351,7 @@ export const queryRouteORS: queryRouteFn = async (
   const response = await axios.get(url, {
     params,
     timeout: 10000,
-    headers: { "User-Agent": "MyTravelApp/1.0" },
+    headers: { "User-Agent": "DriveZero/1.0" },
   });
 
   if (!response.data?.routes?.length) {

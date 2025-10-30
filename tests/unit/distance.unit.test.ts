@@ -115,7 +115,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining("New%20Brighton%20Pier"),
         expect.objectContaining({
-          headers: { "User-Agent": "MyTravelApp/1.0" },
+          headers: { "User-Agent": "DriveZero/1.0" },
           timeout: 10000,
         })
       );
@@ -204,7 +204,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining("Test%20Address&limit=2"),
         expect.objectContaining({
-          headers: { "User-Agent": "MyTravelApp/1.0" },
+          headers: { "User-Agent": "DriveZero/1.0" },
           timeout: 10000,
         })
       );
@@ -265,7 +265,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining("/reverse"),
         expect.objectContaining({
-          headers: expect.objectContaining({ "User-Agent": "MyTravelApp/1.0" }),
+          headers: expect.objectContaining({ "User-Agent": "DriveZero/1.0" }),
           timeout: 10000,
         })
       );

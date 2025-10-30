@@ -1,7 +1,7 @@
 services:
-  mytravelapp-backend-dev:
-    container_name: mytravelapp-backend-dev
-    image: mytravelapp/backend-dev:latest
+  drivezero-backend-dev:
+    container_name: drivezero-backend-dev
+    image: drivezero/backend-dev:latest
     build:
       context: .
       target: development
@@ -25,7 +25,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     networks:
-      - mytravelapp-network
+      - drivezero-network
 
   osrm:
     image: osrm/osrm-backend:latest
@@ -34,7 +34,7 @@ services:
       - osrm-data:/data/osrm
     command: osrm-routed --algorithm mld /data/osrm/new-zealand-latest.osrm
     networks:
-      - mytravelapp-network
+      - drivezero-network
 
   nominatim:
     image: mediagis/nominatim:5.1
@@ -45,17 +45,17 @@ services:
       PBF_PATH: /var/lib/postgresql/16/main/new-zealand-latest.osm.pbf
       IMPORT: "0"
     networks:
-      - mytravelapp-network
+      - drivezero-network
 
 volumes:
   osrm-data:
     external: true
-    name: mytravelapp_osrm-data
+    name: drivezero_osrm-data
   nominatim-data:
     external: true
-    name: mytravelapp_nominatim-data
+    name: drivezero_nominatim-data
   node_modules:
 
 networks:
-  mytravelapp-network:
+  drivezero-network:
     external: true
