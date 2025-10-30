@@ -1,7 +1,8 @@
 import request from "supertest";
 import express from "express";
 import { router as apiRouter } from "../../src/api/routes";
-import * as distanceModule from "../../src/distance/distance";
+import * as geocodeSearchModule from "../../src/route/geocodeSearch";
+import * as routeModule from "../../src/route/route";
 import * as vehicleData from "../../src/vehicle/vehicle";
 import { VehicleData as VehicleDataType } from "../../src/vehicle/vehicle.types"
 
@@ -13,7 +14,7 @@ describe("/trip API Route (mocked external APIs)", () => {
 
   beforeAll(() => {
     // Mock geocodeAddress and queryRoute
-    jest.spyOn(distanceModule, "geocodeAddress").mockImplementation(async (address: string) => {
+    jest.spyOn(geocodeSearchModule, "geocodeAddress").mockImplementation(async (address: string) => {
       switch (address) {
         case "Christchurch":
           return { latitude: -43.5321, longitude: 172.6362 };
@@ -24,7 +25,7 @@ describe("/trip API Route (mocked external APIs)", () => {
       }
     });
 
-    jest.spyOn(distanceModule, "queryRoute").mockImplementation(async () => {
+    jest.spyOn(routeModule, "queryRoute").mockImplementation(async () => {
       return { distance_km: 486.4, duration_min: 364 };
     });
 

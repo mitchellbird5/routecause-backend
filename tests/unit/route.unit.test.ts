@@ -1,17 +1,24 @@
 import axios from "axios";
+// import { 
+//   convertMinutes,
+//   getRoute,
+//   geocodeAddress,
+//   geocodeMultiAddress,
+//   queryRoute,
+//   reverseGeocodeCoordinates
+// } from "../../src/distance/distance";
+import { convertMinutes } from "../../src/route/duration";
 import { 
-  convertMinutes,
-  haversineKm,
-  getRoute,
-  geocodeAddress,
-  geocodeMultiAddress,
-  queryRoute,
-  reverseGeocodeCoordinates
-} from "../../src/distance/distance";
+  getRoute, 
+  queryRoute 
+} from "../../src/route/route";
+import { geocodeAddress } from "../../src/route/geocodeSearch";
+import { geocodeMultiAddress } from "../../src/route/geocodeMultiSearch";
+import { reverseGeocodeCoordinates } from "../../src/route/reverseGeocode";
 import { 
   geocodeAddressFn, 
   queryRouteFn 
-} from "../../src/distance/distance.types";
+} from "../../src/route/route.types";
 
 jest.mock("axios"); // Mock the entire axios module
   const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -43,46 +50,6 @@ describe("Logic testing", () => {
 
     it("should throw an error if totalMinutes is negative", () => {
       expect(() => convertMinutes(-5)).toThrowError("totalMinutes cannot be negative");
-    });
-  });
-
-  // ----------------------
-  // haversineKm
-  // ----------------------
-  describe("haversineKm", () => {
-    const cases = [
-      {
-        coord1: { latitude: 34.05, longitude: -118.24 },
-        coord2: { latitude: 40.71, longitude: -74.0 },
-        expected: 3936.06,
-      },
-      {
-        coord1: { latitude: 51.51, longitude: -0.13 },
-        coord2: { latitude: 48.85, longitude: 2.35 },
-        expected: 344.438,
-      },
-      {
-        coord1: { latitude: -33.87, longitude: 151.21 },
-        coord2: { latitude: -37.81, longitude: 144.96 },
-        expected: 713.377,
-      },
-      {
-        coord1: { latitude: 58.09, longitude: 157.91 },
-        coord2: { latitude: 39.56, longitude: 70.04 },
-        expected: 6253.065,
-      },
-    ];
-
-    cases.forEach(({ coord1, coord2, expected }) => {
-      it(`distance between (${coord1.latitude},${coord1.longitude}) and (${coord2.latitude},${coord2.longitude}) ≈ ${expected} km`, () => {
-        const dist = haversineKm(coord1, coord2);
-        expect(dist).toBeCloseTo(expected, 1);
-      });
-    });
-
-    it("returns 0 km for identical coordinates", () => {
-      const coord = { latitude: 10, longitude: 20 };
-      expect(haversineKm(coord, coord)).toBeCloseTo(0);
     });
   });
 

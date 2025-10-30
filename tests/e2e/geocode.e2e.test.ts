@@ -1,7 +1,7 @@
 import request from "supertest";
 import express from "express";
 import { router as apiRouter } from "../../src/api/routes";
-import { Coordinates } from "../../src/distance/distance.types";
+import { Coordinates } from "../../src/route/route.types";
 
 const app = express();
 app.use(express.json());

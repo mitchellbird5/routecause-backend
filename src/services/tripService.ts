@@ -8,10 +8,9 @@ import {
 } from "../trip/trip";
 import {
   getRoute,
-  geocodeAddress,
-  convertMinutes,
   queryRoute
-} from "../distance/distance";
+} from "../route/route";
+import { geocodeAddress } from "../route/geocodeSearch";
 
 interface TripRequestBody {
   vehicle_id: number;
@@ -42,7 +41,6 @@ export async function getTripService(body: TripRequestBody) {
     vehicle,
     {
       getRoute,
-      convertMinutes,
       geocodeAddress,
       queryRoute,
     }

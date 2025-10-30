@@ -1,4 +1,4 @@
-import { RouteCoordinates } from "../distance/distance.types";
+import { RouteCoordinates } from "../route/route.types";
 
 export interface TripResult {
     distance_km: number;

@@ -1,5 +1,6 @@
 import { calculateTrip, calculateMultiStopTrip } from "../../src/trip/trip";
 import { VehicleData } from "../../src/vehicle/vehicle.types";
+import * as timeUtils from "../../src/route/duration";
 
 describe("Logic testing", () => {
 
@@ -12,11 +13,6 @@ describe("Logic testing", () => {
         distance_km: 200,    // 200 km trip
         duration_min: 130,   // 2 hours 10 minutes
       });
-
-      const mockConvertMinutes = jest.fn().mockImplementation((minutes: number) => ({
-        hours: Math.floor(minutes / 60),
-        minutes: minutes % 60,
-      }));
 
       const mockGeocodeAddress = jest.fn();
       const mockqueryRoute = jest.fn();
@@ -48,7 +44,6 @@ describe("Logic testing", () => {
         vehicleData,
         {
           getRoute: mockGetRoute,
-          convertMinutes: mockConvertMinutes,
           geocodeAddress: mockGeocodeAddress,
           queryRoute: mockqueryRoute,
         }
@@ -65,8 +60,6 @@ describe("Logic testing", () => {
           queryRoute: mockqueryRoute,
         }
       );
-
-      expect(mockConvertMinutes).toHaveBeenCalledWith(130);
 
       // Distance
       expect(result.distance_km).toBe(200);
@@ -94,13 +87,9 @@ describe("Logic testing", () => {
         .mockResolvedValueOnce({ distance_km: 150, duration_min: 90 }) // Stop1 → Stop2
         .mockResolvedValueOnce({ distance_km: 75, duration_min: 45 }); // Stop2 → End
 
-      const mockConvertMinutes = jest.fn().mockImplementation((minutes: number) => ({
-        hours: Math.floor(minutes / 60),
-        minutes: minutes % 60,
-      }));
-
       const mockGeocodeAddress = jest.fn();
       const mockqueryRoute = jest.fn();
+      jest.spyOn(timeUtils, "convertMinutes");
 
       const vehicleData: VehicleData = {
         make: "Toyota",
@@ -122,7 +111,6 @@ describe("Logic testing", () => {
         vehicleData,
         {
           getRoute: mockGetRoute,
-          convertMinutes: mockConvertMinutes,
           geocodeAddress: mockGeocodeAddress,
           queryRoute: mockqueryRoute,
         }
@@ -143,10 +131,10 @@ describe("Logic testing", () => {
 
       expect(result).toHaveProperty("route")
 
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(1, 60);
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(2, 90);
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(3, 45);
-      expect(mockConvertMinutes).toHaveBeenNthCalledWith(4, 195);
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(1, 60);
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(2, 90);
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(3, 45);
+      expect(timeUtils.convertMinutes).toHaveBeenNthCalledWith(4, 195);
 
     });
   });

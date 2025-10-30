@@ -2,11 +2,11 @@ import { VehicleData } from "../vehicle/vehicle.types";
 import { TripResult } from "./trip.types";
 import { 
   queryRouteFn, 
-  convertMinutesFn, 
   getRouteFn, 
   geocodeAddressFn,
   RouteCoordinates
-} from "../distance/distance.types";
+} from "../route/route.types";
+import { convertMinutes } from "../route/duration";
 
 /**
  * Convert TripResult to JSON (for API responses)
@@ -24,7 +24,6 @@ export function tripResultToJson(trip: TripResult) {
 
 export interface TripDependencies {
     getRoute: getRouteFn;
-    convertMinutes: convertMinutesFn;
     geocodeAddress: geocodeAddressFn;
     queryRoute: queryRouteFn;
 }
@@ -38,7 +37,7 @@ export async function calculateTrip(
     vehicle_data: VehicleData,
     deps: TripDependencies,
 ): Promise<TripResult> {
-    const { getRoute, convertMinutes, geocodeAddress, queryRoute } = deps;
+    const { getRoute, geocodeAddress, queryRoute } = deps;
 
     const result = await getRoute(
       start_address,
@@ -100,7 +99,7 @@ export async function calculateMultiStopTrip(
     }
   }
 
-  const dur = deps.convertMinutes(totalMinutes);
+  const dur = convertMinutes(totalMinutes);
 
   return {
     distance_km: totalDistance,
