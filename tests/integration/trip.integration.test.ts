@@ -169,10 +169,7 @@ describe("/trip API Route (mocked external APIs)", () => {
         "RATE_LIMIT_EXCEEDED_MINUTE",
         429,
         "minute",
-        0,
-        15000,
-        995,
-        43200000
+        3000
       )
     );
 
@@ -184,12 +181,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(res.body).toEqual({
       error: "RATE_LIMIT_EXCEEDED_MINUTE",
       limitFreq: "minute",
-      rateLimit: {
-        minuteRemaining: 0,
-        minuteResetMs: 15000,
-        dailyRemaining: 995,
-        dailyResetMs: 43200000,
-      },
+      timeToResetMs: 3000
     });
   });
 
@@ -199,10 +191,7 @@ describe("/trip API Route (mocked external APIs)", () => {
         "RATE_LIMIT_EXCEEDED_DAILY",
         429,
         "daily",
-        3,
-        10000,
-        0,
-        3600000
+        50000
       )
     );
 
@@ -214,12 +203,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(res.body).toEqual({
       error: "RATE_LIMIT_EXCEEDED_DAILY",
       limitFreq: "daily",
-      rateLimit: {
-        minuteRemaining: 3,
-        minuteResetMs: 10000,
-        dailyRemaining: 0,
-        dailyResetMs: 3600000,
-      },
+      timeToResetMs: 50000
     });
   });
 

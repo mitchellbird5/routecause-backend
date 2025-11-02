@@ -46,10 +46,7 @@ export class orsRateLimiter {
         "RATE_LIMIT_EXCEEDED_MINUTE",
         429,
         "minute",
-        status.minuteRemaining,
         status.minuteResetMs,
-        status.dailyRemaining,
-        status.dailyResetMs
       );
     }
 
@@ -59,9 +56,6 @@ export class orsRateLimiter {
         "RATE_LIMIT_EXCEEDED_DAILY",
         429,
         "daily",
-        status.minuteRemaining,
-        status.minuteResetMs,
-        status.dailyRemaining,
         status.dailyResetMs
       );
     }
@@ -102,26 +96,18 @@ export class orsRateLimiter {
 export class OrsRateLimitExceededError extends Error {
   status: number;
   limitFreq: "minute" | "daily";
-  minuteRemaining: number;
-  minuteResetMs: number;
-  dailyRemaining: number;
-  dailyResetMs: number;
+  timeToResetMs: number;
 
   constructor(
     message: string,
     status: number,
     limitFreq: "minute" | "daily",
-    minuteRemaining: number,
-    minuteResetMs: number,
-    dailyRemaining: number,
-    dailyResetMs: number
+    timeToResetMs: number,
+
   ) {
     super(message);
     this.status = status;
     this.limitFreq = limitFreq;
-    this.minuteRemaining = minuteRemaining;
-    this.minuteResetMs = minuteResetMs;
-    this.dailyRemaining = dailyRemaining;
-    this.dailyResetMs = dailyResetMs;
+    this.timeToResetMs = timeToResetMs;
   }
 }

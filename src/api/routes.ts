@@ -36,12 +36,7 @@ router.post("/trip", async (req: Request, res: Response) => {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
-        rateLimit: {
-          minuteRemaining: err.minuteRemaining,
-          minuteResetMs: err.minuteResetMs,
-          dailyRemaining: err.dailyRemaining,
-          dailyResetMs: err.dailyResetMs
-        }
+        timeToResetMs: err.timeToResetMs
       });
     }
 
@@ -71,12 +66,7 @@ router.get("/reverse-geocode", async (req: Request, res: Response) => {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
-        rateLimit: {
-          minuteRemaining: err.minuteRemaining,
-          minuteResetMs: err.minuteResetMs,
-          dailyRemaining: err.dailyRemaining,
-          dailyResetMs: err.dailyResetMs
-        }
+        timeToResetMs: err.timeToResetMs
       });
     }
 
@@ -105,12 +95,7 @@ router.get("/geocode", async (req: Request, res: Response) => {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
-        rateLimit: {
-          minuteRemaining: err.minuteRemaining,
-          minuteResetMs: err.minuteResetMs,
-          dailyRemaining: err.dailyRemaining,
-          dailyResetMs: err.dailyResetMs
-        }
+        timeToResetMs: err.timeToResetMs
       });
     }
 
@@ -140,12 +125,7 @@ router.get("/geocode-multi", async (req: Request, res: Response) => {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
-        rateLimit: {
-          minuteRemaining: err.minuteRemaining,
-          minuteResetMs: err.minuteResetMs,
-          dailyRemaining: err.dailyRemaining,
-          dailyResetMs: err.dailyResetMs
-        }
+        timeToResetMs: err.timeToResetMs
       });
     }
 

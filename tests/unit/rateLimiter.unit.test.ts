@@ -32,7 +32,6 @@ describe("orsRateLimiter", () => {
       expect(err).toBeInstanceOf(OrsRateLimitExceededError);
       expect(err.limitFreq).toBe("minute");
       expect(err.status).toBe(429);
-      expect(err.minuteRemaining).toBe(0);
     }
   });
 
@@ -50,7 +49,6 @@ describe("orsRateLimiter", () => {
       expect(err).toBeInstanceOf(OrsRateLimitExceededError);
       expect(err.limitFreq).toBe("daily");
       expect(err.status).toBe(429);
-      expect(err.dailyRemaining).toBe(0);
     }
   });
 
