@@ -2,6 +2,7 @@ import request from "supertest";
 import express from "express";
 import { router as apiRouter } from "../../src/api/routes";
 import * as geocodeService from "../../src/services/geocodeService";
+import { OrsRateLimitExceededError } from "../../src/utils/rateLimiter";
 
 const app = express();
 app.use(express.json());
@@ -38,7 +39,7 @@ describe("/geocode API Route (mocked external APIs)", () => {
 
   it("returns 500 if service throws an error", async () => {
     jest.spyOn(geocodeService, "getGeocodeService").mockRejectedValue(
-      new Error("Service failure")
+      new Error("Internal Server Error")
     );
 
     const res = await request(app)
@@ -46,7 +47,69 @@ describe("/geocode API Route (mocked external APIs)", () => {
       .query({ address: "Fail Address" });
 
     expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty("error", "Service failure");
+    expect(res.body).toHaveProperty("error", "Internal Server Error");
+  });
+
+  it("returns correct response for minute limit exceedance", async () => {
+    // Mock the service to throw minute limit error
+    jest.spyOn(geocodeService, "getGeocodeService").mockRejectedValue(
+      new OrsRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_MINUTE",
+        429,
+        "minute",
+        0,
+        15000, // 15 seconds until next UTC minute
+        995,
+        43200000 // 12 hours until UTC midnight
+      )
+    );
+
+    const res = await request(app)
+      .get("/api/geocode")
+      .query({ address: "Test Address" });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_MINUTE",
+      limit_freq: "minute",
+      rateLimit: {
+        minuteRemaining: 0,
+        minuteResetMs: 15000,
+        dailyRemaining: 995,
+        dailyResetMs: 43200000,
+      },
+    });
+  });
+
+  it("returns correct response for daily limit exceedance", async () => {
+    // Mock the service to throw daily limit error
+    jest.spyOn(geocodeService, "getGeocodeService").mockRejectedValue(
+      new OrsRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_DAILY",
+        429,
+        "daily",
+        3,
+        10000, // 10 seconds until next UTC minute
+        0,
+        3600000 // 1 hour until UTC midnight
+      )
+    );
+
+    const res = await request(app)
+      .get("/api/geocode")
+      .query({ address: "Test Address" });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_DAILY",
+      limit_freq: "daily",
+      rateLimit: {
+        minuteRemaining: 3,
+        minuteResetMs: 10000,
+        dailyRemaining: 0,
+        dailyResetMs: 3600000,
+      },
+    });
   });
 });
 
@@ -97,7 +160,7 @@ describe("/geocode-multi API Route (mocked external APIs)", () => {
 
   it("returns 500 if service throws an error", async () => {
     jest.spyOn(geocodeService, "getGeocodeMultiService").mockRejectedValue(
-      new Error("Service failure")
+      new Error("Internal Server Error")
     );
 
     const res = await request(app)
@@ -105,20 +168,69 @@ describe("/geocode-multi API Route (mocked external APIs)", () => {
       .query({ q: "Fail Query", limit: 2 });
 
     expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty("error", "Service failure");
+    expect(res.body).toHaveProperty("error", "Internal Server Error");
   });
 
-  it("handles invalid limit parameter gracefully", async () => {
+  it("returns correct response for minute limit exceedance", async () => {
+    // Mock the service to throw minute limit error
     jest.spyOn(geocodeService, "getGeocodeMultiService").mockRejectedValue(
-      new Error("Invalid limit")
+      new OrsRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_MINUTE",
+        429,
+        "minute",
+        0,
+        15000, // 15 seconds until next UTC minute
+        995,
+        43200000 // 12 hours until UTC midnight
+      )
     );
 
     const res = await request(app)
       .get("/api/geocode-multi")
-      .query({ q: "Test Query", limit: "abc" });
+      .query({ address: "Test Address", limit: 3 });
 
-    expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty("error", "Invalid limit");
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_MINUTE",
+      limit_freq: "minute",
+      rateLimit: {
+        minuteRemaining: 0,
+        minuteResetMs: 15000,
+        dailyRemaining: 995,
+        dailyResetMs: 43200000,
+      },
+    });
+  });
+
+  it("returns correct response for daily limit exceedance", async () => {
+    // Mock the service to throw daily limit error
+    jest.spyOn(geocodeService, "getGeocodeMultiService").mockRejectedValue(
+      new OrsRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_DAILY",
+        429,
+        "daily",
+        3,
+        10000, // 10 seconds until next UTC minute
+        0,
+        3600000 // 1 hour until UTC midnight
+      )
+    );
+
+    const res = await request(app)
+      .get("/api/geocode-multi")
+      .query({ address: "Test Address", limit: 3 });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_DAILY",
+      limit_freq: "daily",
+      rateLimit: {
+        minuteRemaining: 3,
+        minuteResetMs: 10000,
+        dailyRemaining: 0,
+        dailyResetMs: 3600000,
+      },
+    });
   });
 });
 
@@ -168,7 +280,7 @@ describe("/reverse-geocode API Route (mocked external APIs)", () => {
 
   it("returns 500 if service throws an error", async () => {
     jest.spyOn(geocodeService, "getReverseGeocodeService").mockRejectedValue(
-      new Error("Service failure")
+      new Error("Internal Server Error")
     );
 
     const res = await request(app)
@@ -176,7 +288,7 @@ describe("/reverse-geocode API Route (mocked external APIs)", () => {
       .query({ lat: -43.5321, lon: 172.6362 });
 
     expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty("error", "Service failure");
+    expect(res.body).toHaveProperty("error", "Internal Server Error");
   });
 });
 

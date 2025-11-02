@@ -1,9 +1,9 @@
-import { orsRateLimiter } from "../../src/utils/rateLimiter";
+import { orsRateLimiter, OrsRateLimitExceededError } from "../../src/utils/rateLimiter";
 
 describe("orsRateLimiter", () => {
   beforeEach(() => {
-    jest.useFakeTimers(); // Control time
-    jest.setSystemTime(0); // Start at t=0
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2025-11-02T00:00:00Z").getTime()); // Start at UTC midnight
   });
 
   afterEach(() => {
@@ -13,7 +13,6 @@ describe("orsRateLimiter", () => {
   it("allows calls below limits", () => {
     const limiter = new orsRateLimiter(3, 5);
 
-    // Should not throw until limits exceeded
     expect(() => limiter.consume()).not.toThrow();
     expect(() => limiter.consume()).not.toThrow();
     expect(() => limiter.consume()).not.toThrow();
@@ -25,12 +24,15 @@ describe("orsRateLimiter", () => {
     limiter.consume();
     limiter.consume();
 
-    expect(() => limiter.consume()).toThrowError("RATE_LIMIT_EXCEEDED_MINUTE");
+    expect(() => limiter.consume()).toThrow(OrsRateLimitExceededError);
 
     try {
       limiter.consume();
     } catch (err: any) {
-      expect(err.code).toBe("RATE_LIMIT_EXCEEDED_MINUTE");
+      expect(err).toBeInstanceOf(OrsRateLimitExceededError);
+      expect(err.limit_freq).toBe("minute");
+      expect(err.status).toBe(429);
+      expect(err.minuteRemaining).toBe(0);
     }
   });
 
@@ -40,34 +42,39 @@ describe("orsRateLimiter", () => {
     limiter.consume();
     limiter.consume();
 
-    expect(() => limiter.consume()).toThrowError("RATE_LIMIT_EXCEEDED_DAILY");
+    expect(() => limiter.consume()).toThrow(OrsRateLimitExceededError);
 
     try {
       limiter.consume();
     } catch (err: any) {
-      expect(err.code).toBe("RATE_LIMIT_EXCEEDED_DAILY");
+      expect(err).toBeInstanceOf(OrsRateLimitExceededError);
+      expect(err.limit_freq).toBe("daily");
+      expect(err.status).toBe(429);
+      expect(err.dailyRemaining).toBe(0);
     }
   });
 
-  it("removes old timestamps older than a minute for minuteCalls", () => {
+  it("resets minute window at top of UTC minute", () => {
     const limiter = new orsRateLimiter(2, 10);
 
-    limiter.consume(); // t=0
-    jest.advanceTimersByTime(61_000); // 61 seconds later
-    limiter.consume(); // old timestamp should be removed
+    limiter.consume(); // t=00:00:00
+    limiter.consume(); // hit minute limit
 
-    // Should allow another call because old one expired
+    // Advance to next UTC minute
+    jest.advanceTimersByTime(60_000);
+
     expect(() => limiter.consume()).not.toThrow();
   });
 
-  it("removes old timestamps older than a day for dailyCalls", () => {
+  it("resets daily window at UTC midnight", () => {
     const limiter = new orsRateLimiter(10, 2);
 
-    limiter.consume(); // t=0
-    jest.advanceTimersByTime(24 * 60 * 60 * 1000 + 1000); // just over 24 hours later
-    limiter.consume(); // first call should expire
+    limiter.consume(); // first call
+    limiter.consume(); // hit daily limit
 
-    // Should allow another call because first one was too old
+    // Advance to next UTC day
+    jest.advanceTimersByTime(24 * 60 * 60 * 1000);
+
     expect(() => limiter.consume()).not.toThrow();
   });
 
@@ -76,9 +83,22 @@ describe("orsRateLimiter", () => {
     limiter.consume();
     limiter.consume();
 
-    // @ts-ignore accessing private fields for test
+    // @ts-ignore access private fields for test
     expect(limiter["minuteCalls"].length).toBe(2);
     // @ts-ignore
     expect(limiter["dailyCalls"].length).toBe(2);
+  });
+
+  it("getStatus returns correct remaining calls and reset times", () => {
+    const limiter = new orsRateLimiter(5, 10);
+    limiter.consume();
+    limiter.consume();
+
+    const status = limiter.getStatus();
+
+    expect(status.minuteRemaining).toBe(3);
+    expect(status.dailyRemaining).toBe(8);
+    expect(status.minuteResetMs).toBeGreaterThan(0);
+    expect(status.dailyResetMs).toBeGreaterThan(0);
   });
 });
