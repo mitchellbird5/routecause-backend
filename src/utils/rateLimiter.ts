@@ -101,7 +101,7 @@ export class orsRateLimiter {
 
 export class OrsRateLimitExceededError extends Error {
   status: number;
-  limit_freq: "minute" | "daily";
+  limitFreq: "minute" | "daily";
   minuteRemaining: number;
   minuteResetMs: number;
   dailyRemaining: number;
@@ -110,7 +110,7 @@ export class OrsRateLimitExceededError extends Error {
   constructor(
     message: string,
     status: number,
-    limit_freq: "minute" | "daily",
+    limitFreq: "minute" | "daily",
     minuteRemaining: number,
     minuteResetMs: number,
     dailyRemaining: number,
@@ -118,7 +118,7 @@ export class OrsRateLimitExceededError extends Error {
   ) {
     super(message);
     this.status = status;
-    this.limit_freq = limit_freq;
+    this.limitFreq = limitFreq;
     this.minuteRemaining = minuteRemaining;
     this.minuteResetMs = minuteResetMs;
     this.dailyRemaining = dailyRemaining;

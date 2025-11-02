@@ -183,7 +183,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(res.status).toBe(429);
     expect(res.body).toEqual({
       error: "RATE_LIMIT_EXCEEDED_MINUTE",
-      limit_freq: "minute",
+      limitFreq: "minute",
       rateLimit: {
         minuteRemaining: 0,
         minuteResetMs: 15000,
@@ -213,7 +213,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(res.status).toBe(429);
     expect(res.body).toEqual({
       error: "RATE_LIMIT_EXCEEDED_DAILY",
-      limit_freq: "daily",
+      limitFreq: "daily",
       rateLimit: {
         minuteRemaining: 3,
         minuteResetMs: 10000,

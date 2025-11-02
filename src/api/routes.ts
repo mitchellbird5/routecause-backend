@@ -35,7 +35,7 @@ router.post("/trip", async (req: Request, res: Response) => {
     if (err instanceof OrsRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
-        limit_freq: err.limit_freq,
+        limitFreq: err.limitFreq,
         rateLimit: {
           minuteRemaining: err.minuteRemaining,
           minuteResetMs: err.minuteResetMs,
@@ -70,7 +70,7 @@ router.get("/reverse-geocode", async (req: Request, res: Response) => {
     if (err instanceof OrsRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
-        limit_freq: err.limit_freq,
+        limitFreq: err.limitFreq,
         rateLimit: {
           minuteRemaining: err.minuteRemaining,
           minuteResetMs: err.minuteResetMs,
@@ -104,7 +104,7 @@ router.get("/geocode", async (req: Request, res: Response) => {
     if (err instanceof OrsRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
-        limit_freq: err.limit_freq,
+        limitFreq: err.limitFreq,
         rateLimit: {
           minuteRemaining: err.minuteRemaining,
           minuteResetMs: err.minuteResetMs,
@@ -139,7 +139,7 @@ router.get("/geocode-multi", async (req: Request, res: Response) => {
     if (err instanceof OrsRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
-        limit_freq: err.limit_freq,
+        limitFreq: err.limitFreq,
         rateLimit: {
           minuteRemaining: err.minuteRemaining,
           minuteResetMs: err.minuteResetMs,
