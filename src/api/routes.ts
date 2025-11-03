@@ -3,6 +3,7 @@ import { getVehiclesService } from "../services/vehicleService";
 import { getTripService } from "../services/tripService";
 import { getGeocodeService, getGeocodeMultiService, getReverseGeocodeService } from "../services/geocodeService";
 import { getEmissionsService } from "../services/emissionsService";
+import { OrsRateLimitExceededError } from "../utils/rateLimiter";
 
 export const router = Router();
 
@@ -30,9 +31,23 @@ router.post("/trip", async (req: Request, res: Response) => {
   try {
     const trip = await getTripService(req.body);
     res.status(200).json(trip);
-  } catch (err) {
-    const status = (err as any).status || 500;
-    res.status(status).json({ error: (err as Error).message || (err as any).message });
+  } catch (err: any) {
+    if (err instanceof OrsRateLimitExceededError) {
+      return res.status(429).json({
+        error: err.message,
+        limitFreq: err.limitFreq,
+        timeToResetMs: err.timeToResetMs
+      });
+    }
+
+    // Handle other errors with a status code
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+
+    // Unexpected errors
+    console.error("Unexpected error in /trip:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -46,9 +61,23 @@ router.get("/reverse-geocode", async (req: Request, res: Response) => {
   try {
     const address = await getReverseGeocodeService(lat, lon);
     res.status(200).json({ address });
-  } catch (err) {
-    const status = (err as any).status || 500;
-    res.status(status).json({ error: (err as Error).message || (err as any).message });
+  } catch (err: any) {
+    if (err instanceof OrsRateLimitExceededError) {
+      return res.status(429).json({
+        error: err.message,
+        limitFreq: err.limitFreq,
+        timeToResetMs: err.timeToResetMs
+      });
+    }
+
+    // Handle other errors with a status code
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+
+    // Unexpected errors
+    console.error("Unexpected error in /reverse-geocode:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -61,9 +90,23 @@ router.get("/geocode", async (req: Request, res: Response) => {
   try {
     const coords = await getGeocodeService(address);
     res.status(200).json(coords);
-  } catch (err) {
-    const status = (err as any).status || 500;
-    res.status(status).json({ error: (err as Error).message || (err as any).message });
+  } catch (err: any)  {
+    if (err instanceof OrsRateLimitExceededError) {
+      return res.status(429).json({
+        error: err.message,
+        limitFreq: err.limitFreq,
+        timeToResetMs: err.timeToResetMs
+      });
+    }
+
+    // Handle other errors with a status code
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+
+    // Unexpected errors
+    console.error("Unexpected error in /geocode:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -77,9 +120,23 @@ router.get("/geocode-multi", async (req: Request, res: Response) => {
   try {
     const suggestions = await getGeocodeMultiService(address, limit);
     res.status(200).json(suggestions);
-  } catch (err) {
-    const status = (err as any).status || 500;
-    res.status(status).json({ error: (err as Error).message || (err as any).message });
+  } catch (err: any) {
+    if (err instanceof OrsRateLimitExceededError) {
+      return res.status(429).json({
+        error: err.message,
+        limitFreq: err.limitFreq,
+        timeToResetMs: err.timeToResetMs
+      });
+    }
+
+    // Handle other errors with a status code
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+
+    // Unexpected errors
+    console.error("Unexpected error in /geocode-multi:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

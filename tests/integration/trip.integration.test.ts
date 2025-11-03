@@ -5,6 +5,8 @@ import * as geocodeSearchModule from "../../src/route/geocodeSearch";
 import * as routeModule from "../../src/route/route";
 import * as vehicleData from "../../src/vehicle/vehicle";
 import { VehicleData as VehicleDataType } from "../../src/vehicle/vehicle.types"
+import * as tripService from "../../src/services/tripService";
+import { OrsRateLimitExceededError } from "../../src/utils/rateLimiter";
 
 const app = express();
 app.use(express.json());
@@ -147,5 +149,62 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty("error", "Vehicle not found");
     });
+
+    it("returns 500 for unexpected errors", async () => {
+    jest.spyOn(tripService, "getTripService").mockRejectedValue(
+      new Error("Unexpected failure")
+    );
+
+    const res = await request(app)
+      .post("/api/trip")
+      .send({ start: "A", end: "B" });
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: "Internal Server Error" });
+  });
+
+  it("returns correct response for minute limit exceedance", async () => {
+    jest.spyOn(tripService, "getTripService").mockRejectedValue(
+      new OrsRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_MINUTE",
+        429,
+        "minute",
+        3000
+      )
+    );
+
+    const res = await request(app)
+      .post("/api/trip")
+      .send({ start: "A", end: "B" });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_MINUTE",
+      limitFreq: "minute",
+      timeToResetMs: 3000
+    });
+  });
+
+  it("returns correct response for daily limit exceedance", async () => {
+    jest.spyOn(tripService, "getTripService").mockRejectedValue(
+      new OrsRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_DAILY",
+        429,
+        "daily",
+        50000
+      )
+    );
+
+    const res = await request(app)
+      .post("/api/trip")
+      .send({ start: "A", end: "B" });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_DAILY",
+      limitFreq: "daily",
+      timeToResetMs: 50000
+    });
+  });
 
 });
