@@ -3,7 +3,7 @@ import { getVehiclesService } from "../services/vehicleService";
 import { getTripService } from "../services/tripService";
 import { getGeocodeService, getGeocodeMultiService, getReverseGeocodeService } from "../services/geocodeService";
 import { getEmissionsService } from "../services/emissionsService";
-import { OrsRateLimitExceededError } from "../utils/rateLimiter";
+import { apiRateLimitExceededError } from "../utils/rateLimiter";
 
 export const router = Router();
 
@@ -18,9 +18,23 @@ router.get("/vehicles", async (req: Request, res: Response) => {
   try {
     const vehicles = await getVehiclesService(make, model, model_year);
     res.status(200).json(vehicles);
-  } catch (err) {
-    const status = (err as any).status || 500;
-    res.status(status).json({ error: (err as Error).message || (err as any).message });
+  } catch (err: any) {
+    if (err instanceof apiRateLimitExceededError) {
+      return res.status(429).json({
+        error: err.message,
+        limitFreq: err.limitFreq,
+        timeToResetMs: err.timeToResetMs
+      });
+    }
+
+    // Handle other errors with a status code
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+
+    // Unexpected errors
+    console.error("Unexpected error in /vehicles:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -32,7 +46,7 @@ router.post("/trip", async (req: Request, res: Response) => {
     const trip = await getTripService(req.body);
     res.status(200).json(trip);
   } catch (err: any) {
-    if (err instanceof OrsRateLimitExceededError) {
+    if (err instanceof apiRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
@@ -62,7 +76,7 @@ router.get("/reverse-geocode", async (req: Request, res: Response) => {
     const address = await getReverseGeocodeService(lat, lon);
     res.status(200).json({ address });
   } catch (err: any) {
-    if (err instanceof OrsRateLimitExceededError) {
+    if (err instanceof apiRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
@@ -91,7 +105,7 @@ router.get("/geocode", async (req: Request, res: Response) => {
     const coords = await getGeocodeService(address);
     res.status(200).json(coords);
   } catch (err: any)  {
-    if (err instanceof OrsRateLimitExceededError) {
+    if (err instanceof apiRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
@@ -121,7 +135,7 @@ router.get("/geocode-multi", async (req: Request, res: Response) => {
     const suggestions = await getGeocodeMultiService(address, limit);
     res.status(200).json(suggestions);
   } catch (err: any) {
-    if (err instanceof OrsRateLimitExceededError) {
+    if (err instanceof apiRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,

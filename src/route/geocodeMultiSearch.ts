@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getOrsApiKey, getGeocodeBaseUrl } from "./apiKeys";
 import { AddressCoordinates, geocodeMultiAddressFn } from "./route.types";
-import { orsRateLimiter } from "../utils/rateLimiter";
+import { apiRateLimiter } from "../utils/rateLimiter";
 
 
 async function callGeocodeMultiApi(
@@ -38,7 +38,7 @@ const geocodeMultiLocal: geocodeMultiAddressFn = async (
   }));
 };
 
-const orsGeocodeMultiRateLimiter = new orsRateLimiter(100, 1000);
+const orsGeocodeMultiRateLimiter = new apiRateLimiter(100, 1000);
 const geocodeMultiORS: geocodeMultiAddressFn = async (
   address: string,
   limit: number,

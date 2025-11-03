@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getOrsApiKey, getGeocodeBaseUrl } from "./apiKeys";
 import { Coordinates } from "./route.types";
-import { orsRateLimiter } from "../utils/rateLimiter";
+import { apiRateLimiter } from "../utils/rateLimiter";
 
 type geocodeAddressFn = (
   address: string
@@ -50,7 +50,7 @@ const geocodeAddressLocal: geocodeAddressFn = async (
   };
 }
 
-const orsGeocodeRateLimiter = new orsRateLimiter(100, 1000);
+const orsGeocodeRateLimiter = new apiRateLimiter(100, 1000);
 const geocodeAddressORS: geocodeAddressFn = async (
   address: string
 ): Promise<Coordinates> => {

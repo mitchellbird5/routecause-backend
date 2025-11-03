@@ -9,7 +9,7 @@ import {
   geocodeAddressFn
 } from "./route.types";
 import { getRouteBaseUrl, getOrsApiKey } from "./apiKeys";
-import { orsRateLimiter } from "../utils/rateLimiter";
+import { apiRateLimiter } from "../utils/rateLimiter";
 
 async function callRouteApi(
   url:string
@@ -50,7 +50,7 @@ export const queryRouteLocal: queryRouteFn = async (
  * OpenRouteService query (for production)
  * https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/get
  */
-const orsRouteRateLimiter = new orsRateLimiter(40, 2000);
+const orsRouteRateLimiter = new apiRateLimiter(40, 2000);
 export const queryRouteORS: queryRouteFn = async (
   start: Coordinates,
   end: Coordinates,

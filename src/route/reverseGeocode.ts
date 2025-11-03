@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getOrsApiKey, getGeocodeBaseUrl } from "./apiKeys";
 import { reverseGeocodeFn } from "./route.types";
-import { orsRateLimiter } from "../utils/rateLimiter";
+import { apiRateLimiter } from "../utils/rateLimiter";
 
 
 async function callReverseGeocodeApi(
@@ -37,7 +37,7 @@ const reverseGeocodeLocal: reverseGeocodeFn = async (
  * Reverse geocode coordinates using OpenStreetMap Nominatim API
  * openstreetmap.org/copyright
  */
-const orsReverseGeocodeRateLimiter = new orsRateLimiter(100, 1000);
+const orsReverseGeocodeRateLimiter = new apiRateLimiter(100, 1000);
 const reverseGeocodeORS: reverseGeocodeFn = async (
   latitude: number,
   longitude: number,

@@ -6,7 +6,7 @@ import * as routeModule from "../../src/route/route";
 import * as vehicleData from "../../src/vehicle/vehicle";
 import { VehicleData as VehicleDataType } from "../../src/vehicle/vehicle.types"
 import * as tripService from "../../src/services/tripService";
-import { OrsRateLimitExceededError } from "../../src/utils/rateLimiter";
+import { apiRateLimitExceededError } from "../../src/utils/rateLimiter";
 
 const app = express();
 app.use(express.json());
@@ -165,7 +165,7 @@ describe("/trip API Route (mocked external APIs)", () => {
 
   it("returns correct response for minute limit exceedance", async () => {
     jest.spyOn(tripService, "getTripService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_MINUTE",
         429,
         "minute",
@@ -187,7 +187,7 @@ describe("/trip API Route (mocked external APIs)", () => {
 
   it("returns correct response for daily limit exceedance", async () => {
     jest.spyOn(tripService, "getTripService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_DAILY",
         429,
         "daily",

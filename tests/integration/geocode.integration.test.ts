@@ -2,7 +2,7 @@ import request from "supertest";
 import express from "express";
 import { router as apiRouter } from "../../src/api/routes";
 import * as geocodeService from "../../src/services/geocodeService";
-import { OrsRateLimitExceededError } from "../../src/utils/rateLimiter";
+import { apiRateLimitExceededError } from "../../src/utils/rateLimiter";
 
 const app = express();
 app.use(express.json());
@@ -53,7 +53,7 @@ describe("/geocode API Route (mocked external APIs)", () => {
   it("returns correct response for minute limit exceedance", async () => {
     // Mock the service to throw minute limit error
     jest.spyOn(geocodeService, "getGeocodeService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_MINUTE",
         429,
         "minute",
@@ -76,7 +76,7 @@ describe("/geocode API Route (mocked external APIs)", () => {
   it("returns correct response for daily limit exceedance", async () => {
     // Mock the service to throw daily limit error
     jest.spyOn(geocodeService, "getGeocodeService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_DAILY",
         429,
         "daily",
@@ -158,7 +158,7 @@ describe("/geocode-multi API Route (mocked external APIs)", () => {
   it("returns correct response for minute limit exceedance", async () => {
     // Mock the service to throw minute limit error
     jest.spyOn(geocodeService, "getGeocodeMultiService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_MINUTE",
         429,
         "minute",
@@ -181,7 +181,7 @@ describe("/geocode-multi API Route (mocked external APIs)", () => {
   it("returns correct response for daily limit exceedance", async () => {
     // Mock the service to throw daily limit error
     jest.spyOn(geocodeService, "getGeocodeMultiService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_DAILY",
         429,
         "daily",
