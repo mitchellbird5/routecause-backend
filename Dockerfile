@@ -119,7 +119,7 @@ COPY package*.json ./
 # Force install all dependencies including devDependencies
 # Use development NODE_ENV at install time to get devDependencies
 ENV NODE_ENV=development
-RUN npm ci
+RUN npm install --include=dev
 
 # Copy built app from builder stage (production code)
 COPY --from=builder /app/dist ./dist
