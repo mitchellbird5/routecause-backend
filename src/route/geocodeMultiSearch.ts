@@ -5,17 +5,12 @@ import { apiRateLimiter } from "../utils/rateLimiter";
 
 
 async function callGeocodeMultiApi(
-  url:string,
-  address:string
+  url:string
 ){
   const response = await axios.get(url, {
     headers: { "User-Agent": "DriveZero/1.0" },
     timeout: 10000,
   });
-
-  if (!Array.isArray(response.data) || response.data.length === 0) {
-    throw new Error(`Address not found: "${address}"`);
-  }
 
   return response
 }
@@ -27,7 +22,11 @@ const geocodeMultiLocal: geocodeMultiAddressFn = async (
   const baseUrl = getGeocodeBaseUrl();
 
   const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}&limit=${limit}`;
-  const response = await callGeocodeMultiApi(url, address);
+  const response = await callGeocodeMultiApi(url);
+
+  if (!Array.isArray(response.data) || response.data.length === 0) {
+    throw new Error(`Address not found: "${address}"`);
+  }
 
   return response.data.map((item: any) => ({
     address: item.display_name,
@@ -48,11 +47,15 @@ const geocodeMultiORS: geocodeMultiAddressFn = async (
   const apiKey = getOrsApiKey();
   const baseUrl = getGeocodeBaseUrl();
 
-  const url = `${baseUrl}/autocomplete?api_key=${apiKey}&text=${encodeURIComponent(address)}&size=${limit}`;
-  const response = await callGeocodeMultiApi(url, address);
+  const url = `${baseUrl}/autocomplete?api_key=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(address)}&size=${limit}`;
+  const response = await callGeocodeMultiApi(url);
+
+  if (!Array.isArray(response.data.features) || response.data.features.length === 0) {
+    throw new Error(`Address not found: "${address}"`);
+  }
 
   return response.data.features.map((f: any) => ({
-    address: f.properties.label || f.properties.name,
+    address: f.properties.name,
     coordinates: {
       latitude: f.geometry.coordinates[1],
       longitude: f.geometry.coordinates[0],

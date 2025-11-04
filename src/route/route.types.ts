@@ -13,7 +13,7 @@ export type RouteCoordinates = [number, number][]
 export interface RouteResult {
   distance_km: number;
   duration_min: number;
-  route?: RouteCoordinates
+  route: RouteCoordinates
 }
 
 export type geocodeAddressFn = (

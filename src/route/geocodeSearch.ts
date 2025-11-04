@@ -59,8 +59,8 @@ const geocodeAddressORS: geocodeAddressFn = async (
   
   const apiKey = getOrsApiKey();
   const baseUrl = getGeocodeBaseUrl();
-  const url = `${baseUrl}/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&size=1`;
-  
+  const url = `${baseUrl}/search?api_key=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(address)}&size=1`;
+
   const response = await callGeocodeApi(url, address);
 
   const coords = response.data.features[0].geometry.coordinates;

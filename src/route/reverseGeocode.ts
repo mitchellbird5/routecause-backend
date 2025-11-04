@@ -12,10 +12,6 @@ async function callReverseGeocodeApi(
     timeout: 10000,
   });
 
-  if (!response.data || !response.data.display_name) {
-    throw new Error("Address not found for coordinates");
-  }
-
   return response
 };
 
@@ -28,7 +24,13 @@ const reverseGeocodeLocal: reverseGeocodeFn = async (
 ): Promise<string> => {
   const baseUrl = getGeocodeBaseUrl();
   const url = `${baseUrl}/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+
   const response = await callReverseGeocodeApi(url);
+
+  if (!response.data || !response.data.display_name) {
+    throw new Error("Address not found for coordinates");
+  }
+
   return response.data.display_name;
 };
 
@@ -45,9 +47,13 @@ const reverseGeocodeORS: reverseGeocodeFn = async (
   orsReverseGeocodeRateLimiter.consume()
   const apiKey = getOrsApiKey();
   const baseUrl = getGeocodeBaseUrl();
-  const url = `${baseUrl}/reverse?api_key=${apiKey}&point.lat=${latitude}&point.lon=${longitude}`;
+  const url = `${baseUrl}/reverse?api_key=${encodeURIComponent(apiKey)}&point.lon=${longitude}&point.lat=${latitude}`;
 
   const response = await callReverseGeocodeApi(url);
+
+  if (!response.data || !response.data.features[0].properties.label) {
+    throw new Error("Address not found for coordinates");
+  }
 
   return response.data.features[0].properties.label;
 };
