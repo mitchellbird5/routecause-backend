@@ -119,7 +119,7 @@ COPY package*.json ./
 # Force install all dependencies including devDependencies
 # Use development NODE_ENV at install time to get devDependencies
 ENV NODE_ENV=development
-RUN npm ci --include=dev
+RUN npm install --include=dev --force
 
 # Copy source code if you have tests that run against TS source
 COPY ./src ./src
