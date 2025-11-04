@@ -94,6 +94,10 @@ EXPOSE 9229
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
+
+# ============================
+# Stage 5: CI
+# ============================
 FROM node:22-slim AS ci
 WORKDIR /app
 
