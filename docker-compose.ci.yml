@@ -1,32 +1,5 @@
 services:
 
-  nominatim_ci:
-    image: mediagis/nominatim:5.1
-    volumes:
-      - ./tests/data-ci/wellington.osm.pbf:/nominatim/data/wellington.osm.pbf
-      - nominatim-data-ci:/var/lib/postgresql/15/main
-    environment:
-      PBF_PATH: /nominatim/data/wellington.osm.pbf
-      IMPORT: 1
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://nominatim_ci:8080/search?q=test&format=json&limit=1"]
-      interval: 20s
-      timeout: 5s
-      retries: 10
-
-  osrm_ci:
-    image: osrm/osrm-backend
-    container_name: osrm_ci
-    volumes:
-      - ./tests/data-ci/wellington.osm.pbf:/data/wellington.osm.pbf
-    command: >
-      /bin/bash -c "
-        osrm-extract -p /opt/car.lua /data/wellington.osm.pbf &&
-        osrm-partition /data/wellington.osrm &&
-        osrm-customize /data/wellington.osrm &&
-        osrm-routed --algorithm mld /data/wellington.osrm
-      "
-
   emission_db_ci:
     image: postgres:16
     container_name: emission_db_ci
@@ -46,22 +19,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: development
+      target: production
     image: drivezero-backend-ci:latest
     working_dir: /app
     volumes:
       - .:/app:cached
     depends_on:
-      nominatim_ci:
-        condition: service_healthy
-      osrm_ci:
-        condition: service_started
       emission_db_ci: 
         condition: service_started
     environment:
-      NODE_ENV: test
-      ROUTER_URL: http://osrm_ci:5000
-      GEOCODE_URL: http://nominatim_ci:8080
+      NODE_ENV: production
+      ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
+      GEOCODE_URL: https://api.openrouteservice.org/geocode
+      ORS_API_KEY: ${ORS_API_KEY}
       POSTGRES_HOST: emission_db_ci
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
