@@ -95,35 +95,31 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
 # ============================
-# Stage 5: CI (production environment + test tooling)
+# Stage 5: CI (production env + test tooling)
 # ============================
 FROM node:22-alpine AS ci
 WORKDIR /app
 
 RUN apk add --no-cache bash git curl git-lfs dos2unix python3 make g++
 
-# Use production env so app behaves like real deployment
+# Your code uses production logic:
 ENV NODE_ENV=production
 
-# Copy only what's needed first
 COPY package*.json ./
 
-# Install *all* dependencies, including dev ones 
-# but preserve NODE_ENV=production for app logic
-RUN npm ci --include=dev
+# Temporarily set NODE_ENV=development to install *all* deps (incl Jest)
+RUN NODE_ENV=development npm ci
 
-# Force install jest
-RUN npm install -g jest
-RUN NODE_ENV=development npm install ts-jest @types/jest --save-dev
-
-# Copy build output (compiled code) and tests
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY ./tests ./tests
 COPY tsconfig.json ./
+COPY jest.config.js ./
+COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Default command runs tests in production context
+# Reset env for runtime
+ENV NODE_ENV=production
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["npx", "jest", "--verbose", "--runInBand"]
+CMD ["npx", "jest", "--runInBand", "--verbose"]
