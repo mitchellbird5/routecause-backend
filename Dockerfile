@@ -121,19 +121,13 @@ COPY package*.json ./
 ENV NODE_ENV=development
 RUN npm install --include=dev
 
-# Copy built app from builder stage (production code)
-COPY --from=builder /app/dist ./dist
-
 # Copy source code if you have tests that run against TS source
-COPY --from=builder /app/dist ./dist
 COPY ./src ./src
 COPY ./tests ./tests
 COPY tsconfig.json ./ 
 COPY jest.config.js ./
-
-# Copy entrypoint
-COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npx", "jest", "--runInBand", "--verbose"]
