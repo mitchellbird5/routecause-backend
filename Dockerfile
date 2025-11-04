@@ -119,7 +119,7 @@ COPY package*.json ./
 # Force install all dependencies including devDependencies
 # Use development NODE_ENV at install time to get devDependencies
 ENV NODE_ENV=development
-RUN npm install
+RUN npm ci --include=dev
 
 # Copy source code if you have tests that run against TS source
 COPY ./src ./src
@@ -128,6 +128,8 @@ COPY tsconfig.json ./
 COPY jest.config.js ./
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+
+ENV NODE_ENV=production
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npx", "jest", "--runInBand", "--verbose"]

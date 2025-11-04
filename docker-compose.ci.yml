@@ -28,7 +28,6 @@ services:
       emission_db_ci: 
         condition: service_started
     environment:
-      NODE_ENV: production
       ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
       GEOCODE_URL: https://api.openrouteservice.org/geocode
       ORS_API_KEY: ${ORS_API_KEY}
