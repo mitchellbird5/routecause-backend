@@ -23,7 +23,7 @@ services:
     image: drivezero-backend-ci:latest
     working_dir: /app
     volumes:
-      - .:/app:cached
+      # - .:/app:cached
     depends_on:
       emission_db_ci: 
         condition: service_started

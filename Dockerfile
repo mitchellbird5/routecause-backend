@@ -102,11 +102,17 @@ WORKDIR /app
 
 RUN apk add --no-cache bash git curl git-lfs dos2unix python3 make g++
 
+# Copy only package files first
 COPY package*.json ./
 
-# Temporarily set NODE_ENV=development to install *all* deps (incl Jest)
-RUN NODE_ENV=development npm ci
+# Force full install including devDependencies
+ENV NODE_ENV=development
+RUN npm ci --include=dev
 
+# sanity check to avoid partial installs
+RUN npx jest --version
+
+# Copy app + config
 COPY --from=builder /app/dist ./dist
 COPY ./tests ./tests
 COPY tsconfig.json ./
@@ -115,7 +121,7 @@ COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Reset env for runtime
+# Runtime env (to simulate production logic)
 ENV NODE_ENV=production
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
