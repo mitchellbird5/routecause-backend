@@ -104,10 +104,8 @@ RUN apk add --no-cache bash git curl git-lfs dos2unix python3 make g++
 
 COPY package*.json ./
 
-# Install all dependencies cleanly (including dev)
-RUN npm ci --include=dev
-
-ENV NODE_ENV=production
+# Temporarily set NODE_ENV=development to install *all* deps (incl Jest)
+RUN NODE_ENV=development npm ci
 
 COPY --from=builder /app/dist ./dist
 COPY ./tests ./tests
@@ -116,6 +114,9 @@ COPY jest.config.js ./
 COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Reset env for runtime
+ENV NODE_ENV=production
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npx", "jest", "--runInBand", "--verbose"]
