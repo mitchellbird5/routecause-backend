@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import polyline from "@mapbox/polyline";
 import {
   Coordinates,
@@ -9,30 +9,19 @@ import {
   geocodeAddressFn
 } from "./route.types";
 import { getRouteBaseUrl, getOrsApiKey } from "./apiKeys";
-import { orsRateLimiter } from "../utils/rateLimiter";
+import { apiRateLimiter } from "../utils/rateLimiter";
 
 async function callRouteApi(
   url:string
-): Promise<RouteResult> {
+): Promise<AxiosResponse> {
   const response = await axios.get(url);
 
   if (response.status !== 200) {
     throw new Error(`OSRM request failed: ${response.status} ${response.statusText}`);
   }
 
-  const route = response.data.routes[0];
-  const geometryCoords: RouteCoordinates = route.geometry
-    ? (polyline.decode(route.geometry) as RouteCoordinates)
-    : [];
+  return response
 
-  const result: RouteResult = {
-    distance_km: route.distance / 1000,
-    duration_min: route.duration / 60,
-  };
-
-  if (geometryCoords.length > 0) result.route = geometryCoords;
-
-  return result
 };
 
 export const queryRouteLocal: queryRouteFn = async (
@@ -43,14 +32,28 @@ export const queryRouteLocal: queryRouteFn = async (
   const startStr = `${start.longitude},${start.latitude}`;
   const endStr = `${end.longitude},${end.latitude}`;
   const url = `${baseUrl}/route/v1/driving/${startStr};${endStr}?overview=full&geometries=polyline`;
-  return callRouteApi(url);
+
+  const response = await callRouteApi(url);
+
+  const route = response.data.routes[0];
+  const geometryCoords: RouteCoordinates = route.geometry
+    ? (polyline.decode(route.geometry) as RouteCoordinates)
+    : [];
+
+  const result: RouteResult = {
+    distance_km: route.distance / 1000,
+    duration_min: route.duration / 60,
+    route: geometryCoords
+  };
+
+  return result;
 };
 
 /**
  * OpenRouteService query (for production)
  * https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/get
  */
-const orsRouteRateLimiter = new orsRateLimiter(40, 2000);
+const orsRouteRateLimiter = new apiRateLimiter(40, 2000);
 export const queryRouteORS: queryRouteFn = async (
   start: Coordinates,
   end: Coordinates,
@@ -58,9 +61,20 @@ export const queryRouteORS: queryRouteFn = async (
   orsRouteRateLimiter.consume()
   const baseUrl = getRouteBaseUrl();
   const apiKey = getOrsApiKey();
-  const url = `${baseUrl}/driving-car?api_key=${apiKey}&\
-  start=${start.longitude},${start.latitude}&end=${end.longitude},${end.latitude}`;
-  return callRouteApi(url);
+  const url = `${baseUrl}?api_key=${encodeURIComponent(apiKey)}&start=${start.longitude},${start.latitude}&end=${end.longitude},${end.latitude}`;
+  
+  const response = await callRouteApi(url);
+
+  const route = response.data.features[0];
+  const geometryCoords: RouteCoordinates = route.geometry?.coordinates || [];
+
+  const result: RouteResult = {
+    distance_km: route.properties.summary.distance / 1000,
+    duration_min: route.properties.summary.duration / 60,
+    route: geometryCoords
+  };
+
+  return result
 };
 
 export const queryRoute: queryRouteFn = async (

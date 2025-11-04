@@ -5,7 +5,7 @@ export interface RateLimitStatus {
   dailyResetMs: number;
 }
 
-export class orsRateLimiter {
+export class apiRateLimiter {
   private minuteCalls: number[] = [];
   private dailyCalls: number[] = [];
   private readonly MINUTE_LIMIT: number;
@@ -42,7 +42,7 @@ export class orsRateLimiter {
 
     // Check limits
     if (this.minuteCalls.length >= this.MINUTE_LIMIT) {
-      throw new OrsRateLimitExceededError(
+      throw new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_MINUTE",
         429,
         "minute",
@@ -52,7 +52,7 @@ export class orsRateLimiter {
 
     // --- Check daily limit ---
     if (this.dailyCalls.length >= this.DAILY_LIMIT) {
-      throw new OrsRateLimitExceededError(
+      throw new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_DAILY",
         429,
         "daily",
@@ -93,7 +93,7 @@ export class orsRateLimiter {
   }
 }
 
-export class OrsRateLimitExceededError extends Error {
+export class apiRateLimitExceededError extends Error {
   status: number;
   limitFreq: "minute" | "daily";
   timeToResetMs: number;

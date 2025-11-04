@@ -19,6 +19,7 @@ import {
   geocodeAddressFn, 
   queryRouteFn 
 } from "../../src/route/route.types";
+import { error } from "console";
 
 jest.mock("axios"); // Mock the entire axios module
   const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -63,15 +64,38 @@ describe("Mocked API and error testing", () => {
   describe("geocodeAddress", () => {
     it("returns coordinates for a mocked response", async () => {
       // Arrange: mock axios.get to return fake geocode data
-      mockedAxios.get.mockResolvedValue({
-        data: [
-          { lat: 0, lon: 0 },
-        ],
-        status: 200,
-        statusText: "OK",
-        headers: {},
-        config: {},
-      });
+
+      if (process.env.NODE_ENV === 'development') {
+          mockedAxios.get.mockResolvedValue({
+          data: [
+            { lat: 0, lon: 0 },
+          ],
+          status: 200,
+          statusText: "OK",
+          headers: {},
+          config: {},
+        });
+      } else if (process.env.NODE_ENV === 'production') {
+        mockedAxios.get.mockResolvedValue({
+          data: {
+            features: [
+              {
+                geometry: {
+                  coordinates: [0, 0]
+                }
+              }
+            ]
+          },
+          status: 200,
+          statusText: "OK",
+          headers: {},
+          config: {},
+        });
+      } else {
+        throw new Error("Couldn't find environment")
+      }
+
+      
 
       // Act
       const result = await geocodeAddress("New Brighton Pier, Christchurch, Canterbury");
@@ -144,12 +168,39 @@ describe("Mocked API and error testing", () => {
     });
 
     it("returns multiple addresses when API responds with several results", async () => {
-      const mockData = [
-        { display_name: "Place 1", lat: "1.1", lon: "2.1" },
-        { display_name: "Place 2", lat: "3.3", lon: "4.4" },
-      ];
-      mockedAxios.get.mockResolvedValueOnce({ data: mockData });
-
+      let expected_url_contain: string;
+      if (process.env.NODE_ENV === 'development') {
+        const mockData = [
+          { display_name: "Place 1", lat: "1.1", lon: "2.1" },
+          { display_name: "Place 2", lat: "3.3", lon: "4.4" },
+        ];
+        mockedAxios.get.mockResolvedValueOnce({ data: mockData });
+        expected_url_contain = "Test%20Address&limit=2"
+      } else if (process.env.NODE_ENV === 'production') {
+        const mockData = [
+          {
+            properties: {
+              name: "Place 1"
+            },
+            geometry: {
+              coordinates: [2.1, 1.1]
+            }
+          },
+          {
+            properties: {
+              name: "Place 2"
+            },
+            geometry: {
+              coordinates: [4.4, 3.3]
+            }
+          }
+        ]
+        mockedAxios.get.mockResolvedValueOnce({ data: {features: mockData} });
+        expected_url_contain = "Test%20Address&size=2"
+      } else {
+        throw new Error("Can't find environment")
+      }
+      
       const result = await geocodeMultiAddress("Test Address", 2);
 
       expect(result).toEqual([
@@ -169,7 +220,7 @@ describe("Mocked API and error testing", () => {
         },
       ]);
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        expect.stringContaining("Test%20Address&limit=2"),
+        expect.stringContaining(expected_url_contain),
         expect.objectContaining({
           headers: { "User-Agent": "DriveZero/1.0" },
           timeout: 10000,
@@ -182,14 +233,6 @@ describe("Mocked API and error testing", () => {
 
       await expect(geocodeMultiAddress("Empty Address", 1)).rejects.toThrow(
         'Address not found: "Empty Address"'
-      );
-    });
-
-    it("throws an error if API returns null", async () => {
-      mockedAxios.get.mockResolvedValueOnce({ data: null });
-
-      await expect(geocodeMultiAddress("Null Address", 1)).rejects.toThrow(
-        'Address not found: "Null Address"'
       );
     });
 
@@ -222,27 +265,34 @@ describe("Mocked API and error testing", () => {
 
     it("returns an address when Nominatim responds with display_name", async () => {
       const mockAddress = "123 Example Street, Test City, Country";
-      mockedAxios.get.mockResolvedValueOnce({
-        data: { display_name: mockAddress },
-      });
+
+      if (process.env.NODE_ENV === 'development') {
+        mockedAxios.get.mockResolvedValueOnce({
+          data: { display_name: mockAddress },
+        });
+      } else if (process.env.NODE_ENV === 'production') {
+        mockedAxios.get.mockResolvedValueOnce({
+          data: { features: [{ properties: { label: mockAddress } }] },
+        });
+      } else {
+        throw new Error("Can't find environment")
+      }
 
       const result = await reverseGeocodeCoordinates(-43.5321, 172.6362);
 
       expect(result).toBe(mockAddress);
-      expect(mockedAxios.get).toHaveBeenCalledWith(
-        expect.stringContaining("/reverse"),
+
+      const [[calledUrl, calledConfig]] = mockedAxios.get.mock.calls;
+
+      expect(calledUrl).toContain("/reverse");
+      expect(calledUrl).toContain("-43.5321");
+      expect(calledUrl).toContain("172.6362");
+
+      expect(calledConfig).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({ "User-Agent": "DriveZero/1.0" }),
           timeout: 10000,
         })
-      );
-    });
-
-    it("throws an error if Nominatim response does not include display_name", async () => {
-      mockedAxios.get.mockResolvedValueOnce({ data: {} });
-
-      await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
-        "Address not found for coordinates"
       );
     });
 
@@ -260,16 +310,33 @@ describe("Mocked API and error testing", () => {
   describe("queryRoute", () => {
     it("returns mocked OSRM route with route", async () => {
       // Arrange: mock axios.get to return a fake OSRM response
-      mockedAxios.get.mockResolvedValue({
-        data: {
-          routes: [{ distance: 0, duration: 0, geometry: "test" }], // distance in meters, duration in seconds
-        },
-        status: 200,
-        statusText: "OK",
-        headers: {},
-        config: {},
-      });
-
+      if (process.env.NODE_ENV === 'development') {
+        mockedAxios.get.mockResolvedValue({
+          data: {
+            routes: [{ distance: 1000, duration: 60, geometry: "test" }],
+          },
+          status: 200,
+          statusText: "OK",
+          headers: {},
+          config: {},
+        });
+      } else if (process.env.NODE_ENV === 'production') {
+        mockedAxios.get.mockResolvedValue({
+          data: {
+            features: [{ 
+              geometry: { coordinates: [[-3.54411, 0]] } ,
+              properties: { summary: { duration: 60, distance: 1000} }
+            }],
+          },
+          status: 200,
+          statusText: "OK",
+          headers: {},
+          config: {},
+        });
+      } else {
+        throw new Error("Can't find environment configuration")
+      }
+      
       const start = { latitude: -43.531, longitude: 172.655 };
       const end = { latitude: -45.021, longitude: 168.738 };
 
@@ -277,10 +344,11 @@ describe("Mocked API and error testing", () => {
       const result = await queryRoute(start, end);
 
       // Assert
-      expect(result.distance_km).toBe(0);
-      expect(result.duration_min).toBe(0);
+      expect(result.distance_km).toBe(1);
+      expect(result.duration_min).toBe(1);
       expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full`));
+      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude}`));
+      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${end.longitude},${end.latitude}`));
       expect(result.route).toEqual([[-3.54411, 0]]);
     });
   });

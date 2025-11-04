@@ -5,6 +5,7 @@ import {
   VEHICLE_FIELD_MAP,
   buildVehicleApiUrl
 } from "./api_refactor"
+import { apiRateLimiter } from "../utils/rateLimiter";
 
 export const emptyVehicleEntry: VehicleData = {
     make: "",
@@ -63,11 +64,14 @@ function assignVehicleField<K extends keyof VehicleData>(
   vehicle[key] = parser ? parser(value) : value as VehicleData[K];
 }
 
+const vehicleRateLimiter = new apiRateLimiter(200, 10000);
 export async function fetchVehicleRecords(
   make: string,
   model: string,
   model_year: string
 ): Promise<VehicleData[]> {
+  vehicleRateLimiter.consume();
+
   const { url, params } = buildVehicleApiUrl(make, model, model_year) ?? {};
   if (!url || !params) return [];
 

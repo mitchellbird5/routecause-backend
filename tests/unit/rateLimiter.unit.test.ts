@@ -1,6 +1,6 @@
-import { orsRateLimiter, OrsRateLimitExceededError } from "../../src/utils/rateLimiter";
+import { apiRateLimiter, apiRateLimitExceededError } from "../../src/utils/rateLimiter";
 
-describe("orsRateLimiter", () => {
+describe("apiRateLimiter", () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2025-11-02T00:00:00Z").getTime()); // Start at UTC midnight
@@ -11,7 +11,7 @@ describe("orsRateLimiter", () => {
   });
 
   it("allows calls below limits", () => {
-    const limiter = new orsRateLimiter(3, 5);
+    const limiter = new apiRateLimiter(3, 5);
 
     expect(() => limiter.consume()).not.toThrow();
     expect(() => limiter.consume()).not.toThrow();
@@ -19,41 +19,41 @@ describe("orsRateLimiter", () => {
   });
 
   it("throws RATE_LIMIT_EXCEEDED_MINUTE when minute limit reached", () => {
-    const limiter = new orsRateLimiter(2, 10);
+    const limiter = new apiRateLimiter(2, 10);
 
     limiter.consume();
     limiter.consume();
 
-    expect(() => limiter.consume()).toThrow(OrsRateLimitExceededError);
+    expect(() => limiter.consume()).toThrow(apiRateLimitExceededError);
 
     try {
       limiter.consume();
     } catch (err: any) {
-      expect(err).toBeInstanceOf(OrsRateLimitExceededError);
+      expect(err).toBeInstanceOf(apiRateLimitExceededError);
       expect(err.limitFreq).toBe("minute");
       expect(err.status).toBe(429);
     }
   });
 
   it("throws RATE_LIMIT_EXCEEDED_DAILY when daily limit reached", () => {
-    const limiter = new orsRateLimiter(100, 2);
+    const limiter = new apiRateLimiter(100, 2);
 
     limiter.consume();
     limiter.consume();
 
-    expect(() => limiter.consume()).toThrow(OrsRateLimitExceededError);
+    expect(() => limiter.consume()).toThrow(apiRateLimitExceededError);
 
     try {
       limiter.consume();
     } catch (err: any) {
-      expect(err).toBeInstanceOf(OrsRateLimitExceededError);
+      expect(err).toBeInstanceOf(apiRateLimitExceededError);
       expect(err.limitFreq).toBe("daily");
       expect(err.status).toBe(429);
     }
   });
 
   it("resets minute window at top of UTC minute", () => {
-    const limiter = new orsRateLimiter(2, 10);
+    const limiter = new apiRateLimiter(2, 10);
 
     limiter.consume(); // t=00:00:00
     limiter.consume(); // hit minute limit
@@ -65,7 +65,7 @@ describe("orsRateLimiter", () => {
   });
 
   it("resets daily window at UTC midnight", () => {
-    const limiter = new orsRateLimiter(10, 2);
+    const limiter = new apiRateLimiter(10, 2);
 
     limiter.consume(); // first call
     limiter.consume(); // hit daily limit
@@ -77,7 +77,7 @@ describe("orsRateLimiter", () => {
   });
 
   it("records new timestamps correctly", () => {
-    const limiter = new orsRateLimiter(5, 5);
+    const limiter = new apiRateLimiter(5, 5);
     limiter.consume();
     limiter.consume();
 
@@ -88,7 +88,7 @@ describe("orsRateLimiter", () => {
   });
 
   it("getStatus returns correct remaining calls and reset times", () => {
-    const limiter = new orsRateLimiter(5, 10);
+    const limiter = new apiRateLimiter(5, 10);
     limiter.consume();
     limiter.consume();
 

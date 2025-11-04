@@ -1,14 +1,14 @@
 #!/bin/sh
 set -e
 
-# Install dependencies if node_modules missing or package.json changed
+# Always ensure all dependencies exist
 if [ ! -d "node_modules" ] || [ ! -f "node_modules/.installed" ] || [ package.json -nt node_modules/.installed ]; then
     echo "Installing npm packages..."
-    npm install
+    npm install --include=dev --force
 
-    # Optional: auto-install missing @types for TS
+    # Optional: auto-install missing @types for TypeScript
     if [ -f "package.json" ]; then
-        npx typesync
+        npx typesync || true
     fi
 
     touch node_modules/.installed

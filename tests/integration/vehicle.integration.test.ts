@@ -3,6 +3,7 @@ import express from "express";
 import { router as apiRouter } from "../../src/api/routes";
 import * as vehicleData from "../../src/vehicle/vehicle";
 import { VehicleData as VehicleDataType } from "../../src/vehicle/vehicle.types"
+import { apiRateLimitExceededError } from "../../src/utils/rateLimiter";
 
 const app = express();
 app.use(express.json());
@@ -97,11 +98,55 @@ describe("/vehicle API Route (mocked external APIs)", () => {
   });
 
   it("returns 500 if fetchVehicleRecords throws using mocked APIs", async () => {
-    jest.spyOn(vehicleData, "fetchVehicleRecords").mockRejectedValue(new Error("DB error"));
+    jest.spyOn(vehicleData, "fetchVehicleRecords").mockRejectedValue(new Error("Internal Server Error"));
 
     const res = await request(app).get("/api/vehicles");
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("DB error");
+    expect(res.body.error).toBe("Internal Server Error");
+  });
+
+  it("returns correct response for minute limit exceedance", async () => {
+    jest.spyOn(vehicleData, "fetchVehicleRecords").mockRejectedValue(
+      new apiRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_MINUTE",
+        429,
+        "minute",
+        3000
+      )
+    );
+
+    const res = await request(app)
+      .get("/api/vehicles")
+      .query({ make: "Toyota", model: "Camry", model_year: "2015" });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_MINUTE",
+      limitFreq: "minute",
+      timeToResetMs: 3000
+    });
+  });
+
+  it("returns correct response for daily limit exceedance", async () => {
+    jest.spyOn(vehicleData, "fetchVehicleRecords").mockRejectedValue(
+      new apiRateLimitExceededError(
+        "RATE_LIMIT_EXCEEDED_DAILY",
+        429,
+        "daily",
+        50000
+      )
+    );
+
+    const res = await request(app)
+      .get("/api/vehicles")
+      .query({ make: "Toyota", model: "Camry", model_year: "2015" });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: "RATE_LIMIT_EXCEEDED_DAILY",
+      limitFreq: "daily",
+      timeToResetMs: 50000
+    });
   });
 });

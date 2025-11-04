@@ -6,7 +6,7 @@ import * as routeModule from "../../src/route/route";
 import * as vehicleData from "../../src/vehicle/vehicle";
 import { VehicleData as VehicleDataType } from "../../src/vehicle/vehicle.types"
 import * as tripService from "../../src/services/tripService";
-import { OrsRateLimitExceededError } from "../../src/utils/rateLimiter";
+import { apiRateLimitExceededError } from "../../src/utils/rateLimiter";
 
 const app = express();
 app.use(express.json());
@@ -28,7 +28,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     });
 
     jest.spyOn(routeModule, "queryRoute").mockImplementation(async () => {
-      return { distance_km: 486.4, duration_min: 364 };
+      return { distance_km: 486.4, duration_min: 364, route: [[1, 2]] };
     });
 
     jest.spyOn(vehicleData, "selectVehicle");
@@ -78,6 +78,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(response.body).toHaveProperty("minutes", 4);
     expect(response.body).toHaveProperty("fuel_used_l", 35.9936);
     expect(response.body.co2_kg).toBeCloseTo(8.2688, 2);
+    expect(response.body).toHaveProperty("route", [[1, 2]]);
   });
 
 
@@ -121,6 +122,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(response.body).toHaveProperty("minutes", 4);
     expect(response.body).toHaveProperty("fuel_used_l", 35.9936);
     expect(response.body.co2_kg).toBeCloseTo(8.2688, 2);
+    expect(response.body).toHaveProperty("route", [[1, 2]]);
   });
 
   it("should return 400 for missing vehicle info using mocked APIs", async () => {
@@ -165,7 +167,7 @@ describe("/trip API Route (mocked external APIs)", () => {
 
   it("returns correct response for minute limit exceedance", async () => {
     jest.spyOn(tripService, "getTripService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_MINUTE",
         429,
         "minute",
@@ -187,7 +189,7 @@ describe("/trip API Route (mocked external APIs)", () => {
 
   it("returns correct response for daily limit exceedance", async () => {
     jest.spyOn(tripService, "getTripService").mockRejectedValue(
-      new OrsRateLimitExceededError(
+      new apiRateLimitExceededError(
         "RATE_LIMIT_EXCEEDED_DAILY",
         429,
         "daily",

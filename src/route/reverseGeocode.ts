@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getOrsApiKey, getGeocodeBaseUrl } from "./apiKeys";
 import { reverseGeocodeFn } from "./route.types";
-import { orsRateLimiter } from "../utils/rateLimiter";
+import { apiRateLimiter } from "../utils/rateLimiter";
 
 
 async function callReverseGeocodeApi(
@@ -11,10 +11,6 @@ async function callReverseGeocodeApi(
     headers: { "User-Agent": "DriveZero/1.0" },
     timeout: 10000,
   });
-
-  if (!response.data || !response.data.display_name) {
-    throw new Error("Address not found for coordinates");
-  }
 
   return response
 };
@@ -28,7 +24,13 @@ const reverseGeocodeLocal: reverseGeocodeFn = async (
 ): Promise<string> => {
   const baseUrl = getGeocodeBaseUrl();
   const url = `${baseUrl}/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+
   const response = await callReverseGeocodeApi(url);
+
+  if (!response.data || !response.data.display_name) {
+    throw new Error("Address not found for coordinates");
+  }
+
   return response.data.display_name;
 };
 
@@ -37,7 +39,7 @@ const reverseGeocodeLocal: reverseGeocodeFn = async (
  * Reverse geocode coordinates using OpenStreetMap Nominatim API
  * openstreetmap.org/copyright
  */
-const orsReverseGeocodeRateLimiter = new orsRateLimiter(100, 1000);
+const orsReverseGeocodeRateLimiter = new apiRateLimiter(100, 1000);
 const reverseGeocodeORS: reverseGeocodeFn = async (
   latitude: number,
   longitude: number,
@@ -45,9 +47,13 @@ const reverseGeocodeORS: reverseGeocodeFn = async (
   orsReverseGeocodeRateLimiter.consume()
   const apiKey = getOrsApiKey();
   const baseUrl = getGeocodeBaseUrl();
-  const url = `${baseUrl}/reverse?api_key=${apiKey}&point.lat=${latitude}&point.lon=${longitude}`;
+  const url = `${baseUrl}/reverse?api_key=${encodeURIComponent(apiKey)}&point.lon=${longitude}&point.lat=${latitude}`;
 
   const response = await callReverseGeocodeApi(url);
+
+  if (!response.data || !response.data.features[0].properties.label) {
+    throw new Error("Address not found for coordinates");
+  }
 
   return response.data.features[0].properties.label;
 };
