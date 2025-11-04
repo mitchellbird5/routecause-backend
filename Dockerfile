@@ -94,34 +94,30 @@ EXPOSE 9229
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
-# ============================
-# Stage 5: CI (production env + test tooling)
-# ============================
-FROM node:22-alpine AS ci
+FROM node:22-slim AS ci
 WORKDIR /app
 
-RUN apk add --no-cache bash git curl git-lfs dos2unix python3 make g++
+# Install bash/git/curl
+RUN apt-get update && apt-get install -y bash git curl && rm -rf /var/lib/apt/lists/*
 
-# Copy only package files first
 COPY package*.json ./
 
-# Force full install including devDependencies
+# Force dev dependencies install
 ENV NODE_ENV=development
-RUN npm ci --include=dev
+RUN npm ci
 
-# sanity check to avoid partial installs
-RUN npx jest --version
+# Verify installation
+RUN npm ls @babel/helper-string-parser
 
-# Copy app + config
+# Copy app + tests
 COPY --from=builder /app/dist ./dist
 COPY ./tests ./tests
-COPY tsconfig.json ./
+COPY tsconfig.json ./ 
 COPY jest.config.js ./
 COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Runtime env (to simulate production logic)
+# Runtime env
 ENV NODE_ENV=production
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
