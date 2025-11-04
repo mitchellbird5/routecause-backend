@@ -96,7 +96,7 @@ CMD ["npm", "run", "dev"]
 
 
 # ============================
-# Stage 5: CI
+# Stage: CI
 # ============================
 FROM node:22-slim AS ci
 WORKDIR /app
@@ -104,24 +104,28 @@ WORKDIR /app
 # Install bash/git/curl
 RUN apt-get update && apt-get install -y bash git curl && rm -rf /var/lib/apt/lists/*
 
+# Copy package files first
 COPY package*.json ./
 
-# Force dev dependencies install
+# Force install all dependencies including devDependencies
+# Use development NODE_ENV at install time to get devDependencies
 ENV NODE_ENV=development
 RUN npm ci
 
-# Verify installation
-RUN npm ls @babel/helper-string-parser
-
-# Copy app + tests
+# Copy built app from builder stage (production code)
 COPY --from=builder /app/dist ./dist
+
+# Copy source code if you have tests that run against TS source
+COPY ./src ./src
 COPY ./tests ./tests
 COPY tsconfig.json ./ 
 COPY jest.config.js ./
+
+# Copy entrypoint
 COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Runtime env
+# Set runtime NODE_ENV=production so app logic runs as production
 ENV NODE_ENV=production
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
