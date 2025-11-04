@@ -22,7 +22,7 @@ services:
       target: ci
     image: drivezero-backend-ci:latest
     working_dir: /app
-    volumes:
+    # volumes:
       # - .:/app:cached
     depends_on:
       emission_db_ci: 
