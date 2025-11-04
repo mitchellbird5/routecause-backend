@@ -109,6 +109,7 @@ RUN apk add --no-cache \
     python3 \
     make \
     g++ \
+    libc6-compat \
     dos2unix
 
 
@@ -124,6 +125,7 @@ RUN npm ci
 COPY --from=builder /app/dist ./dist
 
 # Copy source code if you have tests that run against TS source
+COPY --from=builder /app/dist ./dist
 COPY ./src ./src
 COPY ./tests ./tests
 COPY tsconfig.json ./ 
