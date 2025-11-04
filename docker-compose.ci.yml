@@ -39,5 +39,4 @@ services:
     command: tail -f /dev/null
 
 volumes:
-  nominatim-data-ci: {}
   pgdata-ci:

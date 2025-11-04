@@ -1,12 +1,12 @@
 #!/bin/sh
 set -e
 
-# Always install missing packages (including devDependencies)
+# Always ensure all dependencies exist
 if [ ! -d "node_modules" ] || [ ! -f "node_modules/.installed" ] || [ package.json -nt node_modules/.installed ]; then
     echo "Installing npm packages..."
-    npm ci --include=dev --force || npm install --include=dev --force
+    npm install --include=dev --force
 
-    # Optional: auto-install missing @types for TS
+    # Optional: auto-install missing @types for TypeScript
     if [ -f "package.json" ]; then
         npx typesync || true
     fi

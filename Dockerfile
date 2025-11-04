@@ -98,27 +98,18 @@ CMD ["npm", "run", "dev"]
 # ============================
 # Stage: CI
 # ============================
-FROM node:22-alpine AS ci
+FROM node:22-bullseye AS ci
 WORKDIR /app
 
-# Install bash/git/curl
-RUN apk add --no-cache \
-    bash \
-    git \
-    curl \
-    python3 \
-    make \
-    g++ \
-    libc6-compat \
-    dos2unix
-
+# Install required tools for native builds
+RUN apt-get update && apt-get install -y \
+    bash git curl python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy package files first
 COPY package*.json ./
 
 # Force install all dependencies including devDependencies
-# Use development NODE_ENV at install time to get devDependencies
-ENV NODE_ENV=development
 RUN npm install --include=dev --force
 
 # Copy source code if you have tests that run against TS source
