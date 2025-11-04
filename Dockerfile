@@ -108,7 +108,7 @@ ENV NODE_ENV=production
 # Copy only what's needed first
 COPY package*.json ./
 
-# Install *all* dependencies, including dev ones
+# Install *all* dependencies, including dev ones 
 # but preserve NODE_ENV=production for app logic
 RUN npm ci --include=dev
 
