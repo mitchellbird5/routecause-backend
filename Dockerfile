@@ -98,7 +98,7 @@ CMD ["npm", "run", "dev"]
 # ============================
 # Stage: CI
 # ============================
-FROM node:22-slim AS ci
+FROM node:22-alpine AS ci
 WORKDIR /app
 
 # Install bash/git/curl
