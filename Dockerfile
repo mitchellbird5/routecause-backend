@@ -102,7 +102,15 @@ FROM node:22-alpine AS ci
 WORKDIR /app
 
 # Install bash/git/curl
-RUN apt-get update && apt-get install -y bash git curl && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    bash \
+    git \
+    curl \
+    python3 \
+    make \
+    g++ \
+    dos2unix
+
 
 # Copy package files first
 COPY package*.json ./
