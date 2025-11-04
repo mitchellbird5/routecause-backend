@@ -135,8 +135,5 @@ COPY jest.config.js ./
 COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Set runtime NODE_ENV=production so app logic runs as production
-ENV NODE_ENV=production
-
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npx", "jest", "--runInBand", "--verbose"]
