@@ -112,6 +112,10 @@ COPY package*.json ./
 # but preserve NODE_ENV=production for app logic
 RUN npm ci --include=dev
 
+# Force install jest
+RUN npm install -g jest
+RUN NODE_ENV=development npm install ts-jest @types/jest --save-dev
+
 # Copy build output (compiled code) and tests
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
