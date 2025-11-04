@@ -19,7 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
+      target: ci
     image: drivezero-backend-ci:latest
     working_dir: /app
     volumes:
