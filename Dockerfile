@@ -103,7 +103,7 @@ WORKDIR /app
 
 # Install required tools for native builds
 RUN apt-get update && apt-get install -y \
-    bash git curl python3 make g++ && \
+    bash git curl python3 make g++ dos2unix && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy package files first
