@@ -8,7 +8,11 @@ import {
   getRouteFn,
   geocodeAddressFn
 } from "./route.types";
-import { getRouteBaseUrl, getOrsApiKey } from "./apiKeys";
+import { 
+  getRouteBaseUrl, 
+  getOrsApiKey,
+  getNodeEnvironment 
+} from "../utils/getEnvVariables";
 import { apiRateLimiter } from "../utils/rateLimiter";
 
 async function callRouteApi(
@@ -66,7 +70,10 @@ export const queryRouteORS: queryRouteFn = async (
   const response = await callRouteApi(url);
 
   const route = response.data.features[0];
-  const geometryCoords: RouteCoordinates = route.geometry?.coordinates || [];
+  const coordinates = route.geometry?.coordinates || [];
+  
+  // Convert [longitude, latitude] to [latitude, longitude]
+  const geometryCoords: RouteCoordinates = coordinates.map((coord: number[]) => [coord[1], coord[0]]);
 
   const result: RouteResult = {
     distance_km: route.properties.summary.distance / 1000,
@@ -81,7 +88,7 @@ export const queryRoute: queryRouteFn = async (
   start: Coordinates,
   end: Coordinates,
 ): Promise<RouteResult> => {
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction = getNodeEnvironment();
   try {
     if (isProduction) {
       return await queryRouteORS(start, end);

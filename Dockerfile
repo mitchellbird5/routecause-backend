@@ -27,8 +27,6 @@ FROM node:22-alpine AS development
 WORKDIR /app
 RUN apk add --no-cache bash git curl git-lfs dos2unix
 
-ENV NODE_ENV=development
-
 COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY package*.json ./
 RUN npm install
@@ -45,8 +43,6 @@ CMD ["npm", "run", "dev"]
 FROM node:22-alpine AS production
 WORKDIR /app
 RUN apk add --no-cache bash curl
-
-ENV NODE_ENV=production
 
 # Copy only necessary files
 COPY package*.json ./
@@ -86,9 +82,6 @@ RUN npm install -g ts-node-dev
 COPY ./src ./src
 COPY tsconfig.json ./
 
-# Runtime env is production (your logic depends on it)
-ENV NODE_ENV=production
-
 EXPOSE 9229
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -119,8 +112,6 @@ COPY tsconfig.json ./
 COPY jest.config.js ./
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
-
-ENV NODE_ENV=production
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npx", "jest", "--runInBand", "--verbose"]

@@ -1,5 +1,9 @@
 import axios from "axios";
-import { getOrsApiKey, getGeocodeBaseUrl } from "./apiKeys";
+import { 
+  getOrsApiKey, 
+  getGeocodeBaseUrl,
+  getNodeEnvironment 
+} from "../utils/getEnvVariables";
 import { Coordinates } from "./route.types";
 import { apiRateLimiter } from "../utils/rateLimiter";
 
@@ -70,7 +74,7 @@ const geocodeAddressORS: geocodeAddressFn = async (
 export const geocodeAddress: geocodeAddressFn = async (
   address: string,
 ): Promise<Coordinates> => {
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction = getNodeEnvironment();
   try {
     if (isProduction){
       return geocodeAddressORS(address);

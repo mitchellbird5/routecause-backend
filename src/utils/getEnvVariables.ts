@@ -18,3 +18,9 @@ export function getRouteBaseUrl(){
     throw new Error("ROUTER_URL not defined in production environment");
   return baseUrl
 }
+
+export function getNodeEnvironment(){
+  const isProduction = process.env.APP_ENV === "production";
+  console.log('App environment: ', process.env.APP_ENV);
+  return isProduction
+}
