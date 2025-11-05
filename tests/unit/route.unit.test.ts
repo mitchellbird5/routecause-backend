@@ -65,7 +65,7 @@ describe("Mocked API and error testing", () => {
     it("returns coordinates for a mocked response", async () => {
       // Arrange: mock axios.get to return fake geocode data
 
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.APP_ENV === 'development') {
           mockedAxios.get.mockResolvedValue({
           data: [
             { lat: 0, lon: 0 },
@@ -75,7 +75,7 @@ describe("Mocked API and error testing", () => {
           headers: {},
           config: {},
         });
-      } else if (process.env.NODE_ENV === 'production') {
+      } else if (process.env.APP_ENV === 'production') {
         mockedAxios.get.mockResolvedValue({
           data: {
             features: [
@@ -169,14 +169,14 @@ describe("Mocked API and error testing", () => {
 
     it("returns multiple addresses when API responds with several results", async () => {
       let expected_url_contain: string;
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.APP_ENV === 'development') {
         const mockData = [
           { display_name: "Place 1", lat: "1.1", lon: "2.1" },
           { display_name: "Place 2", lat: "3.3", lon: "4.4" },
         ];
         mockedAxios.get.mockResolvedValueOnce({ data: mockData });
         expected_url_contain = "Test%20Address&limit=2"
-      } else if (process.env.NODE_ENV === 'production') {
+      } else if (process.env.APP_ENV === 'production') {
         const mockData = [
           {
             properties: {
@@ -266,11 +266,11 @@ describe("Mocked API and error testing", () => {
     it("returns an address when Nominatim responds with display_name", async () => {
       const mockAddress = "123 Example Street, Test City, Country";
 
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.APP_ENV === 'development') {
         mockedAxios.get.mockResolvedValueOnce({
           data: { display_name: mockAddress },
         });
-      } else if (process.env.NODE_ENV === 'production') {
+      } else if (process.env.APP_ENV === 'production') {
         mockedAxios.get.mockResolvedValueOnce({
           data: { features: [{ properties: { label: mockAddress } }] },
         });
@@ -310,7 +310,7 @@ describe("Mocked API and error testing", () => {
   describe("queryRoute", () => {
     it("returns mocked OSRM route with route", async () => {
       // Arrange: mock axios.get to return a fake OSRM response
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.APP_ENV === 'development') {
         mockedAxios.get.mockResolvedValue({
           data: {
             routes: [{ distance: 1000, duration: 60, geometry: "test" }],
@@ -320,7 +320,7 @@ describe("Mocked API and error testing", () => {
           headers: {},
           config: {},
         });
-      } else if (process.env.NODE_ENV === 'production') {
+      } else if (process.env.APP_ENV === 'production') {
         mockedAxios.get.mockResolvedValue({
           data: {
             features: [{ 
@@ -349,7 +349,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledTimes(1);
       expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude}`));
       expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${end.longitude},${end.latitude}`));
-      expect(result.route).toEqual([[-3.54411, 0]]);
+      expect(result.route).toEqual([[0, -3.54411]]);
     });
   });
 

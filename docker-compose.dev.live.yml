@@ -15,7 +15,7 @@ services:
       GEOCODE_URL: https://api.openrouteservice.org/geocode
       ORS_API_KEY: ${ORS_API_KEY}
 
-      NODE_ENV: production
+      APP_ENV: production
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
