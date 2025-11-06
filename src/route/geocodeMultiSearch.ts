@@ -2,7 +2,7 @@ import axios from "axios";
 import { 
   getOrsApiKey, 
   getGeocodeBaseUrl, 
-  getNodeEnvironment 
+  getNodeEnvironmentFlag 
 } from "../utils/getEnvVariables";
 import { AddressCoordinates, geocodeMultiAddressFn } from "./route.types";
 import { apiRateLimiter } from "../utils/rateLimiter";
@@ -71,7 +71,7 @@ export const geocodeMultiAddress: geocodeMultiAddressFn = async (
   address: string,
   limit: number
 ): Promise<AddressCoordinates[]> => {
-  const isProduction = getNodeEnvironment();
+  const isProduction = getNodeEnvironmentFlag();
 
   try {
     if (isProduction) {

@@ -11,7 +11,7 @@ import {
 import { 
   getRouteBaseUrl, 
   getOrsApiKey,
-  getNodeEnvironment 
+  getNodeEnvironmentFlag 
 } from "../utils/getEnvVariables";
 import { apiRateLimiter } from "../utils/rateLimiter";
 
@@ -88,7 +88,7 @@ export const queryRoute: queryRouteFn = async (
   start: Coordinates,
   end: Coordinates,
 ): Promise<RouteResult> => {
-  const isProduction = getNodeEnvironment();
+  const isProduction = getNodeEnvironmentFlag();
   try {
     if (isProduction) {
       return await queryRouteORS(start, end);
