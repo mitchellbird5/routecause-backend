@@ -2,7 +2,7 @@ import axios from "axios";
 import { 
   getOrsApiKey, 
   getGeocodeBaseUrl,
-  getNodeEnvironment 
+  getNodeEnvironmentFlag 
 } from "../utils/getEnvVariables";
 import { reverseGeocodeFn } from "./route.types";
 import { apiRateLimiter } from "../utils/rateLimiter";
@@ -69,7 +69,7 @@ export const reverseGeocodeCoordinates: reverseGeocodeFn = async (
   latitude: number,
   longitude: number
 ): Promise<string> => {
-  const isProduction = getNodeEnvironment();
+  const isProduction = getNodeEnvironmentFlag();
   try {
     if (isProduction) {
       return await reverseGeocodeORS(latitude, longitude);

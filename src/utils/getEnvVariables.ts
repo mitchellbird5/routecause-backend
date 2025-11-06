@@ -19,7 +19,7 @@ export function getRouteBaseUrl(){
   return baseUrl
 }
 
-export function getNodeEnvironment(){
+export function getNodeEnvironmentFlag(){
   const isProduction = process.env.APP_ENV === "production";
   console.log('App environment: ', process.env.APP_ENV);
   return isProduction
