@@ -6,18 +6,15 @@ import {
   calculateMultiStopTrip,
   tripResultToJson,
 } from "../trip/trip";
-import {
-  getRoute,
-  queryRoute
-} from "../route/route";
-import { geocodeAddress } from "../route/geocodeSearch";
+import { queryRoute } from "../route/route";
+import { Coordinates } from "../route/route.types";
 
 interface TripRequestBody {
   vehicle_id: number;
   make: string;
   model: string;
   model_year: string;
-  locations: any[];
+  locations: Coordinates[];
 }
 
 export async function getTripService(body: TripRequestBody) {
@@ -39,11 +36,7 @@ export async function getTripService(body: TripRequestBody) {
   const trip = await calculateMultiStopTrip(
     body.locations,
     vehicle,
-    {
-      getRoute,
-      geocodeAddress,
-      queryRoute,
-    }
+    queryRoute,
   );
 
   return tripResultToJson(trip);
