@@ -9,13 +9,11 @@ describe("Logic testing", () => {
       // -------------------------
       // Mock dependencies
       // -------------------------
-      const mockGetRoute = jest.fn().mockResolvedValue({
+
+      const mockQueryRoute = jest.fn().mockResolvedValue({
         distance_km: 200,    // 200 km trip
         duration_min: 130,   // 2 hours 10 minutes
       });
-
-      const mockGeocodeAddress = jest.fn();
-      const mockqueryRoute = jest.fn();
 
       // -------------------------
       // Fake vehicle data
@@ -39,26 +37,18 @@ describe("Logic testing", () => {
       // Run the function
       // -------------------------
       const result = await calculateTrip(
-        "Start Address",
-        "End Address",
+        {latitude: 0, longitude: 0},
+        {latitude: 1, longitude: 1},
         vehicleData,
-        {
-          getRoute: mockGetRoute,
-          geocodeAddress: mockGeocodeAddress,
-          queryRoute: mockqueryRoute,
-        }
+        mockQueryRoute,
       );
 
       // -------------------------
       // Assertions
       // -------------------------
-      expect(mockGetRoute).toHaveBeenCalledWith(
-        "Start Address", 
-        "End Address", 
-        {
-          geocodeAddress: mockGeocodeAddress,
-          queryRoute: mockqueryRoute,
-        }
+      expect(mockQueryRoute).toHaveBeenCalledWith(
+        {latitude: 0, longitude: 0},
+        {latitude: 1, longitude: 1}
       );
 
       // Distance
@@ -81,14 +71,12 @@ describe("Logic testing", () => {
 
   describe("calculateMultiStopTrip", () => {
     it("calculates totals correctly for multiple stops (3 legs, 4 locations)", async () => {
-      const mockGetRoute = jest
+      const mockQueryRoute = jest
         .fn()
         .mockResolvedValueOnce({ distance_km: 100, duration_min: 60 }) // Start → Stop1
         .mockResolvedValueOnce({ distance_km: 150, duration_min: 90 }) // Stop1 → Stop2
         .mockResolvedValueOnce({ distance_km: 75, duration_min: 45 }); // Stop2 → End
 
-      const mockGeocodeAddress = jest.fn();
-      const mockqueryRoute = jest.fn();
       jest.spyOn(timeUtils, "convertMinutes");
 
       const vehicleData: VehicleData = {
@@ -107,13 +95,14 @@ describe("Logic testing", () => {
       };
 
       const result = await calculateMultiStopTrip(
-        ["Start", "Stop1", "Stop2", "End"],
+        [
+          {latitude: 0, longitude: 0},   // Start
+          {latitude: 1, longitude: 1},   // Stop1
+          {latitude: 2, longitude: 2},   // Stop2
+          {latitude: 3, longitude: 3},   // End
+        ],
         vehicleData,
-        {
-          getRoute: mockGetRoute,
-          geocodeAddress: mockGeocodeAddress,
-          queryRoute: mockqueryRoute,
-        }
+        mockQueryRoute,
       );
 
       // Total distances: 100 + 150 + 75 = 325 km

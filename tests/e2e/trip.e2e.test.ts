@@ -10,7 +10,10 @@ describe("End-to-End: /trip", () => {
           make: "Toyota",
           model: "Corolla",
           model_year: "2008",
-          locations: ["Cuba Street, Wellington, New Zealand", "Te Papa Museum, Wellington, New Zealand"],
+          locations: [
+            { latitude: -41.219366, longitude: 174.889145 }, // Auckland
+            { latitude: -41.290588, longitude: 174.781064 }
+          ],
         })
         .set("Accept", "application/json");
 

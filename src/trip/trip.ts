@@ -2,9 +2,8 @@ import { VehicleData } from "../vehicle/vehicle.types";
 import { TripResult } from "./trip.types";
 import { 
   queryRouteFn, 
-  getRouteFn, 
-  geocodeAddressFn,
-  RouteCoordinates
+  RouteCoordinates,
+  Coordinates
 } from "../route/route.types";
 import { convertMinutes } from "../route/duration";
 
@@ -22,31 +21,17 @@ export function tripResultToJson(trip: TripResult) {
     };
 }
 
-export interface TripDependencies {
-    getRoute: getRouteFn;
-    geocodeAddress: geocodeAddressFn;
-    queryRoute: queryRouteFn;
-}
-
 /**
  * Calculate trip based on start/end addresses and vehicle data
  */
 export async function calculateTrip(
-    start_address: string,
-    end_address: string,
+    start: Coordinates,
+    end: Coordinates,
     vehicle_data: VehicleData,
-    deps: TripDependencies,
+    queryRoute: queryRouteFn,
 ): Promise<TripResult> {
-    const { getRoute, geocodeAddress, queryRoute } = deps;
 
-    const result = await getRoute(
-      start_address,
-      end_address, 
-      {
-        geocodeAddress,
-        queryRoute,
-      },
-    );
+    const result = await queryRoute(start, end);
 
     const dur = convertMinutes(Math.floor(result.duration_min));
 
@@ -67,9 +52,9 @@ export async function calculateTrip(
 }
 
 export async function calculateMultiStopTrip(
-  locations: string[],
+  locations: Coordinates[],
   vehicle_data: VehicleData,
-  deps: TripDependencies,
+  queryRoute: queryRouteFn,
 ): Promise<TripResult> {
   if (locations.length < 2) {
     throw new Error("At least two locations (start and end) are required");
@@ -86,7 +71,7 @@ export async function calculateMultiStopTrip(
       locations[i],
       locations[i + 1],
       vehicle_data,
-      deps,
+      queryRoute,
     );
 
     totalDistance += legTrip.distance_km;
