@@ -28,7 +28,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     });
 
     jest.spyOn(routeModule, "queryRoute").mockImplementation(async () => {
-      return { distance_km: 486.4, duration_min: 364, route: [[1, 2]] };
+      return { distance_km: 486.4, duration_min: 364, route: [{latitude: 1, longitude: 2}] };
     });
 
     jest.spyOn(vehicleData, "selectVehicle");
@@ -78,7 +78,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(response.body).toHaveProperty("minutes", 4);
     expect(response.body).toHaveProperty("fuel_used_l", 35.9936);
     expect(response.body.co2_kg).toBeCloseTo(8.2688, 2);
-    expect(response.body).toHaveProperty("route", [[1, 2]]);
+    expect(response.body).toHaveProperty("route", [{latitude: 1, longitude: 2}]);
   });
 
 
@@ -122,7 +122,7 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(response.body).toHaveProperty("minutes", 4);
     expect(response.body).toHaveProperty("fuel_used_l", 35.9936);
     expect(response.body.co2_kg).toBeCloseTo(8.2688, 2);
-    expect(response.body).toHaveProperty("route", [[1, 2]]);
+    expect(response.body).toHaveProperty("route", [{latitude: 1, longitude: 2}]);
   });
 
   it("should return 400 for missing vehicle info using mocked APIs", async () => {

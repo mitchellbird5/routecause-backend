@@ -209,6 +209,7 @@ export const queryRouteLocal: queryRouteFn = async (
 
   const route = response.data.routes[0];
 
+
   const geometryCoords: RouteCoordinates = route.geometry
     ? (polyline.decode(route.geometry).map(
         ([lat, lng]: [number, number]) => ({
