@@ -8,7 +8,7 @@ export interface TimeHM {
   minutes: number;
 }
 
-export type RouteCoordinates = [number, number][]
+export type RouteCoordinates = Coordinates[]
 
 export interface RouteResult {
   distance_km: number;

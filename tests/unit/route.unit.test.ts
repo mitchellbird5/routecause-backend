@@ -16,10 +16,10 @@ import { geocodeAddress } from "../../src/route/geocodeSearch";
 import { geocodeMultiAddress } from "../../src/route/geocodeMultiSearch";
 import { reverseGeocodeCoordinates } from "../../src/route/reverseGeocode";
 import { 
+  Coordinates,
   geocodeAddressFn, 
   queryRouteFn 
 } from "../../src/route/route.types";
-import { error } from "console";
 
 jest.mock("axios"); // Mock the entire axios module
   const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -337,8 +337,8 @@ describe("Mocked API and error testing", () => {
         throw new Error("Can't find environment configuration")
       }
       
-      const start = { latitude: -43.531, longitude: 172.655 };
-      const end = { latitude: -45.021, longitude: 168.738 };
+      const start = { latitude: -43.531, longitude: 172.655 } as Coordinates;
+      const end = { latitude: -45.021, longitude: 168.738 } as Coordinates;
 
       // Act
       const result = await queryRoute(start, end);
@@ -349,7 +349,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledTimes(1);
       expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude}`));
       expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${end.longitude},${end.latitude}`));
-      expect(result.route).toEqual([[0, -3.54411]]);
+      expect(result.route).toEqual([{latitude: 0, longitude: -3.54411}]);
     });
   });
 
@@ -372,8 +372,8 @@ describe("Mocked API and error testing", () => {
         distance_km: 486.4,
         duration_min: 364,
         route: [
-          [172.655, -43.531],
-          [168.738, -45.021],
+          {longitude: 172.655, latitude: -43.531},
+          {longitude: 168.738, latitude: -45.021},
         ],
       });
 
@@ -389,8 +389,8 @@ describe("Mocked API and error testing", () => {
       expect(result.distance_km).toBe(486.4);
       expect(result.duration_min).toBe(364);
       expect(result.route).toEqual([
-        [172.655, -43.531],
-        [168.738, -45.021],
+        {longitude: 172.655, latitude: -43.531},
+        {longitude: 168.738, latitude: -45.021},
       ]);
     });
 
