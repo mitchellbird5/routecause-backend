@@ -40,9 +40,15 @@ export const queryRouteLocal: queryRouteFn = async (
   const response = await callRouteApi(url);
 
   const route = response.data.routes[0];
+
   const geometryCoords: RouteCoordinates = route.geometry
-    ? (polyline.decode(route.geometry) as RouteCoordinates)
-    : [];
+  ? (polyline.decode(route.geometry).map(
+      ([lat, lng]: [number, number]) => ({
+        latitude: lat,
+        longitude: lng,
+      })
+    ) as RouteCoordinates)
+  : [];
 
   const result: RouteResult = {
     distance_km: route.distance / 1000,
@@ -72,8 +78,12 @@ export const queryRouteORS: queryRouteFn = async (
   const route = response.data.features[0];
   const coordinates = route.geometry?.coordinates || [];
   
-  // Convert [longitude, latitude] to [latitude, longitude]
-  const geometryCoords: RouteCoordinates = coordinates.map((coord: number[]) => [coord[1], coord[0]]);
+  const geometryCoords: RouteCoordinates = coordinates.map(
+    ([lon, lat]: [number, number]) => ({
+      latitude: lat,
+      longitude: lon,
+    })
+  );
 
   const result: RouteResult = {
     distance_km: route.properties.summary.distance / 1000,
