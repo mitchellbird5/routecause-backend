@@ -29,7 +29,7 @@ services:
         condition: service_started
     environment:
       APP_ENV: production
-      ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
+      ROUTER_URL: https://api.openrouteservice.org/v2/snap/driving-car
       GEOCODE_URL: https://api.openrouteservice.org/geocode
       ORS_API_KEY: ${ORS_API_KEY}
       POSTGRES_HOST: emission_db_ci
