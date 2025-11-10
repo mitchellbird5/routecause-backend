@@ -1,16 +1,9 @@
 import axios from "axios";
-// import { 
-//   convertMinutes,
-//   getRoute,
-//   geocodeAddress,
-//   geocodeMultiAddress,
-//   queryRoute,
-//   reverseGeocodeCoordinates
-// } from "../../src/distance/distance";
 import { convertMinutes } from "../../src/route/duration";
 import { 
-  getRoute, 
-  queryRoute 
+  callOrsRouteApiWithRetry, 
+  queryRoute, 
+  getRoute 
 } from "../../src/route/route";
 import { geocodeAddress } from "../../src/route/geocodeSearch";
 import { geocodeMultiAddress } from "../../src/route/geocodeMultiSearch";
@@ -58,7 +51,7 @@ describe("Logic testing", () => {
 
 describe("Mocked API and error testing", () => {
   beforeEach(() => {
-    jest.clearAllMocks(); // reset call counts
+    jest.resetAllMocks(); // completely resets mocked implementations
   });
 
   describe("geocodeAddress", () => {
@@ -347,8 +340,18 @@ describe("Mocked API and error testing", () => {
       expect(result.distance_km).toBe(1);
       expect(result.duration_min).toBe(1);
       expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${start.longitude},${start.latitude}`));
-      expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining(`${end.longitude},${end.latitude}`));
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.stringContaining(`${start.longitude},${start.latitude}`),
+        expect.objectContaining({
+          headers: { "User-Agent": "DriveZero/1.0" },
+        })
+      );
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.stringContaining(`${end.longitude},${end.latitude}`),
+        expect.objectContaining({
+          headers: { "User-Agent": "DriveZero/1.0" },
+        })
+      );
       expect(result.route).toEqual([{latitude: 0, longitude: -3.54411}]);
     });
   });
@@ -394,6 +397,134 @@ describe("Mocked API and error testing", () => {
       ]);
     });
 
+  });
+
+  it("returns response immediately if ORS route succeeds on first try", async () => {
+    const start = { latitude: -43.531, longitude: 172.655 };
+    const end = { latitude: -45.021, longitude: 168.738 };
+    const urlPattern = expect.stringContaining(`${start.longitude},${start.latitude}`);
+
+    mockedAxios.get.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        features: [
+          {
+            geometry: { coordinates: [[172.655, -43.531], [168.738, -45.021]] },
+            properties: { summary: { distance: 1000, duration: 60 } },
+          },
+        ],
+      },
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    const response = await callOrsRouteApiWithRetry(start, end, 10000);
+
+    expect(response.data.features[0].geometry.coordinates).toEqual([[172.655, -43.531], [168.738, -45.021]]);
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+    expect(mockedAxios.get).toHaveBeenCalledWith(urlPattern, expect.any(Object));
+  });
+
+  it("snaps start coordinate if ORS 2010 error occurs and retries", async () => {
+    const start = { latitude: -38.9275225, longitude: 174.8982278 };
+    const end = { latitude: -41.285046, longitude: 174.776173 };
+    const radius = 10000;
+
+    // Mock axios.get for ORS route
+    mockedAxios.get.mockResolvedValueOnce({
+      status: 400,
+      data: { error: { code: 2010, message: `Could not find routable point within 350m of ${start.longitude} ${start.latitude}` } },
+      statusText: "Bad Request",
+      headers: {},
+      config: {},
+    });
+
+    mockedAxios.get.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        features: [
+          {
+            geometry: { coordinates: [[174.915644, -38.918619], [174.776173, -41.285046]] },
+            properties: { summary: { distance: 1000, duration: 60 } },
+          },
+        ],
+      },
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    // Mock axios.post for callSnapOrsApi
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 200,
+      data: { locations: [{location: [174.915644, -38.918619]}] },
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    const response = await callOrsRouteApiWithRetry(start, end, radius);
+
+    expect(response.data.features[0].geometry.coordinates).toEqual([
+      [174.915644, -38.918619],
+      [174.776173, -41.285046],
+    ]);
+  });
+
+  it("throws if snapped coordinate does not match start or end", async () => {
+    const start = { latitude: 0, longitude: 0 };
+    const end = { latitude: 1, longitude: 1 };
+    const radius = 10000;
+
+    mockedAxios.get.mockResolvedValueOnce({
+      status: 400,
+      data: { error: { code: 2010, message: `Could not find routable point within 350m of ${start.longitude} ${start.latitude}` } },
+      statusText: "Bad Request",
+      headers: {},
+      config: {},
+    });
+
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        locations: [
+          {longitude: 50, latitude: 50}
+        ],
+      },
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    await expect(callOrsRouteApiWithRetry(start, end, radius)).rejects.toThrow(
+      "Failed to parse unroutable coordinate from ORS error message"
+    );
+  });
+
+  it("returns error and response if it can't find a snapped coordinate", async () => {
+    const start = { latitude: -38.9275225, longitude: 174.8982278 };
+    const end = { latitude: -41.285046, longitude: 174.776173 };
+    const radius = 10000;
+
+    // Mock axios.get for ORS route
+    mockedAxios.get.mockRejectedValueOnce({
+      code: 2010,
+      message: `ORS request failed: Could not find routable point within 350m of ${start.longitude} ${start.latitude}`,
+    });
+
+    // Mock axios.post for callSnapOrsApi
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 200,
+      data: { locations: [null] },
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
+    await expect(callOrsRouteApiWithRetry(start, end, radius)).rejects.toThrow(
+      "ORS snap request failed: Could not find snappable point in 10km radius"
+    );
   });
 
 })

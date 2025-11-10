@@ -48,6 +48,13 @@ export async function callSnapOrsApi(
       }
     }
 
+    if (response.data?.locations?.[0] === null) {
+      const error: any = new Error(`ORS snap request failed: Could not find snappable point in ${radius*1e-3}km radius`);
+      error.code = 2020;
+      error.response = response;
+      throw error;
+    }
+
     const snappedLocation = response.data.locations?.[0]?.location;
     if (!snappedLocation) {
       throw new Error("Failed to snap coordinate via ORS Snap API");
@@ -108,7 +115,7 @@ async function callOrsRouteApi(
 
 };
 
-async function callOrsRouteApiWithRetry(
+export async function callOrsRouteApiWithRetry(
   start: Coordinates,
   end: Coordinates,
   radius: number
