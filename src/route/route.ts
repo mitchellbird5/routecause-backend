@@ -1,4 +1,4 @@
-import axios, { Axios, AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import polyline from "@mapbox/polyline";
 import {
   Coordinates,
@@ -14,6 +14,18 @@ import {
   getNodeEnvironmentFlag 
 } from "../utils/getEnvVariables";
 import { apiRateLimiter } from "../utils/rateLimiter";
+
+export class SnapError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+
+    Object.setPrototypeOf(this, SnapError.prototype);
+  }
+}
+
 
 export async function callSnapOrsApi(
   coord: Coordinates,
@@ -49,9 +61,10 @@ export async function callSnapOrsApi(
     }
 
     if (response.data?.locations?.[0] === null) {
-      const error: any = new Error(`ORS snap request failed: Could not find snappable point in ${radius*1e-3}km radius`);
-      error.code = 2020;
-      error.response = response;
+      const error: SnapError = new SnapError(
+        2020, 
+        `ORS snap request failed: Could not find snappable point in ${radius*1e-3}km radius`
+      );
       throw error;
     }
 
@@ -247,7 +260,11 @@ export const queryRoute: queryRouteFn = async (
       return await queryRouteLocal(start, end);
     }
   } catch (err: any) {
-    console.error("Query route request failed:", err);
+
+    if (err instanceof SnapError) {
+      throw err;
+    }
+
     throw new Error(`Error querying route: Start=(${start.latitude},${start.longitude}), End=(${end.latitude},${end.longitude}) ${err.message}`
     );
   }
@@ -270,6 +287,11 @@ export const getRoute: getRouteFn = async (
   try {
     return await deps.queryRoute(startCoords, endCoords);
   } catch (err: any) {
+
+    if (err instanceof SnapError) {
+      throw err;
+    }
+    
     throw new Error(
       `Error querying route: Start=(${startCoords.latitude},${startCoords.longitude}), End=(${endCoords.latitude},${endCoords.longitude}) ${err.message}`
     );
