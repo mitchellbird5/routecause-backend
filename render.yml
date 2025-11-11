@@ -7,6 +7,3 @@ services:
     dockerBuildArgs:
       - key: target
         value: production
-    envVars:
-      - key: NODE_ENV
-        value: production
