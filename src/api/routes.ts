@@ -53,25 +53,35 @@ router.get("/vehicles", async (req: Request, res: Response) => {
 // POST /trip
 // -------------------------------
 router.post("/trip", async (req: Request, res: Response) => {
-  const make = xss((req.query.make as string) || "").trim();
-  const model = xss((req.query.model as string) || "").trim();
-  const model_year = xss((req.query.year as string) || "").trim();
-  const vehicle_id_raw = req.query.vehicle_id as string;
-  const locations = req.body.locations;
+  const {
+    vehicle_id,
+    make: rawMake,
+    model: rawModel,
+    model_year: rawYear,
+    locations,
+  } = req.body;
 
-  if (!validator.isInt(vehicle_id_raw || "", { min: 1 })) {
+  const make = xss((rawMake as string || "").trim());
+  const model = xss((rawModel as string || "").trim());
+  const model_year = xss((rawYear as string || "").trim());
+
+  // Validate vehicle_id
+  if (!Number.isInteger(vehicle_id) || vehicle_id < 1) {
     return res.status(400).json({ error: "Invalid vehicle_id" });
   }
-  const vehicle_id = parseInt(vehicle_id_raw);
 
+  // Validate make/model
   if (!make || make.length > 50 || !model || model.length > 50) {
     return res.status(400).json({ error: "Invalid make or model" });
   }
 
-  if (!validator.isInt(model_year, { min: 1995, max: new Date().getFullYear() + 1 })) {
+  // Validate model_year
+  const yearInt = parseInt(model_year);
+  if (isNaN(yearInt) || yearInt < 1995 || yearInt > new Date().getFullYear() + 1) {
     return res.status(400).json({ error: "Invalid model year" });
   }
 
+  // Validate locations array
   if (!Array.isArray(locations) || locations.length === 0) {
     return res.status(400).json({ error: "Locations must be a non-empty array" });
   }
@@ -80,37 +90,27 @@ router.post("/trip", async (req: Request, res: Response) => {
     if (
       typeof loc.latitude !== "number" ||
       typeof loc.longitude !== "number" ||
-      loc.latitude < -360 || loc.latitude > 360 ||
-      loc.longitude < -360 || loc.longitude > 360
+      loc.latitude < -90 || loc.latitude > 90 ||
+      loc.longitude < -180 || loc.longitude > 180
     ) {
       return res.status(400).json({ error: "Invalid coordinates in locations" });
     }
   }
 
   try {
-    const trip = await getTripService(
-      vehicle_id,
-      make,
-      model,
-      model_year,
-      locations,
-    );
+    const trip = await getTripService(vehicle_id, make, model, model_year, locations);
     res.status(200).json(trip);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
         limitFreq: err.limitFreq,
-        timeToResetMs: err.timeToResetMs
+        timeToResetMs: err.timeToResetMs,
       });
     }
 
-    // Handle other errors with a status code
-    if (err.status) {
-      return res.status(err.status).json({ error: err.message });
-    }
+    if (err.status) return res.status(err.status).json({ error: err.message });
 
-    // Unexpected errors
     console.error("Unexpected error in /trip:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
