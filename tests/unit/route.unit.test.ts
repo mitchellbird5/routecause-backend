@@ -99,7 +99,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining("New%20Brighton%20Pier"),
         expect.objectContaining({
-          headers: { "User-Agent": "DriveZero/1.0" },
+          headers: { "User-Agent": "RouteCause/1.0" },
           timeout: 10000,
         })
       );
@@ -215,7 +215,7 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining(expected_url_contain),
         expect.objectContaining({
-          headers: { "User-Agent": "DriveZero/1.0" },
+          headers: { "User-Agent": "RouteCause/1.0" },
           timeout: 10000,
         })
       );
@@ -283,7 +283,7 @@ describe("Mocked API and error testing", () => {
 
       expect(calledConfig).toEqual(
         expect.objectContaining({
-          headers: expect.objectContaining({ "User-Agent": "DriveZero/1.0" }),
+          headers: expect.objectContaining({ "User-Agent": "RouteCause/1.0" }),
           timeout: 10000,
         })
       );
@@ -343,13 +343,13 @@ describe("Mocked API and error testing", () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining(`${start.longitude},${start.latitude}`),
         expect.objectContaining({
-          headers: { "User-Agent": "DriveZero/1.0" },
+          headers: { "User-Agent": "RouteCause/1.0" },
         })
       );
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining(`${end.longitude},${end.latitude}`),
         expect.objectContaining({
-          headers: { "User-Agent": "DriveZero/1.0" },
+          headers: { "User-Agent": "RouteCause/1.0" },
         })
       );
       expect(result.route).toEqual([{latitude: 0, longitude: -3.54411}]);

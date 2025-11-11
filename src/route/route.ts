@@ -42,7 +42,7 @@ export async function callSnapOrsApi(
       },
       {
         headers: {
-          "User-Agent": "DriveZero/1.0",
+          "User-Agent": "RouteCause/1.0",
           "Accept": "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8",
           "Content-Type": "application/json; charset=utf-8",
           Authorization: getOrsApiKey(),
@@ -103,7 +103,7 @@ async function callOrsRouteApi(
   try {
     const response = await axios.get(url, {
       headers: {
-        "User-Agent": "DriveZero/1.0",
+        "User-Agent": "RouteCause/1.0",
       },
       timeout: 30000,
       validateStatus: () => true,

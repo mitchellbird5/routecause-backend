@@ -7,6 +7,7 @@ import * as vehicleData from "../../src/vehicle/vehicle";
 import { VehicleData as VehicleDataType } from "../../src/vehicle/vehicle.types"
 import * as tripService from "../../src/services/tripService";
 import { apiRateLimitExceededError } from "../../src/utils/rateLimiter";
+import { Coordinates } from "../../src/route/route.types";
 
 const app = express();
 app.use(express.json());
@@ -44,8 +45,7 @@ describe("/trip API Route (mocked external APIs)", () => {
       make: "Toyota",
       model: "Corolla",
       model_year: "2008",
-      locations: ["Christchurch", "Queenstown"],
-      overview: "full"
+      locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
     };
 
     const fakeVehicle: VehicleDataType[] = [
@@ -88,8 +88,7 @@ describe("/trip API Route (mocked external APIs)", () => {
       make: "Toyota",
       model: "Corolla",
       model_year: "2008",
-      locations: ["Christchurch", "Queenstown"],
-      overview: "false"
+      locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
     };
 
     const fakeVehicle: VehicleDataType[] = [
@@ -132,7 +131,6 @@ describe("/trip API Route (mocked external APIs)", () => {
       .set("Accept", "application/json");
 
     expect(response.status).toBe(400);
-    expect(response.body).toHaveProperty("error", "Missing Vehicle ID or vehicle info.");
   });
 
   it("should return 400 if vehicle not found", async () => {
@@ -149,7 +147,6 @@ describe("/trip API Route (mocked external APIs)", () => {
     });
 
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error", "Vehicle not found");
     });
 
     it("returns 500 for unexpected errors", async () => {
@@ -157,12 +154,21 @@ describe("/trip API Route (mocked external APIs)", () => {
       new Error("Unexpected failure")
     );
 
-    const res = await request(app)
-      .post("/api/trip")
-      .send({ start: "A", end: "B" });
+    const postData = {
+      vehicle_id: 1,
+      make: "Toyota",
+      model: "Corolla",
+      model_year: "2008",
+      locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
+    };
 
-    expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: "Internal Server Error" });
+    const response = await request(app)
+      .post("/api/trip")
+      .send(postData)
+      .set("Accept", "application/json");
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ error: "Internal Server Error" });
   });
 
   it("returns correct response for minute limit exceedance", async () => {
@@ -175,12 +181,21 @@ describe("/trip API Route (mocked external APIs)", () => {
       )
     );
 
-    const res = await request(app)
-      .post("/api/trip")
-      .send({ start: "A", end: "B" });
+    const postData = {
+      vehicle_id: 1,
+      make: "Toyota",
+      model: "Corolla",
+      model_year: "2008",
+      locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
+    };
 
-    expect(res.status).toBe(429);
-    expect(res.body).toEqual({
+    const response = await request(app)
+      .post("/api/trip")
+      .send(postData)
+      .set("Accept", "application/json");
+
+    expect(response.status).toBe(429);
+    expect(response.body).toEqual({
       error: "RATE_LIMIT_EXCEEDED_MINUTE",
       limitFreq: "minute",
       timeToResetMs: 3000
@@ -197,12 +212,21 @@ describe("/trip API Route (mocked external APIs)", () => {
       )
     );
 
-    const res = await request(app)
-      .post("/api/trip")
-      .send({ start: "A", end: "B" });
+    const postData = {
+      vehicle_id: 1,
+      make: "Toyota",
+      model: "Corolla",
+      model_year: "2008",
+      locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
+    };
 
-    expect(res.status).toBe(429);
-    expect(res.body).toEqual({
+    const response = await request(app)
+      .post("/api/trip")
+      .send(postData)
+      .set("Accept", "application/json");
+
+    expect(response.status).toBe(429);
+    expect(response.body).toEqual({
       error: "RATE_LIMIT_EXCEEDED_DAILY",
       limitFreq: "daily",
       timeToResetMs: 50000

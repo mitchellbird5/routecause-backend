@@ -16,7 +16,7 @@ async function callGeocodeApi(url: string, address: string) {
 
   try {
     response = await axios.get(url, {
-      headers: { "User-Agent": "DriveZero/1.0" },
+      headers: { "User-Agent": "RouteCause/1.0" },
       timeout: 10000, // 10s timeout
     });
     console.log("Geocode response:", response.data);

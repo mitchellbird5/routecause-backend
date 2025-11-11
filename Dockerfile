@@ -7,7 +7,7 @@ WORKDIR /app
 RUN apk add --no-cache bash git curl git-lfs dos2unix
 
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY ./src ./src
 COPY tsconfig.json ./

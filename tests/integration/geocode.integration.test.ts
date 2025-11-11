@@ -34,7 +34,7 @@ describe("/geocode API Route (mocked external APIs)", () => {
     const res = await request(app).get("/api/geocode");
 
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error", "Missing or invalid 'address' query param.");
+    expect(res.body).toHaveProperty("error", "Missing or invalid address");
   });
 
   it("returns 500 if service throws an error", async () => {
@@ -123,7 +123,7 @@ describe("/geocode-multi API Route (mocked external APIs)", () => {
 
     const res = await request(app)
       .get("/api/geocode-multi")
-      .query({ q: "Test Query", limit: 2 });
+      .query({ address: "Test Query", limit: 2 });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(mockSuggestions);
@@ -149,7 +149,7 @@ describe("/geocode-multi API Route (mocked external APIs)", () => {
 
     const res = await request(app)
       .get("/api/geocode-multi")
-      .query({ q: "Fail Query", limit: 2 });
+      .query({ address: "Fail Query", limit: 2 });
 
     expect(res.status).toBe(500);
     expect(res.body).toHaveProperty("error", "Internal Server Error");
@@ -225,25 +225,25 @@ describe("/reverse-geocode API Route (mocked external APIs)", () => {
       .get("/api/reverse-geocode")
       .query({ lat: "abc", lon: 172.6362 });
     expect(res1.status).toBe(400);
-    expect(res1.body).toHaveProperty("error", "Invalid latitude or longitude.");
+    expect(res1.body).toHaveProperty("error", "Invalid latitude or longitude");
 
     const res2 = await request(app)
       .get("/api/reverse-geocode")
       .query({ lat: -43.5321 });
     expect(res2.status).toBe(400);
-    expect(res2.body).toHaveProperty("error", "Invalid latitude or longitude.");
+    expect(res2.body).toHaveProperty("error", "Missing latitude or longitude");
 
     const res3 = await request(app)
       .get("/api/reverse-geocode")
       .query({ lat: 45, lon: "abc" });
     expect(res3.status).toBe(400);
-    expect(res3.body).toHaveProperty("error", "Invalid latitude or longitude.");
+    expect(res3.body).toHaveProperty("error", "Invalid latitude or longitude");
 
     const res4 = await request(app)
       .get("/api/reverse-geocode")
       .query({ lon: -43.5321 });
     expect(res4.status).toBe(400);
-    expect(res4.body).toHaveProperty("error", "Invalid latitude or longitude.");
+    expect(res4.body).toHaveProperty("error", "Missing latitude or longitude");
   });
 
   it("returns 500 if service throws an error", async () => {

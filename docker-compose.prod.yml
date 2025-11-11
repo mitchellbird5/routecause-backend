@@ -1,7 +1,7 @@
 services:
-  drivezero-backend:
-    container_name: drivezero-backend
-    image: drivezero/backend:latest
+  routecause-backend:
+    container_name: routecause-backend
+    image: routecause/backend:latest
     build:
       context: .
       target: production
@@ -23,12 +23,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
 
     networks:
-      - drivezero-network
+      - routecause-network
 
     dns:
       - 8.8.8.8
       - 8.8.4.4
 
 networks:
-  drivezero-network:
+  routecause-network:
     external: true
