@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: routecause-backend
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerBuildArgs:
+      - key: target
+        value: production
+    envVars:
+      - key: NODE_ENV
+        value: production
