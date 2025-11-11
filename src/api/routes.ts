@@ -4,6 +4,9 @@ import { getTripService } from "../services/tripService";
 import { getGeocodeService, getGeocodeMultiService, getReverseGeocodeService } from "../services/geocodeService";
 import { getEmissionsService } from "../services/emissionsService";
 import { apiRateLimitExceededError } from "../utils/rateLimiter";
+import validator from "validator";
+import xss from "xss";
+
 
 export const router = Router();
 
@@ -11,9 +14,17 @@ export const router = Router();
 // GET /vehicles
 // -------------------------------
 router.get("/vehicles", async (req: Request, res: Response) => {
-  const make = (req.query.make as string) || "";
-  const model = (req.query.model as string) || "";
-  const model_year = (req.query.year as string) || "";
+  const make = xss((req.query.make as string) || "").trim();
+  const model = xss((req.query.model as string) || "").trim();
+  const model_year = xss((req.query.year as string) || "").trim();
+
+  if (make.length > 50 || model.length > 50) {
+    return res.status(400).json({ error: "Input too long" });
+  }
+
+  if (model_year && !validator.isInt(model_year, { min: 1995, max: new Date().getFullYear() + 1 })) {
+    return res.status(400).json({ error: "Invalid model year" });
+  }
 
   try {
     const vehicles = await getVehiclesService(make, model, model_year);
@@ -42,8 +53,48 @@ router.get("/vehicles", async (req: Request, res: Response) => {
 // POST /trip
 // -------------------------------
 router.post("/trip", async (req: Request, res: Response) => {
+  const make = xss((req.query.make as string) || "").trim();
+  const model = xss((req.query.model as string) || "").trim();
+  const model_year = xss((req.query.year as string) || "").trim();
+  const vehicle_id_raw = req.query.vehicle_id as string;
+  const locations = req.body.locations;
+
+  if (!validator.isInt(vehicle_id_raw || "", { min: 1 })) {
+    return res.status(400).json({ error: "Invalid vehicle_id" });
+  }
+  const vehicle_id = parseInt(vehicle_id_raw);
+
+  if (!make || make.length > 50 || !model || model.length > 50) {
+    return res.status(400).json({ error: "Invalid make or model" });
+  }
+
+  if (!validator.isInt(model_year, { min: 1995, max: new Date().getFullYear() + 1 })) {
+    return res.status(400).json({ error: "Invalid model year" });
+  }
+
+  if (!Array.isArray(locations) || locations.length === 0) {
+    return res.status(400).json({ error: "Locations must be a non-empty array" });
+  }
+
+  for (const loc of locations) {
+    if (
+      typeof loc.latitude !== "number" ||
+      typeof loc.longitude !== "number" ||
+      loc.latitude < -360 || loc.latitude > 360 ||
+      loc.longitude < -360 || loc.longitude > 360
+    ) {
+      return res.status(400).json({ error: "Invalid coordinates in locations" });
+    }
+  }
+
   try {
-    const trip = await getTripService(req.body);
+    const trip = await getTripService(
+      vehicle_id,
+      make,
+      model,
+      model_year,
+      locations,
+    );
     res.status(200).json(trip);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {
@@ -69,10 +120,23 @@ router.post("/trip", async (req: Request, res: Response) => {
 // GET /reverse-geocode
 // -------------------------------
 router.get("/reverse-geocode", async (req: Request, res: Response) => {
-  const lat = parseFloat(req.query.lat as string);
-  const lon = parseFloat(req.query.lon as string);
-
   try {
+    const latStr = req.query.lat as string;
+    const lonStr = req.query.lon as string;
+
+    // Validate existence
+    if (!latStr || !lonStr) {
+      return res.status(400).json({ error: "Missing latitude or longitude" });
+    }
+
+    const lat = parseFloat(latStr);
+    const lon = parseFloat(lonStr);
+
+    // Validate numeric ranges
+    if (isNaN(lat) || isNaN(lon) || lat < -360 || lat > 360 || lon < -360 || lon > 360) {
+      return res.status(400).json({ error: "Invalid latitude or longitude" });
+    }
+
     const address = await getReverseGeocodeService(lat, lon);
     res.status(200).json({ address });
   } catch (err: any) {
@@ -83,28 +147,28 @@ router.get("/reverse-geocode", async (req: Request, res: Response) => {
         timeToResetMs: err.timeToResetMs
       });
     }
-
-    // Handle other errors with a status code
-    if (err.status) {
-      return res.status(err.status).json({ error: err.message });
-    }
-
-    // Unexpected errors
+    if (err.status) return res.status(err.status).json({ error: err.message });
     console.error("Unexpected error in /reverse-geocode:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
+
 // -------------------------------
 // GET /geocode
 // -------------------------------
 router.get("/geocode", async (req: Request, res: Response) => {
-  const address = req.query.address as string;
-
   try {
+    let address = (req.query.address as string) || "";
+    address = xss(address).trim();
+
+    if (!address || address.length > 200) {
+      return res.status(400).json({ error: "Missing or invalid address" });
+    }
+
     const coords = await getGeocodeService(address);
     res.status(200).json(coords);
-  } catch (err: any)  {
+  } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {
       return res.status(429).json({
         error: err.message,
@@ -112,26 +176,32 @@ router.get("/geocode", async (req: Request, res: Response) => {
         timeToResetMs: err.timeToResetMs
       });
     }
-
-    // Handle other errors with a status code
-    if (err.status) {
-      return res.status(err.status).json({ error: err.message });
-    }
-
-    // Unexpected errors
+    if (err.status) return res.status(err.status).json({ error: err.message });
     console.error("Unexpected error in /geocode:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
+
 // -------------------------------
 // GET /geocode-multi
 // -------------------------------
 router.get("/geocode-multi", async (req: Request, res: Response) => {
-  const address = req.query.address as string;
-  const limit = parseInt(req.query.limit as string);
-
   try {
+    let address = (req.query.address as string) || "";
+    address = xss(address).trim();
+
+    let limitStr = req.query.limit as string;
+    const limit = parseInt(limitStr); // default limit
+
+    if (!address || address.length > 200) {
+      return res.status(400).json({ error: "Missing or invalid address" });
+    }
+
+    if (isNaN(limit) || limit < 1 || limit > 20) {
+      return res.status(400).json({ error: "Invalid limit; must be 1-20" });
+    }
+
     const suggestions = await getGeocodeMultiService(address, limit);
     res.status(200).json(suggestions);
   } catch (err: any) {
@@ -142,13 +212,7 @@ router.get("/geocode-multi", async (req: Request, res: Response) => {
         timeToResetMs: err.timeToResetMs
       });
     }
-
-    // Handle other errors with a status code
-    if (err.status) {
-      return res.status(err.status).json({ error: err.message });
-    }
-
-    // Unexpected errors
+    if (err.status) return res.status(err.status).json({ error: err.message });
     console.error("Unexpected error in /geocode-multi:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }

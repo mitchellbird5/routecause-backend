@@ -1,10 +1,10 @@
 {
   "name": "Node.js & TypeScript",
   "dockerComposeFile": ["../docker-compose.dev.yml"],
-  "service": "drivezero-dev",
+  "service": "routecause-dev",
   "workspaceFolder": "/app",
   "postStartCommand": "git config --global --add safe.directory /app",
-  "runServices": ["drivezero-dev", "osrm"],
+  "runServices": ["routecause-dev", "osrm"],
   "customizations": {
     "vscode": {
       "extensions": [

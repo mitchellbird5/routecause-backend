@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "skipLibCheck": true,
+    "typeRoots": ["node_modules/@types"],
     "types": ["node", "jest", "supertest"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
