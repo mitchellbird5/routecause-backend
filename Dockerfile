@@ -21,24 +21,6 @@ RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.
 RUN npm run build
 
 # ============================
-# Stage 2: Development
-# ============================
-FROM node:22-alpine AS development
-WORKDIR /app
-RUN apk add --no-cache bash git curl git-lfs dos2unix
-
-COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY package*.json ./
-RUN npm install
-
-COPY ./src ./src
-COPY tsconfig.json ./
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["npm", "run", "dev"]
-
-
-# ============================
 # Stage 3: Production
 # ============================
 FROM node:22-alpine AS production
@@ -57,62 +39,3 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["node", "dist/api/server.js"]
-
-# ============================
-# Stage 4: DevLive (production env + dev tooling)
-# ============================
-FROM node:22-alpine AS devlive
-WORKDIR /app
-
-RUN apk add --no-cache bash git curl git-lfs dos2unix python3 make g++
-
-# Copy entrypoint
-COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# Copy package files first
-COPY package*.json ./
-
-# Force install all deps (including dev) cleanly
-RUN npm install --include=dev
-RUN npm install --save-dev @types/node
-
-# Explicitly ensure ts-node-dev is available globally
-RUN npm install -g ts-node-dev
-
-# Copy source
-COPY ./src ./src
-COPY tsconfig.json ./
-
-EXPOSE 9229
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["npm", "run", "dev"]
-
-
-# ============================
-# Stage: CI
-# ============================
-FROM node:22-bullseye AS ci
-WORKDIR /app
-
-# Install required tools for native builds
-RUN apt-get update && apt-get install -y \
-    bash git curl python3 make g++ dos2unix && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy package files first
-COPY package*.json ./
-
-# Force install all dependencies including devDependencies
-RUN npm install --include=dev --force
-
-# Copy source code if you have tests that run against TS source
-COPY ./src ./src
-COPY ./tests ./tests
-COPY tsconfig.json ./ 
-COPY jest.config.js ./
-COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["npx", "jest", "--runInBand", "--verbose"]
