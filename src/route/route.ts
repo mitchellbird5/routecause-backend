@@ -62,7 +62,7 @@ export async function callSnapOrsApi(
 
     if (response.data?.locations?.[0] === null) {
       const error: SnapError = new SnapError(
-        2020, 
+        520, 
         `ORS snap request failed: Could not find snappable point in ${radius*1e-3}km radius`
       );
       throw error;
