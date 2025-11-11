@@ -21,6 +21,24 @@ RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.
 RUN npm run build
 
 # ============================
+# Stage 2: Development
+# ============================
+FROM node:22-alpine AS development
+WORKDIR /app
+RUN apk add --no-cache bash git curl git-lfs dos2unix
+
+COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY package*.json ./
+RUN npm install
+
+COPY ./src ./src
+COPY tsconfig.json ./
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["npm", "run", "dev"]
+
+
+# ============================
 # Stage 3: Production
 # ============================
 FROM node:22-alpine AS production
@@ -98,20 +116,3 @@ RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npx", "jest", "--runInBand", "--verbose"]
-
-# ============================
-# Stage 2: Development
-# ============================
-FROM node:22-alpine AS development
-WORKDIR /app
-RUN apk add --no-cache bash git curl git-lfs dos2unix
-
-COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY package*.json ./
-RUN npm install
-
-COPY ./src ./src
-COPY tsconfig.json ./
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["npm", "run", "dev"]
