@@ -4,6 +4,7 @@ services:
     image: routecause/backend-dev-live:latest
     build:
       context: .
+      dockerfile: Dockerfile.dev
       target: development
     volumes:
       - .:/app:cached
