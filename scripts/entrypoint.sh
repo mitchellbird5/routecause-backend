@@ -14,5 +14,8 @@ if [ ! -d "node_modules" ] || [ ! -f "node_modules/.installed" ] || [ package.js
     touch node_modules/.installed
 fi
 
+echo "ROUTER_URL=$ROUTER_URL"
+echo "GEOCODE_URL=$GEOCODE_URL"
+
 # Execute the container command
 exec "$@"

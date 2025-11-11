@@ -37,6 +37,7 @@ COPY tsconfig.json ./
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
+
 # ============================
 # Stage 3: Production
 # ============================
