@@ -41,7 +41,8 @@ CMD ["npm", "run", "dev"]
 # ============================
 # Stage 3: Production
 # ============================
-FROM node:22-alpine AS production
+ARG TARGET=production
+FROM node:22-alpine AS ${TARGET}
 WORKDIR /app
 RUN apk add --no-cache bash curl
 

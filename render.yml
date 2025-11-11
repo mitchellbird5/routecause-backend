@@ -5,5 +5,8 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     dockerBuildArgs:
-      - key: target
+      - key: TARGET
+        value: production
+    envVars:
+      - key: NODE_ENV
         value: production
