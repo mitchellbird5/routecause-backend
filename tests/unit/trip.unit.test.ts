@@ -16,30 +16,11 @@ describe("Logic testing", () => {
       });
 
       // -------------------------
-      // Fake vehicle data
-      // -------------------------
-      const vehicleData: VehicleData = {
-        make: "Toyota",
-        model: "Corolla",
-        model_year: "2020",
-        vehicle_class: "Compact",
-        engine_size: 1.8,
-        cylinders: 4,
-        transmission: "Automatic",
-        fuel_type: "Gasoline",
-        fuel_consumption_city: 7.5,
-        fuel_consumption_hwy: 5.5,
-        fuel_consumption_comb: 6.5, // L/100km
-        co2_emissions: 150, // g/km
-      };
-
-      // -------------------------
       // Run the function
       // -------------------------
       const result = await calculateTrip(
         {latitude: 0, longitude: 0},
         {latitude: 1, longitude: 1},
-        vehicleData,
         mockQueryRoute,
       );
 
@@ -58,12 +39,6 @@ describe("Logic testing", () => {
       expect(result.hours).toBe(2);
       expect(result.minutes).toBe(10);
 
-      // Fuel used: (200 / 100) * 6.5 = 13 L
-      expect(result.fuel_used_l).toBeCloseTo(13.0);
-
-      // Emissions: (200 * 150) / 1000 = 30 kg
-      expect(result.co2_kg).toBeCloseTo(30.0);
-
       expect(result).toHaveProperty("route")
     });
 
@@ -79,21 +54,6 @@ describe("Logic testing", () => {
 
       jest.spyOn(timeUtils, "convertMinutes");
 
-      const vehicleData: VehicleData = {
-        make: "Toyota",
-        model: "Corolla",
-        model_year: "2020",
-        vehicle_class: "Compact",
-        engine_size: 1.8,
-        cylinders: 4,
-        transmission: "Automatic",
-        fuel_type: "Gasoline",
-        fuel_consumption_city: 7.5,
-        fuel_consumption_hwy: 5.5,
-        fuel_consumption_comb: 6.5,
-        co2_emissions: 150,
-      };
-
       const result = await calculateMultiStopTrip(
         [
           {latitude: 0, longitude: 0},   // Start
@@ -101,7 +61,6 @@ describe("Logic testing", () => {
           {latitude: 2, longitude: 2},   // Stop2
           {latitude: 3, longitude: 3},   // End
         ],
-        vehicleData,
         mockQueryRoute,
       );
 
@@ -111,12 +70,6 @@ describe("Logic testing", () => {
       // Total duration: 60 + 90 + 45 = 195 min = 3h 15m
       expect(result.hours).toBe(3);
       expect(result.minutes).toBe(15);
-
-      // Fuel: (325 / 100) * 6.5 = 21.125 L
-      expect(result.fuel_used_l).toBeCloseTo(21.125, 2);
-
-      // Emissions: (325 * 150) / 1000 = 48.75 kg
-      expect(result.co2_kg).toBeCloseTo(48.75, 2);
 
       expect(result).toHaveProperty("route")
 

@@ -31,8 +31,6 @@ describe("/trip API Route (mocked external APIs)", () => {
     jest.spyOn(routeModule, "queryRoute").mockImplementation(async () => {
       return { distance_km: 486.4, duration_min: 364, route: [{latitude: 1, longitude: 2}] };
     });
-
-    jest.spyOn(vehicleData, "selectVehicle");
   });
 
   afterAll(() => {
@@ -41,31 +39,8 @@ describe("/trip API Route (mocked external APIs)", () => {
 
   it("should calculate a trip for a valid vehicle using mocked APIs and full route", async () => {
     const postData = {
-      vehicle_id: 1,
-      make: "Toyota",
-      model: "Corolla",
-      model_year: "2008",
       locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
     };
-
-    const fakeVehicle: VehicleDataType[] = [
-      {
-        make: "Toyota",
-        model: "Corolla",
-        model_year: "2008",
-        vehicle_class: "Sedan",
-        engine_size: 1.8,
-        cylinders: 4,
-        transmission: "Automatic",
-        fuel_type: "Gasoline",
-        fuel_consumption_city: 8.5,
-        fuel_consumption_hwy: 6.2,
-        fuel_consumption_comb: 7.4,
-        co2_emissions: 17
-      }
-    ];
-
-    jest.spyOn(vehicleData, "fetchVehicleRecords").mockResolvedValue(fakeVehicle);
 
     const response = await request(app)
       .post("/api/trip")
@@ -76,39 +51,14 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(response.body).toHaveProperty("distance_km", 486.4);
     expect(response.body).toHaveProperty("hours", 6);
     expect(response.body).toHaveProperty("minutes", 4);
-    expect(response.body).toHaveProperty("fuel_used_l", 35.9936);
-    expect(response.body.co2_kg).toBeCloseTo(8.2688, 2);
     expect(response.body).toHaveProperty("route", [{latitude: 1, longitude: 2}]);
   });
 
 
   it("should calculate a trip for a valid vehicle using mocked APIs and false route", async () => {
     const postData = {
-      vehicle_id: 1,
-      make: "Toyota",
-      model: "Corolla",
-      model_year: "2008",
       locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
     };
-
-    const fakeVehicle: VehicleDataType[] = [
-      {
-        make: "Toyota",
-        model: "Corolla",
-        model_year: "2008",
-        vehicle_class: "Sedan",
-        engine_size: 1.8,
-        cylinders: 4,
-        transmission: "Automatic",
-        fuel_type: "Gasoline",
-        fuel_consumption_city: 8.5,
-        fuel_consumption_hwy: 6.2,
-        fuel_consumption_comb: 7.4,
-        co2_emissions: 17
-      }
-    ];
-
-    jest.spyOn(vehicleData, "fetchVehicleRecords").mockResolvedValue(fakeVehicle);
 
     const response = await request(app)
       .post("/api/trip")
@@ -119,8 +69,6 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(response.body).toHaveProperty("distance_km", 486.4);
     expect(response.body).toHaveProperty("hours", 6);
     expect(response.body).toHaveProperty("minutes", 4);
-    expect(response.body).toHaveProperty("fuel_used_l", 35.9936);
-    expect(response.body.co2_kg).toBeCloseTo(8.2688, 2);
     expect(response.body).toHaveProperty("route", [{latitude: 1, longitude: 2}]);
   });
 
@@ -133,32 +81,12 @@ describe("/trip API Route (mocked external APIs)", () => {
     expect(response.status).toBe(400);
   });
 
-  it("should return 400 if vehicle not found", async () => {
-    (vehicleData.fetchVehicleRecords as jest.Mock).mockResolvedValue([]);
-    (vehicleData.selectVehicle as jest.Mock).mockReturnValue(null);
-
-    const res = await request(app).post("/api/trip").send({
-        vehicle_id: 1,
-        make: "Toyota",
-        model: "Corolla",
-        model_year: "2020",
-        locations: ["A", "B"],
-        overview: 'false'
-    });
-
-    expect(res.status).toBe(400);
-    });
-
     it("returns 500 for unexpected errors", async () => {
     jest.spyOn(tripService, "getTripService").mockRejectedValue(
       new Error("Unexpected failure")
     );
 
     const postData = {
-      vehicle_id: 1,
-      make: "Toyota",
-      model: "Corolla",
-      model_year: "2008",
       locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
     };
 
@@ -182,10 +110,6 @@ describe("/trip API Route (mocked external APIs)", () => {
     );
 
     const postData = {
-      vehicle_id: 1,
-      make: "Toyota",
-      model: "Corolla",
-      model_year: "2008",
       locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
     };
 
@@ -213,10 +137,6 @@ describe("/trip API Route (mocked external APIs)", () => {
     );
 
     const postData = {
-      vehicle_id: 1,
-      make: "Toyota",
-      model: "Corolla",
-      model_year: "2008",
       locations: [{longitude:0, latitude:0}, {longitude:1, latitude:1}],
     };
 
