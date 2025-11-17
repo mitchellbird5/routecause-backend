@@ -18,15 +18,15 @@ type VehicleFieldMap = {
 export const VEHICLE_FIELD_MAP: VehicleFieldMap = {
   make: { source: "Make", default: "" },
   model: { source: "Model", default: "" },
-  model_year: { source: "Model year", default: "" },
-  vehicle_class: { source: "Vehicle class", default: "" },
-  engine_size: { source: "Engine size (L)", parser: toFloatOrNaN, default: NaN },
+  modelYear: { source: "Model year", default: "" },
+  vehicleClass: { source: "Vehicle class", default: "" },
+  engineSize: { source: "Engine size (L)", parser: toFloatOrNaN, default: NaN },
   cylinders: { source: "Cylinders", parser: (v) => parseInt(v) || -1, default: -1 },
   transmission: { source: "Transmission", default: "" },
-  fuel_type: { source: "Fuel type", default: "" },
-  fuel_consumption_city: { source: "City (L/100 km)", parser: toFloatOrNaN, default: NaN },
-  fuel_consumption_hwy: { source: "Highway (L/100 km)", parser: toFloatOrNaN, default: NaN },
-  fuel_consumption_comb: { source: "Combined (L/100 km)", parser: toFloatOrNaN, default: NaN },
+  fuelType: { source: "Fuel type", default: "" },
+  fuelConsumptionCity: { source: "City (L/100 km)", parser: toFloatOrNaN, default: NaN },
+  fuelConsumptionHwy: { source: "Highway (L/100 km)", parser: toFloatOrNaN, default: NaN },
+  fuelConsumptionComb: { source: "Combined (L/100 km)", parser: toFloatOrNaN, default: NaN },
   co2_emissions: { source: "CO2 emissions (g/km)", parser: toFloatOrNaN, default: NaN },
 };
 
@@ -40,7 +40,7 @@ const TRANSMISSION_MAP: Record<string, string> = {
   M: "Manual",
 };
 
-const FUEL_TYPE_MAP: Record<string, string> = {
+const fuelType_MAP: Record<string, string> = {
   X: "Petrol",
   Z: "Petrol",
   D: "Diesel",
@@ -82,7 +82,7 @@ export function normalizeVehicleRecord(rec: VehicleRecord): VehicleRecord {
 
   if ("Fuel type" in rec && typeof rec["Fuel type"] === "string") {
     const code = rec["Fuel type"].trim();
-    normalized["Fuel type"] = FUEL_TYPE_MAP[code] ?? rec["Fuel type"];
+    normalized["Fuel type"] = fuelType_MAP[code] ?? rec["Fuel type"];
   }
 
   return normalized;
@@ -94,8 +94,8 @@ export function normalizeVehicleRecord(rec: VehicleRecord): VehicleRecord {
  ratings - 2015-2024 Fuel Consumption Ratings (2025-07-24)" authored by
   Government of Canada.
 */
-export function datasetIdForYear(model_year: string): string | undefined {
-  const numeric_year = parseInt(model_year);
+export function datasetIdForYear(modelYear: string): string | undefined {
+  const numeric_year = parseInt(modelYear);
   if (isNaN(numeric_year)) return undefined;
 
   if (numeric_year >= 1990 && numeric_year <= 2014) {
@@ -110,12 +110,12 @@ export function datasetIdForYear(model_year: string): string | undefined {
 export function buildVehicleApiUrl(
   make: string,
   model: string,
-  model_year: string
+  modelYear: string
 ): { url: string; params: Record<string, any> } | null {
-  const datasetId = datasetIdForYear(model_year);
+  const datasetId = datasetIdForYear(modelYear);
   if (!datasetId) return null;
 
-  const query = `${make} ${model_year} ${model}`;
+  const query = `${make} ${modelYear} ${model}`;
   const url = "https://open.canada.ca/data/en/api/3/action/datastore_search";
   const params = { resource_id: datasetId, q: query };
 

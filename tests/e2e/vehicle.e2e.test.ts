@@ -16,20 +16,20 @@ describe("End-to-End: /vehicles", () => {
       expect(res.status).toBe(200);
       expect(res.body[0]).toHaveProperty("co2_emissions");
       expect(res.body[0]).toHaveProperty("cylinders");
-      expect(res.body[0]).toHaveProperty("engine_size");
-      expect(res.body[0]).toHaveProperty("fuel_consumption_city");
-      expect(res.body[0]).toHaveProperty("fuel_consumption_comb");
-      expect(res.body[0]).toHaveProperty("fuel_consumption_hwy");
-      expect(res.body[0]).toHaveProperty("fuel_type");
+      expect(res.body[0]).toHaveProperty("engineSize");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionCity");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionComb");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionHwy");
+      expect(res.body[0]).toHaveProperty("fuelType");
       expect(res.body[0]).toHaveProperty("id");
       expect(res.body[0]).toHaveProperty("make");
       expect(res.body[0]).toHaveProperty("model");
-      expect(res.body[0]).toHaveProperty("model_year");
+      expect(res.body[0]).toHaveProperty("modelYear");
       expect(res.body[0]).toHaveProperty("transmission");
-      expect(res.body[0]).toHaveProperty("vehicle_class");
+      expect(res.body[0]).toHaveProperty("vehicleClass");
       expect(res.body[0].make).toBe("Toyota");
       expect(res.body[0].model).toBe("Corolla LE Eco (1-Mode)");
-      expect(res.body[0].model_year).toBe("2015");
+      expect(res.body[0].modelYear).toBe("2015");
     }
   );
 
@@ -46,20 +46,20 @@ describe("End-to-End: /vehicles", () => {
       expect(res.status).toBe(200);
       expect(res.body[0]).toHaveProperty("co2_emissions");
       expect(res.body[0]).toHaveProperty("cylinders");
-      expect(res.body[0]).toHaveProperty("engine_size");
-      expect(res.body[0]).toHaveProperty("fuel_consumption_city");
-      expect(res.body[0]).toHaveProperty("fuel_consumption_comb");
-      expect(res.body[0]).toHaveProperty("fuel_consumption_hwy");
-      expect(res.body[0]).toHaveProperty("fuel_type");
+      expect(res.body[0]).toHaveProperty("engineSize");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionCity");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionComb");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionHwy");
+      expect(res.body[0]).toHaveProperty("fuelType");
       expect(res.body[0]).toHaveProperty("id");
       expect(res.body[0]).toHaveProperty("make");
       expect(res.body[0]).toHaveProperty("model");
-      expect(res.body[0]).toHaveProperty("model_year");
+      expect(res.body[0]).toHaveProperty("modelYear");
       expect(res.body[0]).toHaveProperty("transmission");
-      expect(res.body[0]).toHaveProperty("vehicle_class");
+      expect(res.body[0]).toHaveProperty("vehicleClass");
       expect(res.body[0].make).toBe("Toyota");
       expect(res.body[0].model).toBe("Corolla LE Eco (1-Mode)");
-      expect(res.body[0].model_year).toBe("2015");
+      expect(res.body[0].modelYear).toBe("2015");
     }
   );
 });

@@ -12,10 +12,10 @@ import {
 export async function getEmissionsService(
   column: string,
   filter: string,
-  trip_emissions_kg: number
+  trip_emissions_kg_values: number[]
 ): Promise<EmissionEquivalentRow[]> {
-  if (isNaN(trip_emissions_kg) || trip_emissions_kg < 0) {
-    throw { status: 400, message: "Invalid trip emissions value" };
+  if (!Array.isArray(trip_emissions_kg_values) || trip_emissions_kg_values.some(v => isNaN(v) || v < 0)) {
+    throw { status: 400, message: "Invalid trip emissions values" };
   }
 
   // Validate column exists
@@ -45,10 +45,14 @@ export async function getEmissionsService(
         throw { status: 500, message: "Invalid row value in database" };
       }
 
+      const emission_equivalent_value = trip_emissions_kg_values.map(v =>
+        calculateEmissionEquivalent(v, row.value)
+      );
+
       return {
         label: row.label,
         category: row.category,
-        emission_equivalent_value: calculateEmissionEquivalent(trip_emissions_kg, row.value),
+        emission_equivalent_value: emission_equivalent_value,
         emission_equivalent_unit: row.equivalent_unit,
         description: row.description,
         source: row.source,

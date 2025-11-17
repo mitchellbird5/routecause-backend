@@ -6,7 +6,11 @@ describe("End-to-End: /emissions-comparison", () => {
   it("should return emissions with correct columns", async () => {
     const res = await request(app)
       .get("/api/emissions-comparison")
-      .query({ column: "category", filter: "food", emissions: "1.0" })
+      .query({ 
+        column: "category", 
+        filter: "food", 
+        emissions: ["1.0", "10.0"].join(",") 
+      })
       .set("Accept", "application/json");
 
     expect(res.status).toBe(200);
@@ -25,7 +29,7 @@ describe("End-to-End: /emissions-comparison", () => {
       // Optional: check types
       expect(typeof item.label).toBe("string");
       expect(typeof item.category).toBe("string");
-      expect(typeof item.emission_equivalent_value).toBe("number");
+      expect(item.emission_equivalent_value).toBeInstanceOf(Array);
       expect(typeof item.emission_equivalent_unit).toBe("string");
       expect(typeof item.description).toBe("string");
       expect(typeof item.source).toBe("string");

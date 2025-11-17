@@ -55,29 +55,29 @@ const mockVehicleData: VehicleData[] = [
   {
     make: "Toyota",
     model: "Corolla",
-    model_year: "2020",
-    vehicle_class: "Compact",
-    engine_size: 1.8,
+    modelYear: "2020",
+    vehicleClass: "Compact",
+    engineSize: 1.8,
     cylinders: 4,
     transmission: "Automatic",
-    fuel_type: "Gasoline",
-    fuel_consumption_city: 7.9,
-    fuel_consumption_hwy: 6.1,
-    fuel_consumption_comb: 32.0,
+    fuelType: "Gasoline",
+    fuelConsumptionCity: 7.9,
+    fuelConsumptionHwy: 6.1,
+    fuelConsumptionComb: 32.0,
     co2_emissions: 180.0,
   },
   {
     make: "Honda",
     model: "Civic",
-    model_year: "2019",
-    vehicle_class: "Compact",
-    engine_size: 2.0,
+    modelYear: "2019",
+    vehicleClass: "Compact",
+    engineSize: 2.0,
     cylinders: 4,
     transmission: "Manual",
-    fuel_type: "Gasoline",
-    fuel_consumption_city: 8.5,
-    fuel_consumption_hwy: 6.8,
-    fuel_consumption_comb: 30.0,
+    fuelType: "Gasoline",
+    fuelConsumptionCity: 8.5,
+    fuelConsumptionHwy: 6.8,
+    fuelConsumptionComb: 30.0,
     co2_emissions: 185.0,
   },
 ];
@@ -104,15 +104,15 @@ describe("Logic testing", () => {
 
       expect(v.make).toBe("Toyota");
       expect(v.model).toBe("Corolla");
-      expect(v.model_year).toBe("2020");
-      expect(v.vehicle_class).toBe("Compact");
-      expect(v.engine_size).toBe(1.8);
+      expect(v.modelYear).toBe("2020");
+      expect(v.vehicleClass).toBe("Compact");
+      expect(v.engineSize).toBe(1.8);
       expect(v.cylinders).toBe(4);
       expect(v.transmission).toBe("Automatic");
-      expect(v.fuel_type).toBe("Petrol");
-      expect(v.fuel_consumption_city).toBe(7.9);
-      expect(v.fuel_consumption_hwy).toBe(6.1);
-      expect(v.fuel_consumption_comb).toBe(32.0);
+      expect(v.fuelType).toBe("Petrol");
+      expect(v.fuelConsumptionCity).toBe(7.9);
+      expect(v.fuelConsumptionHwy).toBe(6.1);
+      expect(v.fuelConsumptionComb).toBe(32.0);
       expect(v.co2_emissions).toBe(180.0);
     });
   });
@@ -125,15 +125,15 @@ describe("Logic testing", () => {
 
       expect(v.make).toBe("Honda");
       expect(v.model).toBe("Civic");
-      expect(v.model_year).toBe("2019");
-      expect(v.vehicle_class).toBe("Compact");
-      expect(v.engine_size).toBe(2.0);
+      expect(v.modelYear).toBe("2019");
+      expect(v.vehicleClass).toBe("Compact");
+      expect(v.engineSize).toBe(2.0);
       expect(v.cylinders).toBe(4);
       expect(v.transmission).toBe("Manual");
-      expect(v.fuel_type).toBe("Gasoline");
-      expect(v.fuel_consumption_city).toBe(8.5);
-      expect(v.fuel_consumption_hwy).toBe(6.8);
-      expect(v.fuel_consumption_comb).toBe(30.0);
+      expect(v.fuelType).toBe("Gasoline");
+      expect(v.fuelConsumptionCity).toBe(8.5);
+      expect(v.fuelConsumptionHwy).toBe(6.8);
+      expect(v.fuelConsumptionComb).toBe(30.0);
       expect(v.co2_emissions).toBe(185.0);
     });
 
@@ -147,7 +147,7 @@ describe("Logic testing", () => {
   describe("fetchVehicleRecords", () => {
     beforeEach(() => jest.clearAllMocks());
 
-    it("returns [] if model_year is not a number", async () => {
+    it("returns [] if modelYear is not a number", async () => {
       const result = await fetchVehicleRecords("Honda", "Civic", "notayear");
       expect(result).toEqual([]);
     });
@@ -301,7 +301,7 @@ describe("Mocked API and error testing", () => {
 
       const vehicle = makeVehicleFromRecord(completeRec);
       expect(vehicle.make).toBe("Toyota");
-      expect(vehicle.model_year).toBe("2020");
+      expect(vehicle.modelYear).toBe("2020");
       expect(vehicle.cylinders).toBe(4);
     });
   });

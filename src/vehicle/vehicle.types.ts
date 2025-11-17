@@ -1,14 +1,14 @@
 export interface VehicleData {
     make: string;
     model: string;
-    model_year: string;
-    vehicle_class: string;
-    engine_size: number;
+    modelYear: string;
+    vehicleClass: string;
+    engineSize: number;
     cylinders: number;
     transmission: string;
-    fuel_type: string;
-    fuel_consumption_city: number;
-    fuel_consumption_hwy: number;
-    fuel_consumption_comb: number;
+    fuelType: string;
+    fuelConsumptionCity: number;
+    fuelConsumptionHwy: number;
+    fuelConsumptionComb: number;
     co2_emissions: number;
 }
