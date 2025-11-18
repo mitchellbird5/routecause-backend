@@ -20,14 +20,14 @@ export const VEHICLE_FIELD_MAP: VehicleFieldMap = {
   model: { source: "Model", default: "" },
   modelYear: { source: "Model year", default: "" },
   vehicleClass: { source: "Vehicle class", default: "" },
-  engineSize: { source: "Engine size (L)", parser: toFloatOrNaN, default: NaN },
+  engineSize_L: { source: "Engine size (L)", parser: toFloatOrNaN, default: NaN },
   cylinders: { source: "Cylinders", parser: (v) => parseInt(v) || -1, default: -1 },
   transmission: { source: "Transmission", default: "" },
   fuelType: { source: "Fuel type", default: "" },
-  fuelConsumptionCity: { source: "City (L/100 km)", parser: toFloatOrNaN, default: NaN },
-  fuelConsumptionHwy: { source: "Highway (L/100 km)", parser: toFloatOrNaN, default: NaN },
-  fuelConsumptionComb: { source: "Combined (L/100 km)", parser: toFloatOrNaN, default: NaN },
-  co2_emissions: { source: "CO2 emissions (g/km)", parser: toFloatOrNaN, default: NaN },
+  fuelConsumptionCity_L100km: { source: "City (L/100 km)", parser: toFloatOrNaN, default: NaN },
+  fuelConsumptionHwy_L100km: { source: "Highway (L/100 km)", parser: toFloatOrNaN, default: NaN },
+  fuelConsumptionComb_L100km: { source: "Combined (L/100 km)", parser: toFloatOrNaN, default: NaN },
+  CO2Emissions_gKm: { source: "CO2 emissions (g/km)", parser: toFloatOrNaN, default: NaN },
 };
 
 export type VehicleRecord = Record<string, any>;

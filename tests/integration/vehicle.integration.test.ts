@@ -21,28 +21,28 @@ describe("/vehicle API Route (mocked external APIs)", () => {
       model: "Corolla",
       modelYear: "2008",
       vehicleClass: "Sedan",
-      engineSize: 1.8,
+      engineSize_L: 1.8,
       cylinders: 4,
       transmission: "Automatic",
       fuelType: "Gasoline",
-      fuelConsumptionCity: 8.5,
-      fuelConsumptionHwy: 6.2,
-      fuelConsumptionComb: 7.4,
-      co2_emissions: 17
+      fuelConsumptionCity_L100km: 8.5,
+      fuelConsumptionHwy_L100km: 6.2,
+      fuelConsumptionComb_L100km: 7.4,
+      CO2Emissions_gKm: 17
     },
     {
       make: "Toyota",
       model: "Camry",
       modelYear: "2012",
       vehicleClass: "Sedan",
-      engineSize: 1.8,
+      engineSize_L: 1.8,
       cylinders: 4,
       transmission: "Automatic",
       fuelType: "Gasoline",
-      fuelConsumptionCity: 8.5,
-      fuelConsumptionHwy: 6.2,
-      fuelConsumptionComb: 7.4,
-      co2_emissions: 17
+      fuelConsumptionCity_L100km: 8.5,
+      fuelConsumptionHwy_L100km: 6.2,
+      fuelConsumptionComb_L100km: 7.4,
+      CO2Emissions_gKm: 17
     }
   ];
 
@@ -76,14 +76,14 @@ describe("/vehicle API Route (mocked external APIs)", () => {
         model: "Corolla",
         modelYear: "2008",
         vehicleClass: "Sedan",
-        engineSize: 1.8,
+        engineSize_L: 1.8,
         cylinders: 4,
         transmission: "Automatic",
         fuelType: "Gasoline",
-        fuelConsumptionCity: 8.5,
-        fuelConsumptionHwy: 6.2,
-        fuelConsumptionComb: 7.4,
-        co2_emissions: 180,
+        fuelConsumptionCity_L100km: 8.5,
+        fuelConsumptionHwy_L100km: 6.2,
+        fuelConsumptionComb_L100km: 7.4,
+        CO2Emissions_gKm: 180,
       },
     ];
 

@@ -14,12 +14,12 @@ describe("End-to-End: /vehicles", () => {
       .set("Accept", "application/json");
 
       expect(res.status).toBe(200);
-      expect(res.body[0]).toHaveProperty("co2_emissions");
+      expect(res.body[0]).toHaveProperty("CO2Emissions_gKm");
       expect(res.body[0]).toHaveProperty("cylinders");
-      expect(res.body[0]).toHaveProperty("engineSize");
-      expect(res.body[0]).toHaveProperty("fuelConsumptionCity");
-      expect(res.body[0]).toHaveProperty("fuelConsumptionComb");
-      expect(res.body[0]).toHaveProperty("fuelConsumptionHwy");
+      expect(res.body[0]).toHaveProperty("engineSize_L");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionCity_L100km");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionComb_L100km");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionHwy_L100km");
       expect(res.body[0]).toHaveProperty("fuelType");
       expect(res.body[0]).toHaveProperty("id");
       expect(res.body[0]).toHaveProperty("make");
@@ -44,12 +44,12 @@ describe("End-to-End: /vehicles", () => {
       .set("Accept", "application/json");
 
       expect(res.status).toBe(200);
-      expect(res.body[0]).toHaveProperty("co2_emissions");
+      expect(res.body[0]).toHaveProperty("CO2Emissions_gKm");
       expect(res.body[0]).toHaveProperty("cylinders");
-      expect(res.body[0]).toHaveProperty("engineSize");
-      expect(res.body[0]).toHaveProperty("fuelConsumptionCity");
-      expect(res.body[0]).toHaveProperty("fuelConsumptionComb");
-      expect(res.body[0]).toHaveProperty("fuelConsumptionHwy");
+      expect(res.body[0]).toHaveProperty("engineSize_L");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionCity_L100km");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionComb_L100km");
+      expect(res.body[0]).toHaveProperty("fuelConsumptionHwy_L100km");
       expect(res.body[0]).toHaveProperty("fuelType");
       expect(res.body[0]).toHaveProperty("id");
       expect(res.body[0]).toHaveProperty("make");

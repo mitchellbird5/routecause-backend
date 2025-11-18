@@ -12,14 +12,14 @@ export const emptyVehicleEntry: VehicleData = {
     model: "",
     modelYear: "",
     vehicleClass: "",
-    engineSize: NaN,
+    engineSize_L: NaN,
     cylinders: -1,
     transmission: "",
     fuelType: "",
-    fuelConsumptionCity: NaN,
-    fuelConsumptionHwy: NaN,
-    fuelConsumptionComb: NaN,
-    co2_emissions: NaN,
+    fuelConsumptionCity_L100km: NaN,
+    fuelConsumptionHwy_L100km: NaN,
+    fuelConsumptionComb_L100km: NaN,
+    CO2Emissions_gKm: NaN,
 };
 
 /**

@@ -57,28 +57,28 @@ const mockVehicleData: VehicleData[] = [
     model: "Corolla",
     modelYear: "2020",
     vehicleClass: "Compact",
-    engineSize: 1.8,
+    engineSize_L: 1.8,
     cylinders: 4,
     transmission: "Automatic",
     fuelType: "Gasoline",
-    fuelConsumptionCity: 7.9,
-    fuelConsumptionHwy: 6.1,
-    fuelConsumptionComb: 32.0,
-    co2_emissions: 180.0,
+    fuelConsumptionCity_L100km: 7.9,
+    fuelConsumptionHwy_L100km: 6.1,
+    fuelConsumptionComb_L100km: 32.0,
+    CO2Emissions_gKm: 180.0,
   },
   {
     make: "Honda",
     model: "Civic",
     modelYear: "2019",
     vehicleClass: "Compact",
-    engineSize: 2.0,
+    engineSize_L: 2.0,
     cylinders: 4,
     transmission: "Manual",
     fuelType: "Gasoline",
-    fuelConsumptionCity: 8.5,
-    fuelConsumptionHwy: 6.8,
-    fuelConsumptionComb: 30.0,
-    co2_emissions: 185.0,
+    fuelConsumptionCity_L100km: 8.5,
+    fuelConsumptionHwy_L100km: 6.8,
+    fuelConsumptionComb_L100km: 30.0,
+    CO2Emissions_gKm: 185.0,
   },
 ];
 
@@ -106,14 +106,14 @@ describe("Logic testing", () => {
       expect(v.model).toBe("Corolla");
       expect(v.modelYear).toBe("2020");
       expect(v.vehicleClass).toBe("Compact");
-      expect(v.engineSize).toBe(1.8);
+      expect(v.engineSize_L).toBe(1.8);
       expect(v.cylinders).toBe(4);
       expect(v.transmission).toBe("Automatic");
       expect(v.fuelType).toBe("Petrol");
-      expect(v.fuelConsumptionCity).toBe(7.9);
-      expect(v.fuelConsumptionHwy).toBe(6.1);
-      expect(v.fuelConsumptionComb).toBe(32.0);
-      expect(v.co2_emissions).toBe(180.0);
+      expect(v.fuelConsumptionCity_L100km).toBe(7.9);
+      expect(v.fuelConsumptionHwy_L100km).toBe(6.1);
+      expect(v.fuelConsumptionComb_L100km).toBe(32.0);
+      expect(v.CO2Emissions_gKm).toBe(180.0);
     });
   });
 
@@ -127,14 +127,14 @@ describe("Logic testing", () => {
       expect(v.model).toBe("Civic");
       expect(v.modelYear).toBe("2019");
       expect(v.vehicleClass).toBe("Compact");
-      expect(v.engineSize).toBe(2.0);
+      expect(v.engineSize_L).toBe(2.0);
       expect(v.cylinders).toBe(4);
       expect(v.transmission).toBe("Manual");
       expect(v.fuelType).toBe("Gasoline");
-      expect(v.fuelConsumptionCity).toBe(8.5);
-      expect(v.fuelConsumptionHwy).toBe(6.8);
-      expect(v.fuelConsumptionComb).toBe(30.0);
-      expect(v.co2_emissions).toBe(185.0);
+      expect(v.fuelConsumptionCity_L100km).toBe(8.5);
+      expect(v.fuelConsumptionHwy_L100km).toBe(6.8);
+      expect(v.fuelConsumptionComb_L100km).toBe(30.0);
+      expect(v.CO2Emissions_gKm).toBe(185.0);
     });
 
     it("returns emptyVehicleEntry for invalid index", () => {
