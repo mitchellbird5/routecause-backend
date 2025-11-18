@@ -67,13 +67,13 @@ describe("Mocked API and error testing", () => {
             ]
             });
 
-            const result = await getEmissionsService("category", "food", 10);
+            const result = await getEmissionsService("category", "food", [10, 100, 1000]);
 
             expect(result).toHaveLength(1);
             expect(result[0]).toMatchObject({
                 label: "Beef",
                 category: "food",
-                emission_equivalent_value: 0.1,
+                emission_equivalent_value: [0.1, 1, 10],
                 emission_equivalent_unit: "kg",
                 description: "description",
                 source: "source",
@@ -98,14 +98,14 @@ describe("Mocked API and error testing", () => {
             ]
             });
 
-            const result = await getEmissionsService("CATEGORY", "food", 20);
+            const result = await getEmissionsService("CATEGORY", "food", [20]);
 
-            expect(result[0].emission_equivalent_value).toBe(0.4);
+            expect(result[0].emission_equivalent_value).toStrictEqual([0.4]);
         });
 
         it("throws 400 if column is invalid", async () => {
             (getTableColumns as jest.Mock).mockResolvedValue(["category"]);
-            await expect(getEmissionsService("invalid_column", "food", 1)).rejects.toMatchObject({
+            await expect(getEmissionsService("invalid_column", "food", [1])).rejects.toMatchObject({
             status: 400,
             message: "Invalid column name: invalid_column"
             });
@@ -114,20 +114,20 @@ describe("Mocked API and error testing", () => {
         it("throws 400 if filter is invalid", async () => {
             (getTableColumns as jest.Mock).mockResolvedValue(["category"]);
             (getDistinctColumnValues as jest.Mock).mockResolvedValue(["food"]);
-            await expect(getEmissionsService("category", "invalidFilter", 1)).rejects.toMatchObject({
+            await expect(getEmissionsService("category", "invalidFilter", [1])).rejects.toMatchObject({
             status: 400,
             message: "Invalid filter value: invalidFilter"
             });
         });
 
         it("throws 400 if trip_emissions_kg is NaN or negative", async () => {
-            await expect(getEmissionsService("category", "food", NaN)).rejects.toMatchObject({
+            await expect(getEmissionsService("category", "food", [NaN])).rejects.toMatchObject({
             status: 400,
-            message: "Invalid trip emissions value"
+            message: "Invalid trip emissions values"
             });
-            await expect(getEmissionsService("category", "food", -5)).rejects.toMatchObject({
+            await expect(getEmissionsService("category", "food", [-5])).rejects.toMatchObject({
             status: 400,
-            message: "Invalid trip emissions value"
+            message: "Invalid trip emissions values"
             });
         });
 
@@ -148,7 +148,7 @@ describe("Mocked API and error testing", () => {
                 ]
             });
 
-            await expect(getEmissionsService("category", "food", 1)).rejects.toMatchObject({
+            await expect(getEmissionsService("category", "food", [1])).rejects.toMatchObject({
             status: 500,
             message: "Invalid row value in database"
             });
@@ -159,7 +159,7 @@ describe("Mocked API and error testing", () => {
             (getDistinctColumnValues as jest.Mock).mockResolvedValue(["food"]);
             (pool.query as jest.Mock).mockRejectedValue(new Error("DB down"));
 
-            await expect(getEmissionsService("category", "food", 1)).rejects.toMatchObject({
+            await expect(getEmissionsService("category", "food", [1])).rejects.toMatchObject({
             status: 500,
             message: "Database query failed"
             });

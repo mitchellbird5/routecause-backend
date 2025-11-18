@@ -16,18 +16,18 @@ export const router = Router();
 router.get("/vehicles", async (req: Request, res: Response) => {
   const make = xss((req.query.make as string) || "").trim();
   const model = xss((req.query.model as string) || "").trim();
-  const model_year = xss((req.query.year as string) || "").trim();
+  const modelYear = xss((req.query.year as string) || "").trim();
 
   if (make.length > 50 || model.length > 50) {
     return res.status(400).json({ error: "Input too long" });
   }
 
-  if (model_year && !validator.isInt(model_year, { min: 1995, max: new Date().getFullYear() + 1 })) {
+  if (modelYear && !validator.isInt(modelYear, { min: 1995, max: new Date().getFullYear() + 1 })) {
     return res.status(400).json({ error: "Invalid model year" });
   }
 
   try {
-    const vehicles = await getVehiclesService(make, model, model_year);
+    const vehicles = await getVehiclesService(make, model, modelYear);
     res.status(200).json(vehicles);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {
@@ -54,32 +54,8 @@ router.get("/vehicles", async (req: Request, res: Response) => {
 // -------------------------------
 router.post("/trip", async (req: Request, res: Response) => {
   const {
-    vehicle_id,
-    make: rawMake,
-    model: rawModel,
-    model_year: rawYear,
     locations,
   } = req.body;
-
-  const make = xss((rawMake as string || "").trim());
-  const model = xss((rawModel as string || "").trim());
-  const model_year = xss((rawYear as string || "").trim());
-
-  // Validate vehicle_id
-  if (!Number.isInteger(vehicle_id) || vehicle_id < 1) {
-    return res.status(400).json({ error: "Invalid vehicle_id" });
-  }
-
-  // Validate make/model
-  if (!make || make.length > 50 || !model || model.length > 50) {
-    return res.status(400).json({ error: "Invalid make or model" });
-  }
-
-  // Validate model_year
-  const yearInt = parseInt(model_year);
-  if (isNaN(yearInt) || yearInt < 1995 || yearInt > new Date().getFullYear() + 1) {
-    return res.status(400).json({ error: "Invalid model year" });
-  }
 
   // Validate locations array
   if (!Array.isArray(locations) || locations.length === 0) {
@@ -98,7 +74,7 @@ router.post("/trip", async (req: Request, res: Response) => {
   }
 
   try {
-    const trip = await getTripService(vehicle_id, make, model, model_year, locations);
+    const trip = await getTripService(locations);
     res.status(200).json(trip);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {
@@ -225,7 +201,16 @@ router.get("/geocode-multi", async (req: Request, res: Response) => {
 router.get("/emissions-comparison", async (req: Request, res: Response) => {
   const column = req.query.column as string;
   const filter = req.query.filter as string;
-  const emissions = parseFloat(req.query.emissions as string);
+  
+  const emissionsQuery = req.query.emissions as string;
+  const emissions: number[] = emissionsQuery
+    .split(",")
+    .map(e => parseFloat(e))
+    .filter(e => !isNaN(e) && e >= 0);
+
+  if (!emissions.length) {
+    return res.status(400).json({ error: "Invalid emissions values" });
+  }
 
   try {
     const results = await getEmissionsService(column, filter, emissions);

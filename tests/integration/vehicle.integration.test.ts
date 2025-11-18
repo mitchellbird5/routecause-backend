@@ -19,30 +19,30 @@ describe("/vehicle API Route (mocked external APIs)", () => {
     {
       make: "Toyota",
       model: "Corolla",
-      model_year: "2008",
-      vehicle_class: "Sedan",
-      engine_size: 1.8,
+      modelYear: "2008",
+      vehicleClass: "Sedan",
+      engineSize_L: 1.8,
       cylinders: 4,
       transmission: "Automatic",
-      fuel_type: "Gasoline",
-      fuel_consumption_city: 8.5,
-      fuel_consumption_hwy: 6.2,
-      fuel_consumption_comb: 7.4,
-      co2_emissions: 17
+      fuelType: "Gasoline",
+      fuelConsumptionCity_L100km: 8.5,
+      fuelConsumptionHwy_L100km: 6.2,
+      fuelConsumptionComb_L100km: 7.4,
+      CO2Emissions_gKm: 17
     },
     {
       make: "Toyota",
       model: "Camry",
-      model_year: "2012",
-      vehicle_class: "Sedan",
-      engine_size: 1.8,
+      modelYear: "2012",
+      vehicleClass: "Sedan",
+      engineSize_L: 1.8,
       cylinders: 4,
       transmission: "Automatic",
-      fuel_type: "Gasoline",
-      fuel_consumption_city: 8.5,
-      fuel_consumption_hwy: 6.2,
-      fuel_consumption_comb: 7.4,
-      co2_emissions: 17
+      fuelType: "Gasoline",
+      fuelConsumptionCity_L100km: 8.5,
+      fuelConsumptionHwy_L100km: 6.2,
+      fuelConsumptionComb_L100km: 7.4,
+      CO2Emissions_gKm: 17
     }
   ];
 
@@ -74,16 +74,16 @@ describe("/vehicle API Route (mocked external APIs)", () => {
       {
         make: "Toyota",
         model: "Corolla",
-        model_year: "2008",
-        vehicle_class: "Sedan",
-        engine_size: 1.8,
+        modelYear: "2008",
+        vehicleClass: "Sedan",
+        engineSize_L: 1.8,
         cylinders: 4,
         transmission: "Automatic",
-        fuel_type: "Gasoline",
-        fuel_consumption_city: 8.5,
-        fuel_consumption_hwy: 6.2,
-        fuel_consumption_comb: 7.4,
-        co2_emissions: 180,
+        fuelType: "Gasoline",
+        fuelConsumptionCity_L100km: 8.5,
+        fuelConsumptionHwy_L100km: 6.2,
+        fuelConsumptionComb_L100km: 7.4,
+        CO2Emissions_gKm: 180,
       },
     ];
 
@@ -118,7 +118,7 @@ describe("/vehicle API Route (mocked external APIs)", () => {
 
     const res = await request(app)
       .get("/api/vehicles")
-      .query({ make: "Toyota", model: "Camry", model_year: "2015" });
+      .query({ make: "Toyota", model: "Camry", modelYear: "2015" });
 
     expect(res.status).toBe(429);
     expect(res.body).toEqual({
@@ -140,7 +140,7 @@ describe("/vehicle API Route (mocked external APIs)", () => {
 
     const res = await request(app)
       .get("/api/vehicles")
-      .query({ make: "Toyota", model: "Camry", model_year: "2015" });
+      .query({ make: "Toyota", model: "Camry", modelYear: "2015" });
 
     expect(res.status).toBe(429);
     expect(res.body).toEqual({

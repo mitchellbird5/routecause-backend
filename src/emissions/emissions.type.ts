@@ -11,7 +11,7 @@ export interface EmissionDataRow {
 export interface EmissionEquivalentRow {
   label: string;
   category: string;
-  emission_equivalent_value: number;
+  emission_equivalent_value: number[];
   emission_equivalent_unit: string;
   description: string;
   source: string;

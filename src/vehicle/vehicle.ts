@@ -10,16 +10,16 @@ import { apiRateLimiter } from "../utils/rateLimiter";
 export const emptyVehicleEntry: VehicleData = {
     make: "",
     model: "",
-    model_year: "",
-    vehicle_class: "",
-    engine_size: NaN,
+    modelYear: "",
+    vehicleClass: "",
+    engineSize_L: NaN,
     cylinders: -1,
     transmission: "",
-    fuel_type: "",
-    fuel_consumption_city: NaN,
-    fuel_consumption_hwy: NaN,
-    fuel_consumption_comb: NaN,
-    co2_emissions: NaN,
+    fuelType: "",
+    fuelConsumptionCity_L100km: NaN,
+    fuelConsumptionHwy_L100km: NaN,
+    fuelConsumptionComb_L100km: NaN,
+    CO2Emissions_gKm: NaN,
 };
 
 /**
@@ -68,11 +68,11 @@ const vehicleRateLimiter = new apiRateLimiter(200, 10000);
 export async function fetchVehicleRecords(
   make: string,
   model: string,
-  model_year: string
+  modelYear: string
 ): Promise<VehicleData[]> {
   vehicleRateLimiter.consume();
 
-  const { url, params } = buildVehicleApiUrl(make, model, model_year) ?? {};
+  const { url, params } = buildVehicleApiUrl(make, model, modelYear) ?? {};
   if (!url || !params) return [];
 
   for (let attempt = 0; attempt < 3; attempt++) {
