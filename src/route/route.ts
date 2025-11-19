@@ -83,20 +83,6 @@ export async function callSnapOrsApi(
   }
 }
 
-function parseOrs2010ErrorCoordinates(errorMessage: string): Coordinates {
-  // Match pattern: "<longitude> <latitude>" — both may be negative or decimal
-  const match = errorMessage.match(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/);
-
-  if (!match) {
-    throw new Error("Failed to parse unroutable coordinate from ORS error message");
-  }
-
-  const longitude = parseFloat(match[1]);
-  const latitude = parseFloat(match[2]);
-
-  return { latitude, longitude };
-}
-
 async function callOrsRouteApi(
   url:string,
 ): Promise<AxiosResponse> {
