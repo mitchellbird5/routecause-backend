@@ -55,7 +55,10 @@ const geocodeMultiORS: geocodeMultiAddressFn = async (
   const response = await callGeocodeMultiApi(url);
 
   if (!Array.isArray(response.data.features) || response.data.features.length === 0) {
-    throw new Error(`Address not found: "${address}"`);
+    const error: any = new Error(`Address not found: "${address}"`);
+    error.status = 404;
+    error.response = response;
+    throw error;
   }
 
   return response.data.features.map((f: any) => ({
@@ -81,8 +84,6 @@ export const geocodeMultiAddress: geocodeMultiAddressFn = async (
     }
   } catch (err) {
     console.error("Geocode request failed:", err);
-    throw new Error(
-      `Failed to geocode address "${address}": ${(err as Error).message}`
-    );
+    throw err;
   }
 };

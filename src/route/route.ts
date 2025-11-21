@@ -83,20 +83,6 @@ export async function callSnapOrsApi(
   }
 }
 
-function parseOrs2010ErrorCoordinates(errorMessage: string): Coordinates {
-  // Match pattern: "<longitude> <latitude>" — both may be negative or decimal
-  const match = errorMessage.match(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/);
-
-  if (!match) {
-    throw new Error("Failed to parse unroutable coordinate from ORS error message");
-  }
-
-  const longitude = parseFloat(match[1]);
-  const latitude = parseFloat(match[2]);
-
-  return { latitude, longitude };
-}
-
 async function callOrsRouteApi(
   url:string,
 ): Promise<AxiosResponse> {
@@ -140,36 +126,16 @@ export async function callOrsRouteApiWithRetry(
     `${baseUrl}?api_key=${encodeURIComponent(apiKey)}&start=${s.longitude},${s.latitude}&end=${e.longitude},${e.latitude}`;
 
   let response: AxiosResponse;
-  let currentStart = { ...start };
-  let currentEnd = { ...end };
-  const url = buildUrl(currentStart, currentEnd);
+  const url = buildUrl(start, end);
 
   try {
     response = await callOrsRouteApi(url);
     return response;
   } catch (err: any) {
     if (err.code === 2010) {
-      const coordMatches = parseOrs2010ErrorCoordinates(err.message);
-      const newCoord = await callSnapOrsApi(coordMatches, radius);
-
-      // Determine whether to update start or end
-      if (
-        Math.abs(coordMatches.latitude - start.latitude) < 1e-6 &&
-        Math.abs(coordMatches.longitude - start.longitude) < 1e-6
-      ) {
-        currentStart = newCoord;
-      } else if (
-        Math.abs(coordMatches.latitude - end.latitude) < 1e-6 &&
-        Math.abs(coordMatches.longitude - end.longitude) < 1e-6
-      ) {
-        currentEnd = newCoord;
-      } else {
-        throw new Error("Parsed unroutable coordinate does not match start or end");
-      }
-
-      const snappedUrl = buildUrl(currentStart, currentEnd);
-      console.log("Original URL:", buildUrl(start, end));
-      console.log("Snapped URL:", snappedUrl);
+      const snappedStart = await callSnapOrsApi(start, radius);
+      const snappedEnd = await callSnapOrsApi(end, radius);
+      const snappedUrl = buildUrl(snappedStart, snappedEnd);
 
       // Retry with updated coordinates
       response = await callOrsRouteApi(snappedUrl);

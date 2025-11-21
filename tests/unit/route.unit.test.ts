@@ -233,21 +233,22 @@ describe("Mocked API and error testing", () => {
       mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(geocodeMultiAddress("Fail Address", 1)).rejects.toThrow(
-        'Failed to geocode address "Fail Address": Network error'
+        'Network error'
       );
     });
 
     it("throws an error if axios request fails with AxiosError object", async () => {
-      mockedAxios.get.mockRejectedValueOnce({
-        isAxiosError: true,
-        message: "Internal Server Error",
-        config: {},
-        response: { status: 500, data: "Server blew up" },
-      });
-
-      await expect(geocodeMultiAddress("Server Error Address", 1)).rejects.toThrow(
-        'Failed to geocode address "Server Error Address": Internal Server Error'
+      mockedAxios.get.mockRejectedValueOnce(
+        Object.assign(new Error("Internal Server Error"), {
+          isAxiosError: true,
+          config: {},
+          response: { status: 500, data: "Server blew up" },
+        })
       );
+
+      await expect(
+        geocodeMultiAddress("Server Error Address", 1)
+      ).rejects.toThrow("Internal Server Error");
     });
   });
 
@@ -464,42 +465,20 @@ describe("Mocked API and error testing", () => {
       config: {},
     });
 
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 200,
+      data: { locations: [{location: [174.776173, -41.285046]}] },
+      statusText: "OK",
+      headers: {},
+      config: {},
+    });
+
     const response = await callOrsRouteApiWithRetry(start, end, radius);
 
     expect(response.data.features[0].geometry.coordinates).toEqual([
       [174.915644, -38.918619],
       [174.776173, -41.285046],
     ]);
-  });
-
-  it("throws if snapped coordinate does not match start or end", async () => {
-    const start = { latitude: 0, longitude: 0 };
-    const end = { latitude: 1, longitude: 1 };
-    const radius = 10000;
-
-    mockedAxios.get.mockResolvedValueOnce({
-      status: 400,
-      data: { error: { code: 2010, message: `Could not find routable point within 350m of ${start.longitude} ${start.latitude}` } },
-      statusText: "Bad Request",
-      headers: {},
-      config: {},
-    });
-
-    mockedAxios.post.mockResolvedValueOnce({
-      status: 200,
-      data: {
-        locations: [
-          {longitude: 50, latitude: 50}
-        ],
-      },
-      statusText: "OK",
-      headers: {},
-      config: {},
-    });
-
-    await expect(callOrsRouteApiWithRetry(start, end, radius)).rejects.toThrow(
-      "Failed to parse unroutable coordinate from ORS error message"
-    );
   });
 
   it("returns error and response if it can't find a snapped coordinate", async () => {
