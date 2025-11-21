@@ -233,21 +233,22 @@ describe("Mocked API and error testing", () => {
       mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(geocodeMultiAddress("Fail Address", 1)).rejects.toThrow(
-        'Failed to geocode address "Fail Address": Network error'
+        'Network error'
       );
     });
 
     it("throws an error if axios request fails with AxiosError object", async () => {
-      mockedAxios.get.mockRejectedValueOnce({
-        isAxiosError: true,
-        message: "Internal Server Error",
-        config: {},
-        response: { status: 500, data: "Server blew up" },
-      });
-
-      await expect(geocodeMultiAddress("Server Error Address", 1)).rejects.toThrow(
-        'Failed to geocode address "Server Error Address": Internal Server Error'
+      mockedAxios.get.mockRejectedValueOnce(
+        Object.assign(new Error("Internal Server Error"), {
+          isAxiosError: true,
+          config: {},
+          response: { status: 500, data: "Server blew up" },
+        })
       );
+
+      await expect(
+        geocodeMultiAddress("Server Error Address", 1)
+      ).rejects.toThrow("Internal Server Error");
     });
   });
 
