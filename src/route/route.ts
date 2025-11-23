@@ -5,8 +5,8 @@ import {
   RouteResult,
   queryRouteFn,
   RouteCoordinates,
-  getRouteFn,
-  geocodeAddressFn
+  decodeWayCategorySummary,
+  WayCategory
 } from "./route.types";
 import { 
   getRouteBaseUrl, 
@@ -83,17 +83,39 @@ export async function callSnapOrsApi(
   }
 }
 
+function convertCoordinateToLonLat(coord: Coordinates) {
+  return [coord.longitude, coord.latitude]
+}
+
 async function callOrsRouteApi(
   url:string,
+  start: Coordinates,
+  end: Coordinates,
+  apiKey: string 
 ): Promise<AxiosResponse> {
+
+  const body = {
+    coordinates: [
+      convertCoordinateToLonLat(start),
+      convertCoordinateToLonLat(end)
+    ],
+    extra_info: ["waycategory"]
+  }
+
   try {
-    const response = await axios.get(url, {
+    const response = await axios.post(
+      url,
+      body, 
+      {
       headers: {
-        "User-Agent": "RouteCause/1.0",
+        "Content-Type": "application/json; charset=utf-8",
+        Accept:
+          "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8",
+        Authorization: apiKey,
       },
       timeout: 30000,
       validateStatus: () => true,
-    });
+    })
 
     // ORS returns structured error JSON
     if (response.status !== 200) {
@@ -122,23 +144,28 @@ export async function callOrsRouteApiWithRetry(
   const baseUrl = getRouteBaseUrl();
   const apiKey = getOrsApiKey();
 
-  const buildUrl = (s: Coordinates, e: Coordinates) =>
-    `${baseUrl}?api_key=${encodeURIComponent(apiKey)}&start=${s.longitude},${s.latitude}&end=${e.longitude},${e.latitude}`;
-
   let response: AxiosResponse;
-  const url = buildUrl(start, end);
 
   try {
-    response = await callOrsRouteApi(url);
+    response = await callOrsRouteApi(
+      baseUrl,
+      start,
+      end,
+      apiKey
+    );
     return response;
   } catch (err: any) {
     if (err.code === 2010) {
       const snappedStart = await callSnapOrsApi(start, radius);
       const snappedEnd = await callSnapOrsApi(end, radius);
-      const snappedUrl = buildUrl(snappedStart, snappedEnd);
 
       // Retry with updated coordinates
-      response = await callOrsRouteApi(snappedUrl);
+      response = await callOrsRouteApi(
+        baseUrl,
+        snappedStart,
+        snappedEnd,
+        apiKey
+      );
       return response;
     } else {
       throw err;
@@ -160,20 +187,27 @@ async (
 
   const response = await callOrsRouteApiWithRetry(start, end, 25e3);
 
-  const route = response.data.features[0];
-  const coordinates = route.geometry?.coordinates || [];
+  const route = response.data.routes[0];
+  const coordinates = polyline.decode(route.geometry) || [];
   
   const geometryCoords: RouteCoordinates = coordinates.map(
-    ([lon, lat]: [number, number]) => ({
+    ([lat, lon]: [number, number]) => ({
       latitude: lat,
       longitude: lon,
     })
   );
 
+  const decoded = decodeWayCategorySummary(route.extras.waycategory.summary);
+  const wayCategory = {
+    summary: decoded,
+    values: route.extras.waycategory.values
+  } as WayCategory;
+
   const result: RouteResult = {
-    distance_km: route.properties.summary.distance / 1000,
-    duration_min: route.properties.summary.duration / 60,
-    route: geometryCoords
+    distance_km: route.summary.distance / 1000,
+    duration_min: route.summary.duration / 60,
+    route: geometryCoords,
+    wayCategory: wayCategory
   };
 
   return result
@@ -235,31 +269,3 @@ export const queryRoute: queryRouteFn = async (
     );
   }
 }
-
-/**
- * Main query function — automatically switches between local OSRM and ORS
- */
-export const getRoute: getRouteFn = async (
-  startAddress: string,
-  endAddress: string,
-  deps: {
-    geocodeAddress: geocodeAddressFn;
-    queryRoute: queryRouteFn;
-  }
-): Promise<RouteResult> => {
-  const startCoords = await deps.geocodeAddress(startAddress);
-  const endCoords = await deps.geocodeAddress(endAddress);
-
-  try {
-    return await deps.queryRoute(startCoords, endCoords);
-  } catch (err: any) {
-
-    if (err instanceof SnapError) {
-      throw err;
-    }
-    
-    throw new Error(
-      `Error querying route: Start=(${startCoords.latitude},${startCoords.longitude}), End=(${endCoords.latitude},${endCoords.longitude}) ${err.message}`
-    );
-  }
-};
