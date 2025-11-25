@@ -1,10 +1,9 @@
 import axios from "axios";
 import { 
   getOrsApiKey, 
-  getGeocodeBaseUrl, 
-  getNodeEnvironmentFlag 
+  getGeocodeBaseUrl,
 } from "../utils/getEnvVariables";
-import { AddressCoordinates, geocodeMultiAddressFn } from "./route.types";
+import { AddressCoordinates, geocodeMultiAddressFn } from "./geocode.types";
 import { apiRateLimiter } from "../utils/rateLimiter";
 
 
@@ -19,30 +18,8 @@ async function callGeocodeMultiApi(
   return response
 }
 
-const geocodeMultiLocal: geocodeMultiAddressFn = async (
-  address: string,
-  limit: number
-): Promise<AddressCoordinates[]> => {
-  const baseUrl = getGeocodeBaseUrl();
-
-  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}&limit=${limit}`;
-  const response = await callGeocodeMultiApi(url);
-
-  if (!Array.isArray(response.data) || response.data.length === 0) {
-    throw new Error(`Address not found: "${address}"`);
-  }
-
-  return response.data.map((item: any) => ({
-    address: item.display_name,
-    coordinates: {
-      latitude: parseFloat(item.lat),
-      longitude: parseFloat(item.lon),
-    },
-  }));
-};
-
 const orsGeocodeMultiRateLimiter = new apiRateLimiter(100, 1000);
-const geocodeMultiORS: geocodeMultiAddressFn = async (
+export const geocodeMultiAddress: geocodeMultiAddressFn = async (
   address: string,
   limit: number,
 ): Promise<AddressCoordinates[]> => {
@@ -68,22 +45,4 @@ const geocodeMultiORS: geocodeMultiAddressFn = async (
       longitude: f.geometry.coordinates[0],
     },
   }));
-};
-
-export const geocodeMultiAddress: geocodeMultiAddressFn = async (
-  address: string,
-  limit: number
-): Promise<AddressCoordinates[]> => {
-  const isProduction = getNodeEnvironmentFlag();
-
-  try {
-    if (isProduction) {
-      return await geocodeMultiORS(address, limit);
-    } else {
-      return await geocodeMultiLocal(address, limit);
-    }
-  } catch (err) {
-    console.error("Geocode request failed:", err);
-    throw err;
-  }
 };

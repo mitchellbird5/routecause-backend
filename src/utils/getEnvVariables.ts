@@ -19,8 +19,9 @@ export function getRouteBaseUrl(){
   return baseUrl
 }
 
-export function getNodeEnvironmentFlag(){
-  const isProduction = process.env.APP_ENV === "production";
-  console.log('App environment: ', process.env.APP_ENV);
-  return isProduction
+export function getGeoSnapBaseUrl(){
+  const snapUrl = process.env.GEOSNAP_URL!;
+  if (!snapUrl)
+    throw new Error("GEOSNAP_URL not defined in production environment");
+  return snapUrl
 }

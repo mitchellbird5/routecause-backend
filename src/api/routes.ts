@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { getVehiclesService } from "../services/vehicleService";
-import { getTripService } from "../services/tripService";
+import { fetchVehicleRecords } from "../vehicle/vehicle";
+import { queryRoute } from "../route/route";
 import { getGeocodeService, getGeocodeMultiService, getReverseGeocodeService } from "../services/geocodeService";
 import { getEmissionsService } from "../services/emissionsService";
 import { apiRateLimitExceededError } from "../utils/rateLimiter";
@@ -27,7 +27,7 @@ router.get("/vehicles", async (req: Request, res: Response) => {
   }
 
   try {
-    const vehicles = await getVehiclesService(make, model, modelYear);
+    const vehicles = await fetchVehicleRecords(make, model, modelYear);;
     res.status(200).json(vehicles);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {
@@ -55,7 +55,10 @@ router.get("/vehicles", async (req: Request, res: Response) => {
 router.post("/trip", async (req: Request, res: Response) => {
   const {
     locations,
+    radius
   } = req.body;
+
+  const snapRadius = parseFloat(radius);
 
   // Validate locations array
   if (!Array.isArray(locations) || locations.length === 0) {
@@ -74,7 +77,7 @@ router.post("/trip", async (req: Request, res: Response) => {
   }
 
   try {
-    const trip = await getTripService(locations);
+    const trip = await queryRoute(locations, snapRadius);
     res.status(200).json(trip);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {

@@ -2,14 +2,10 @@ import axios from "axios";
 import { 
   getOrsApiKey, 
   getGeocodeBaseUrl,
-  getNodeEnvironmentFlag 
 } from "../utils/getEnvVariables";
 import { Coordinates } from "./route.types";
 import { apiRateLimiter } from "../utils/rateLimiter";
-
-type geocodeAddressFn = (
-  address: string
-) => Promise<Coordinates>;
+import { geocodeAddressFn } from "./geocode.types";
 
 async function callGeocodeApi(url: string, address: string) {
   let response;
@@ -38,24 +34,9 @@ async function callGeocodeApi(url: string, address: string) {
   return response;
 }
 
-/**
- * Geocode an address using OpenStreetMap Nominatim API
- * openstreetmap.org/copyright
- */
-const geocodeAddressLocal: geocodeAddressFn = async (
-  address: string
-): Promise<Coordinates> => {
-  const baseUrl = getGeocodeBaseUrl();
-  const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(address)}`;
-  const response = await callGeocodeApi(url, address);
-  return {
-    latitude: response.data[0].lat,
-    longitude: response.data[0].lon,
-  };
-}
 
 const orsGeocodeRateLimiter = new apiRateLimiter(100, 1000);
-const geocodeAddressORS: geocodeAddressFn = async (
+export const geocodeAddress: geocodeAddressFn = async (
   address: string
 ): Promise<Coordinates> => {
 
@@ -69,22 +50,4 @@ const geocodeAddressORS: geocodeAddressFn = async (
 
   const coords = response.data.features[0].geometry.coordinates;
   return { longitude: coords[0], latitude: coords[1] };
-}
-
-export const geocodeAddress: geocodeAddressFn = async (
-  address: string,
-): Promise<Coordinates> => {
-  const isProduction = getNodeEnvironmentFlag();
-  try {
-    if (isProduction){
-      return geocodeAddressORS(address);
-    } else {
-      return geocodeAddressLocal(address)
-    }
-  } catch (err) {
-    console.error("Geocode request failed:", err);
-    throw new Error(
-      `Failed to geocode address "${address}": ${(err as Error).message}`
-    );
-  }
 }
