@@ -1,5 +1,8 @@
 import request from "supertest";
 import { app } from "../../src/api/server";
+import { getNodeEnvironmentFlag } from "../../src/utils/getEnvVariables";
+
+const isProduction = getNodeEnvironmentFlag();
 
 describe("End-to-End: /trip", () => {
   it("calls /trip API", async () => {
@@ -17,6 +20,9 @@ describe("End-to-End: /trip", () => {
       expect(res.body).toHaveProperty("distance_km");
       expect(res.body).toHaveProperty("hours");
       expect(res.body).toHaveProperty("minutes");
+      if (isProduction) {
+        expect(res.body).toHaveProperty("wayCategory");
+      }
     },
     20000
   );
@@ -36,6 +42,9 @@ describe("End-to-End: /trip", () => {
       expect(res.body).toHaveProperty("distance_km");
       expect(res.body).toHaveProperty("hours");
       expect(res.body).toHaveProperty("minutes");
+      if (isProduction) {
+        expect(res.body).toHaveProperty("wayCategory");
+      }
     },
     20000
   );
