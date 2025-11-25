@@ -70,7 +70,8 @@ export function decodeWayCategorySummary(
 
 export interface RouteResult {
   distance_km: number;
-  duration_min: number;
+  hours: number;
+  minutes: number;
   route: RouteCoordinates;
   wayCategory?: WayCategory
 }

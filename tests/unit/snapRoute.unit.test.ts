@@ -4,7 +4,7 @@ import { callSnapOrsApi, SnapError } from "../../src/route/snapRoute";
 jest.mock("axios");
 const mockAxios = axios as jest.Mocked<typeof axios>;
 
-jest.mock("../../utils/getEnvVariables", () => ({
+jest.mock("../../src/utils/getEnvVariables", () => ({
   getGeoSnapBaseUrl: () => "https://example.com/snap",
   getOrsApiKey: () => "FAKE_KEY",
 }));
@@ -22,7 +22,10 @@ describe("callSnapOrsApi", () => {
   it("returns snapped locations when successful", async () => {
     mockAxios.post.mockResolvedValue({
       status: 200,
-      data: { locations: [[1,2],[3,4]] }
+      data: { locations: [
+        {location: [1,2]},
+        {location: [3,4]}
+      ] }
     });
 
     const res = await callSnapOrsApi(sampleLocations, 500);
@@ -35,7 +38,7 @@ describe("callSnapOrsApi", () => {
   it("logs ORS error if status not 200 and response contains error", async () => {
     mockAxios.post.mockResolvedValue({
       status: 500,
-      data: { error: { message: "fail", code: 69 }, locations: [[1,2]] }
+      data: { error: { message: "fail", code: 69 }, locations: [{ location: [1,2] }] }
     });
 
     const res = await callSnapOrsApi(sampleLocations, 500);

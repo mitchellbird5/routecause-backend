@@ -63,7 +63,7 @@ export async function callSnapOrsApi(
       throw new Error("Failed to snap coordinate via ORS Snap API");
     }
 
-    return snappedLocations;
+    return snappedLocations.map((l: { location: [number, number] }) => l.location);
   } catch (err: any) {
     console.error("ORS Snap to Road request failed:", err);
     throw err;

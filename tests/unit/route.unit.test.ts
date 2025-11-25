@@ -69,13 +69,25 @@ describe("Mocked ORS API", () => {
       [-45.021,168.738]
     ]);
 
+    // mock snap coordinates
+    mockedAxios.post
+      .mockResolvedValueOnce({
+        status: 200,
+        data: {
+          locations: [
+            [-43.531,172.655],
+            [-45.021,168.738]
+          ]
+        }
+      });
+
     mockedAxios.post
       .mockResolvedValueOnce({
         status: 200,
         data: {
           routes: [{
             geometry: encoded,
-            summary: { distance: 1000, duration: 60 },
+            summary: { distance: 1000, duration: 3720 },
             extras: {
               waycategory: {
                 summary: [
@@ -98,9 +110,10 @@ describe("Mocked ORS API", () => {
     const result = await queryRoute([start,end], 1000);
 
     expect(result.distance_km).toBe(1);
-    expect(result.duration_min).toBe(1);
+    expect(result.hours).toBe(1);
+    expect(result.minutes).toBe(2);
 
-    expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    expect(mockedAxios.post).toHaveBeenCalledTimes(2);
 
     expect(result.route).toEqual([
       { latitude: -43.531, longitude: 172.655 },

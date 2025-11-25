@@ -58,7 +58,9 @@ router.post("/trip", async (req: Request, res: Response) => {
     radius
   } = req.body;
 
-  const snapRadius = parseFloat(radius);
+  if ( typeof radius !== "number" ) {
+    return res.status(400).json({ error: "Radius must be a number" });
+  }
 
   // Validate locations array
   if (!Array.isArray(locations) || locations.length === 0) {
@@ -77,7 +79,7 @@ router.post("/trip", async (req: Request, res: Response) => {
   }
 
   try {
-    const trip = await queryRoute(locations, snapRadius);
+    const trip = await queryRoute(locations, radius);
     res.status(200).json(trip);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {

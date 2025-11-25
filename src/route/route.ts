@@ -15,6 +15,7 @@ import {
 } from "../utils/getEnvVariables";
 import { apiRateLimiter } from "../utils/rateLimiter";
 import { callSnapOrsApi } from "./snapRoute";
+import { convertMinutes } from "./duration";
 
 async function callOrsRouteApi(
   url:string,
@@ -100,9 +101,12 @@ async (
     values: route.extras.waycategory.values
   } as WayCategory;
 
+  const {hours, minutes} = convertMinutes(route.summary.duration / 60)
+
   const result: RouteResult = {
     distance_km: route.summary.distance / 1000,
-    duration_min: route.summary.duration / 60,
+    hours: hours,
+    minutes: minutes,
     route: geometryCoords,
     wayCategory: wayCategory
   };

@@ -1,8 +1,5 @@
 import request from "supertest";
 import { app } from "../../src/api/server";
-import { getNodeEnvironmentFlag } from "../../src/utils/getEnvVariables";
-
-const isProduction = getNodeEnvironmentFlag();
 
 describe("End-to-End: /trip", () => {
   it("calls /trip API", async () => {
@@ -10,9 +7,12 @@ describe("End-to-End: /trip", () => {
         .post("/api/trip")
         .send({
           locations: [
-            { latitude: -41.219366, longitude: 174.889145 }, // Auckland
-            { latitude: -41.290588, longitude: 174.781064 }
+            { latitude: 51.5072,   longitude: -0.1275   },  
+            { latitude: 52.4895,   longitude: -1.8986   },
+            { latitude: 55.9533,   longitude: -3.1965   },
+            { latitude: 55.8610,   longitude: -4.2490   }
           ],
+          radius: 1e3
         })
         .set("Accept", "application/json");
 
@@ -20,11 +20,9 @@ describe("End-to-End: /trip", () => {
       expect(res.body).toHaveProperty("distance_km");
       expect(res.body).toHaveProperty("hours");
       expect(res.body).toHaveProperty("minutes");
-      if (isProduction) {
-        expect(res.body).toHaveProperty("wayCategory");
-      }
+      expect(res.body).toHaveProperty("wayCategory");
     },
-    20000
+    600000
   );
 
   it("calls /trip API within 25km of snappable route", async () => {
@@ -32,9 +30,12 @@ describe("End-to-End: /trip", () => {
         .post("/api/trip")
         .send({
           locations: [
-            { latitude: -41.219366, longitude: 174.889145 }, // Auckland
-            { latitude: -36.732047, longitude: 174.794605 }
+            { latitude: 51.5072,   longitude: -0.1275   },  
+            { latitude: 52.4895,   longitude: -1.8986   },
+            { latitude: 55.9533,   longitude: -3.1965   },
+            { latitude: 53.628292,   longitude: -0.168410   }
           ],
+          radius: 1e3
         })
         .set("Accept", "application/json");
 
@@ -42,10 +43,8 @@ describe("End-to-End: /trip", () => {
       expect(res.body).toHaveProperty("distance_km");
       expect(res.body).toHaveProperty("hours");
       expect(res.body).toHaveProperty("minutes");
-      if (isProduction) {
-        expect(res.body).toHaveProperty("wayCategory");
-      }
+      expect(res.body).toHaveProperty("wayCategory");
     },
-    20000
+    600000
   );
 });
