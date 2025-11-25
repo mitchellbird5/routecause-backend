@@ -52,7 +52,7 @@ router.get("/vehicles", async (req: Request, res: Response) => {
 // -------------------------------
 // POST /trip
 // -------------------------------
-router.post("/trip", async (req: Request, res: Response) => {
+router.post("/route", async (req: Request, res: Response) => {
   const {
     locations,
     radius
