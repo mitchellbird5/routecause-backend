@@ -12,6 +12,10 @@ jobs:
 
     env:
       ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
+      ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
+      GEOCODE_URL: https://api.openrouteservice.org/geocode
+      GEOSNAP_URL: https://api.openrouteservice.org/v2/snap/driving-car
+
       POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
