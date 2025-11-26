@@ -15,6 +15,7 @@ services:
       # External routing/geocoding APIs
       ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
       GEOCODE_URL: https://api.openrouteservice.org/geocode
+      GEOSNAP_URL: https://api.openrouteservice.org/v2/snap/driving-car
       ORS_API_KEY: ${ORS_API_KEY}
 
       POSTGRES_HOST: ${POSTGRES_HOST}

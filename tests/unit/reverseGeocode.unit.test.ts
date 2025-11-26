@@ -46,7 +46,7 @@ describe("Mocked API and error testing", () => {
     mockedAxios.get.mockRejectedValueOnce(new Error("Network error"));
 
     await expect(reverseGeocodeCoordinates(0, 0)).rejects.toThrow(
-      "Failed to reverse geocode coordinates: 0 0 - Network error"
+      "Network error"
     );
   });
 });

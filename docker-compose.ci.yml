@@ -24,8 +24,6 @@ services:
       target: ci
     image: routecause-backend-ci:latest
     working_dir: /app
-    # volumes:
-      # - .:/app:cached
     depends_on:
       emission_db_ci: 
         condition: service_started
@@ -33,6 +31,7 @@ services:
       APP_ENV: production
       ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
       GEOCODE_URL: https://api.openrouteservice.org/geocode
+      GEOSNAP_URL: https://api.openrouteservice.org/v2/snap/driving-car
       ORS_API_KEY: ${ORS_API_KEY}
       POSTGRES_HOST: emission_db_ci
       POSTGRES_PORT: ${POSTGRES_PORT}

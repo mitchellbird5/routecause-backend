@@ -3,6 +3,8 @@ export interface Coordinates {
   longitude: number;
 }
 
+export type LonLat = [number, number]
+
 export interface TimeHM {
   hours: number;
   minutes: number;
@@ -66,33 +68,41 @@ export function decodeWayCategorySummary(
   return result;
 }
 
-
 export interface RouteResult {
   distance_km: number;
-  duration_min: number;
+  hours: number;
+  minutes: number;
   route: RouteCoordinates;
   wayCategory?: WayCategory
 }
 
-export type geocodeAddressFn = (
-  address: string
-) => Promise<Coordinates>;
-
-export interface AddressCoordinates {
-  address: string;
-  coordinates: Coordinates
-}
-
-export type geocodeMultiAddressFn = (
-  address: string, 
-  limit: number
-) => Promise<AddressCoordinates[]>;
-
 export type queryRouteFn = (
-  start: Coordinates,
-  end: Coordinates,
+  coordinates: Coordinates[],
+  radius: number
 ) => Promise<RouteResult>;
 
 export type convertMinutesFn = (minutes: number) => TimeHM;
 
-export type reverseGeocodeFn = (latitude: number, longitude: number) => Promise<string>;
+export function convertCoordinateToLonLat(
+  coord: Coordinates
+) : LonLat {
+  return [coord.longitude, coord.latitude]
+}
+
+export function convertCoordinateListToLonLat(
+  coords: Coordinates[]
+) : LonLat[] {
+  return coords.map(convertCoordinateToLonLat);
+}
+
+export function convertLonLatToCoordinates(
+  coord: LonLat
+) : Coordinates {
+  return {longitude: coord[0], latitude: coord[1]} as Coordinates
+}
+
+export function convertLonLatListToCoordinates(
+  coords: LonLat[]
+) : Coordinates[] {
+  return coords.map(convertLonLatToCoordinates)
+}
