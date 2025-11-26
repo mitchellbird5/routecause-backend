@@ -102,3 +102,59 @@ describe("callSnapOrsApi", () => {
   });
 
 });
+
+describe("callSnapOrsApi SnapError for null locations", () => {
+  const sampleLocations = [
+    [10, 20],
+    [30, 40],
+    [50, 60],
+  ] as any;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("throws SnapError if the first location is null", async () => {
+    mockAxios.post.mockResolvedValue({
+      status: 200,
+      data: { locations: [null, { location: [1,2] }, { location: [3,4] }] }
+    });
+
+    await expect(callSnapOrsApi(sampleLocations, 1000))
+      .rejects
+      .toBeInstanceOf(SnapError);
+  });
+
+  it("throws SnapError if a middle location is null", async () => {
+    mockAxios.post.mockResolvedValue({
+      status: 200,
+      data: { locations: [{ location: [1,2] }, null, { location: [3,4] }] }
+    });
+
+    await expect(callSnapOrsApi(sampleLocations, 1000))
+      .rejects
+      .toBeInstanceOf(SnapError);
+  });
+
+  it("throws SnapError if the last location is null", async () => {
+    mockAxios.post.mockResolvedValue({
+      status: 200,
+      data: { locations: [{ location: [1,2] }, { location: [3,4] }, null] }
+    });
+
+    await expect(callSnapOrsApi(sampleLocations, 1000))
+      .rejects
+      .toBeInstanceOf(SnapError);
+  });
+
+  it("does NOT throw if all locations are valid", async () => {
+    mockAxios.post.mockResolvedValue({
+      status: 200,
+      data: { locations: [{ location: [1,2] }, { location: [3,4] }, { location: [5,6] }] }
+    });
+
+    await expect(callSnapOrsApi(sampleLocations, 1000))
+      .resolves
+      .toEqual([[1,2],[3,4],[5,6]]);
+  });
+});
