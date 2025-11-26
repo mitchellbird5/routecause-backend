@@ -50,7 +50,7 @@ router.get("/vehicles", async (req: Request, res: Response) => {
 });
 
 // -------------------------------
-// POST /trip
+// POST /route
 // -------------------------------
 router.post("/route", async (req: Request, res: Response) => {
   const {
