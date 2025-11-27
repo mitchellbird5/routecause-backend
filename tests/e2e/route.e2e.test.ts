@@ -12,15 +12,20 @@ describe("End-to-End: /route", () => {
             { latitude: 55.9533,   longitude: -3.1965   },
             { latitude: 55.8610,   longitude: -4.2490   }
           ],
-          radius: 1e3
+          radius: 1e3,
+          options: {
+            extra_info: ["waycategory"]
+          }
         })
         .set("Accept", "application/json");
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty("distance_km");
-      expect(res.body).toHaveProperty("hours");
-      expect(res.body).toHaveProperty("minutes");
-      expect(res.body).toHaveProperty("wayCategory");
+      expect(res).toHaveProperty('body');
+      expect(res.body.routes).toHaveLength(1);
+      expect(res.body.routes[0].summary).toHaveProperty("distance");
+      expect(res.body.routes[0].summary).toHaveProperty("duration");
+      expect(res.body.routes[0]).toHaveProperty("geometry");
+      expect(res.body.routes[0].extras).toHaveProperty("waycategory");
     },
     600000
   );
@@ -35,15 +40,20 @@ describe("End-to-End: /route", () => {
             { latitude: 55.9533,   longitude: -3.1965   },
             { latitude: 53.628292,   longitude: -0.168410   }
           ],
-          radius: 1e3
+          radius: 1e3,
+          options: {
+            extra_info: ["waycategory"]
+          }
         })
         .set("Accept", "application/json");
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty("distance_km");
-      expect(res.body).toHaveProperty("hours");
-      expect(res.body).toHaveProperty("minutes");
-      expect(res.body).toHaveProperty("wayCategory");
+      expect(res).toHaveProperty('body');
+      expect(res.body.routes).toHaveLength(1);
+      expect(res.body.routes[0].summary).toHaveProperty("distance");
+      expect(res.body.routes[0].summary).toHaveProperty("duration");
+      expect(res.body.routes[0]).toHaveProperty("geometry");
+      expect(res.body.routes[0].extras).toHaveProperty("waycategory");
     },
     600000
   );
