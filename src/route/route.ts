@@ -1,12 +1,7 @@
 import axios, { AxiosResponse } from "axios";
-import polyline from "@mapbox/polyline";
 import {
   Coordinates,
-  RouteResult,
   queryRouteFn,
-  RouteCoordinates,
-  decodeWayCategorySummary,
-  WayCategory,
   convertCoordinateListToLonLat
 } from "./route.types";
 import { 
@@ -15,17 +10,17 @@ import {
 } from "../utils/getEnvVariables";
 import { apiRateLimiter } from "../utils/rateLimiter";
 import { callSnapOrsApi } from "./snapRoute";
-import { convertMinutes } from "./duration";
 
 async function callOrsRouteApi(
   url:string,
   locations: [number, number][],
-  apiKey: string 
+  apiKey: string,
+  options: Record<string, any> = {} 
 ): Promise<AxiosResponse> {
 
   const body = {
     coordinates: locations,
-    extra_info: ["waycategory"]
+    ...options
   }
 
   try {
@@ -70,8 +65,9 @@ const orsRouteRateLimiter = new apiRateLimiter(40, 2000);
 export const queryRoute: queryRouteFn = 
 async (
   coordinates: Coordinates[],
-  radius: number
-): Promise<RouteResult> => {
+  radius: number,
+  options: Record<string, any> = {} 
+): Promise<AxiosResponse> => {
   orsRouteRateLimiter.consume()
 
   const snappedLocations = await callSnapOrsApi(
@@ -83,33 +79,8 @@ async (
     getRouteBaseUrl(),
     snappedLocations,
     getOrsApiKey(),
+    options
   );
 
-  const route = response.data.routes[0];
-  const routeCoordinates = polyline.decode(route.geometry) || [];
-  
-  const geometryCoords: RouteCoordinates = routeCoordinates.map(
-    ([lat, lon]: [number, number]) => ({
-      latitude: lat,
-      longitude: lon,
-    })
-  );
-
-  const decoded = decodeWayCategorySummary(route.extras.waycategory.summary);
-  const wayCategory = {
-    summary: decoded,
-    values: route.extras.waycategory.values
-  } as WayCategory;
-
-  const {hours, minutes} = convertMinutes(route.summary.duration / 60)
-
-  const result: RouteResult = {
-    distance_km: route.summary.distance / 1000,
-    hours: hours,
-    minutes: minutes,
-    route: geometryCoords,
-    wayCategory: wayCategory
-  };
-
-  return result
+  return response.data
 };

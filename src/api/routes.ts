@@ -55,7 +55,8 @@ router.get("/vehicles", async (req: Request, res: Response) => {
 router.post("/route", async (req: Request, res: Response) => {
   const {
     locations,
-    radius
+    radius,
+    options
   } = req.body;
 
   if ( typeof radius !== "number" ) {
@@ -79,7 +80,7 @@ router.post("/route", async (req: Request, res: Response) => {
   }
 
   try {
-    const trip = await queryRoute(locations, radius);
+    const trip = await queryRoute(locations, radius, options);
     res.status(200).json(trip);
   } catch (err: any) {
     if (err instanceof apiRateLimitExceededError) {
