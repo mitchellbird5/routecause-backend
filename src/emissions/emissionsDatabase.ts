@@ -5,8 +5,7 @@ const pool = new Pool({
   port: Number(process.env.POSTGRES_PORT),
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
-  database: process.env.POSTGRES_DB,
-  ssl: process.env.POSTGRES_SSL === 'true' ? { rejectUnauthorized: false } : undefined, // required for Supabase
+  database: process.env.POSTGRES_DB
 });
 
 export default pool;

@@ -25,7 +25,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_SSL: false
       FRONTEND_URL: http://localhost:3000
     networks:
       - routecause-network
