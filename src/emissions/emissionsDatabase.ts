@@ -98,7 +98,7 @@ export async function validateColumnAndFilter(
   column = matchingColumn; // Normalized to DB column name
 
   const validFilters = await getDistinctColumnValues(tableName, column);
-  if (!validFilters.includes(filter)) {
+  if (!validFilters.includes(filter.toLowerCase())) {
     throw { status: 400, message: `Invalid filter value: ${filter}` };
   }
 
