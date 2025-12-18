@@ -1,12 +1,23 @@
 import { Pool } from "pg";
 
-const pool = new Pool({
-  host: process.env.POSTGRES_HOST,
-  port: Number(process.env.POSTGRES_PORT),
-  user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
-  database: process.env.POSTGRES_DB,
-  ssl: process.env.POSTGRES_SSL === 'true' ? { rejectUnauthorized: true } : undefined, // required for Supabase
+// const pool = new Pool({
+//   host: process.env.POSTGRES_HOST,
+//   port: Number(process.env.POSTGRES_PORT),
+//   user: process.env.POSTGRES_USER,
+//   password: process.env.POSTGRES_PASSWORD,
+//   database: process.env.POSTGRES_DB,
+//   ssl: { rejectUnauthorized: false }, // required for Supabase,
+// });
+
+const connectionString = `
+postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}?options=-c%20pool_mode=session
+`;
+
+const pool = new Pool({ 
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false, // skip cert verification for supabase
+  }, 
 });
 
 export default pool;
@@ -59,6 +70,12 @@ export async function getDistinctColumnValues(
   return values;
 }
 
+function sqlInjectionCheck(parameter: string){
+  if (!/^[a-zA-Z0-9_]+$/.test(parameter)) {
+    throw new Error("Invalid column name");
+  }
+}
+
 /**
  * Validates that the column exists and the filter value is valid.
  */
@@ -67,6 +84,10 @@ export async function validateColumnAndFilter(
   column: string,
   filter: string
 ) {
+
+  sqlInjectionCheck(column);
+  sqlInjectionCheck(filter);
+
   const validColumns = (await getTableColumns(tableName)).map(c => c.toLowerCase());
 
   const matchingColumn = validColumns.find(c => c === column.toLowerCase());
@@ -77,7 +98,7 @@ export async function validateColumnAndFilter(
   column = matchingColumn; // Normalized to DB column name
 
   const validFilters = await getDistinctColumnValues(tableName, column);
-  if (!validFilters.includes(filter)) {
+  if (!validFilters.includes(filter.toLowerCase())) {
     throw { status: 400, message: `Invalid filter value: ${filter}` };
   }
 

@@ -1,8 +1,4 @@
-import pool from "../emissions/emissionsDatabase";
-import {
-  getTableColumns,
-  getDistinctColumnValues
-} from "../emissions/emissionsDatabase";
+import pool, { validateColumnAndFilter } from "../emissions/emissionsDatabase";
 import { calculateEmissionEquivalent } from "../emissions/emissions";
 import {
   validateEmissionRow,
@@ -18,25 +14,30 @@ export async function getEmissionsService(
     throw { status: 400, message: "Invalid trip emissions values" };
   }
 
-  // Validate column exists
-  const validColumns = (await getTableColumns("emission_data")).map(c => c.toLowerCase());
-  if (!validColumns.includes(column.toLowerCase())) {
-    throw { status: 400, message: `Invalid column name: ${column}` };
-  }
-  column = validColumns.find(c => c.toLowerCase() === column.toLowerCase())!;
+  const table = process.env.POSTGRES_TABLE
 
-  // Validate filter value exists in that column
-  const validFilters = await getDistinctColumnValues("emission_data", column);
-  if (!validFilters.includes(filter.toLowerCase())) {
-    throw { status: 400, message: `Invalid filter value: ${filter}` };
+  if (!table) {
+    throw { status:400, message: "No table environment variable set"}
   }
 
+  const validColumn = await validateColumnAndFilter(
+    table,
+    column,
+    filter
+  )
 
   try {
     const query = `
-      SELECT label, category, value, equivalent_unit, description, source, equivalent_description
+      SELECT 
+        label, 
+        category, 
+        value::float AS value, 
+        equivalent_unit, 
+        description, 
+        source, 
+        equivalent_description
       FROM emission_data
-      WHERE LOWER(${column}) = LOWER($1)
+      WHERE LOWER(${validColumn}) = LOWER($1)
     `;
     const result = await pool.query(query, [filter]);
 
