@@ -1,23 +1,5 @@
 services:
 
-  emission_db_ci:
-    image: postgres:16
-    container_name: emission_db_ci
-    volumes:
-      - ./tests/data-ci:/docker-entrypoint-initdb.d
-      - pgdata-ci:/var/lib/postgresql/data
-    environment:
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_TABLE: ${POSTGRES_TABLE}
-      
-      FRONTEND_URL: ${FRONTEND_URL}
-    expose:
-      - "5432"
-
   routecause-backend-ci:
     build:
       context: .
@@ -25,21 +7,17 @@ services:
       target: ci
     image: routecause-backend-ci:latest
     working_dir: /app
-    depends_on:
-      emission_db_ci: 
-        condition: service_started
     environment:
       APP_ENV: production
       ROUTER_URL: https://api.openrouteservice.org/v2/directions/driving-car
       GEOCODE_URL: https://api.openrouteservice.org/geocode
       GEOSNAP_URL: https://api.openrouteservice.org/v2/snap/driving-car
       ORS_API_KEY: ${ORS_API_KEY}
-      POSTGRES_HOST: emission_db_ci
+      POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_TABLE: ${POSTGRES_TABLE}
+      FRONTEND_URL: ${FRONTEND_URL}
     command: tail -f /dev/null
-
-volumes:
-  pgdata-ci:
