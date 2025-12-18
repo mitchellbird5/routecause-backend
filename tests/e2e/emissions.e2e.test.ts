@@ -35,4 +35,30 @@ describe("End-to-End: /emissions-comparison", () => {
       expect(typeof item.source).toBe("string");
     }
   });
+
+  it("should fail with invalid column", async () => {
+    const res = await request(app)
+      .get("/api/emissions-comparison")
+      .query({ 
+        column: "invalid_column", 
+        filter: "food", 
+        emissions: ["1.0", "10.0"].join(",") 
+      })
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+  });
+
+  it("should fail with invalid filter", async () => {
+    const res = await request(app)
+      .get("/api/emissions-comparison")
+      .query({ 
+        column: "invalid_column", 
+        filter: "invalid_filter", 
+        emissions: ["1.0", "10.0"].join(",") 
+      })
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+  });
 });
